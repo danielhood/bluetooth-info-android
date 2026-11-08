@@ -4,16 +4,23 @@ Each milestone ends with a green `scripts/verify.sh` (from M1 on), a commit, and
 
 Status key: [ ] not started, [~] in progress, [x] done.
 
-## M0. Environment bootstrap [ ]
+## M0. Environment bootstrap [~]
 
 Goal: the machine can build and run Android apps headlessly.
 
-- [ ] **Human:** approve downloads; run `sdkmanager --licenses`; enable USB debugging on the Pixel 9a and accept the host key prompt.
-- [ ] Install JDK, Android cmdline-tools, platform-tools, emulator, platform, build-tools, system images into user space.
-- [ ] Create the AVD (`btscan-api34`).
-- [ ] Write `scripts/env.sh`, `scripts/env-check.sh`, `scripts/emu.sh`.
+- [x] **Human:** approve downloads; run `sdkmanager --licenses`.
+- [ ] **Human:** enable USB debugging on the Pixel 9a and accept the host key prompt (no device visible to `adb devices` yet).
+- [x] Install JDK 21 (apt), Android cmdline-tools 22.0, platform-tools 37.0.1, emulator 37.2.13, platform 36, build-tools 36.1.0, system images `android-36;google_apis` and `android-34;aosp_atd` (about 14 GB in `~/Android/Sdk`).
+- [x] Create the AVD (`btscan-api36`, pixel_6 profile, 3 GB RAM).
+- [x] Write `scripts/env.sh`, `scripts/env-check.sh`, `scripts/emu.sh`.
 
-Exit: `env-check.sh` all green; `emu.sh start && emu.sh wait` boots headless in under ~2 min; `adb shell getprop ro.build.version.sdk` answers.
+Findings:
+- Headless boot takes about 30 s; screenshot and `uiautomator dump` work.
+- The emulator image reports `android.hardware.bluetooth` and `bluetooth_le`, which is encouraging for spike S1.
+- `adb shell uiautomator dump /dev/tty` prints nothing useful; use `adb exec-out` (M1 `ui.sh` must handle this).
+- `sdkmanager` is flagged deprecated in favour of Google's Android CLI (`android sdk`); evaluate in S2.
+
+Exit: `env-check.sh` all green (done); `emu.sh start && emu.sh wait` boots headless (done); Pixel 9a visible to adb (pending).
 
 ## M1. Scaffold and harness [ ]
 

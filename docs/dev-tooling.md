@@ -4,11 +4,11 @@ The objective: an agent can go from a clean checkout to a built, installed, runn
 
 ## 1. Toolchain to install
 
-Nothing is installed yet (see README findings). `sudo` needs a password on this machine, so install into user space. Downloads and SDK licence acceptance are **human-approved steps** (M0).
+Nothing is installed yet (see README findings). `sudo` needs a password on this machine, so the JDK is installed by the owner with `apt` (one command, below) and everything else goes into user space. Downloads and SDK licence acceptance are **human-approved steps** (M0).
 
 | Component | Choice | Location |
 |---|---|---|
-| JDK | A JDK 17+ LTS (Temurin tarball, or distro package if the owner runs `apt`) | `~/.local/jdks/…`, `JAVA_HOME` set by `scripts/env.sh` |
+| JDK | **OpenJDK 21 headless** from apt: `sudo apt install openjdk-21-jdk-headless`. 21 is an LTS, above the AGP minimum (17), and matches what current Android Studio bundles. Not 25: too new for the Gradle/Kotlin/AGP combination to be safe. | `/usr/lib/jvm/java-21-openjdk-amd64`, `JAVA_HOME` set by `scripts/env.sh` |
 | Gradle | Via the committed **wrapper only**; no system Gradle | repo |
 | Android command-line tools | Latest from developer.android.com | `~/Android/Sdk/cmdline-tools/latest` |
 | SDK packages | `platform-tools`, `emulator`, `platforms;android-<compileSdk>`, `build-tools;<ver>`, one system image (`system-images;android-34;google_apis;x86_64` or newer), and the ATD image for the Managed Device | `~/Android/Sdk` |
