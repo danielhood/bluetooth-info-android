@@ -45,7 +45,7 @@ Findings and decisions made during M1:
 - **Compose test rules:** use the `v2` packages; the v1 ones are deprecated and warnings are errors.
 - **uiautomator** exposes a Compose container only if it has semantics beyond `testTag` (we add a `contentDescription` to the screen container).
 - `verify.sh --full` stops the exploration emulator before the Managed Device test and the smoke test restarts it.
-- The smoke test passes on the emulator. On the Pixel 9a the app installs and launches, but UI checks need an unlocked screen; the script now says so instead of failing obscurely. Re-run with `ANDROID_SERIAL=5A151JEBF21180 scripts/e2e-smoke.sh` while the phone is unlocked.
+- The smoke test passes on both the emulator and the physical Pixel 9a (API 37; run by the owner with the phone unlocked on 2026-11-08). The script refuses to run on a locked device and says so.
 
 Exit: met. From a clean clone, `verify.sh --full` passes; an agent can launch the app on the emulator, dump the UI and see the placeholder tags, and take a screenshot.
 
