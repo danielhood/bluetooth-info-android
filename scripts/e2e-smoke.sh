@@ -138,6 +138,21 @@ check "screen visible"              "$S/ui.sh" wait device_list_screen 20
 check "no debug label"              absent debug_label
 check "app logged no override"      bash -c "'$S/logs.sh' | grep -q 'launch debugConfig=none'"
 
+echo "-- real scanner path starts and stops cleanly (no devices expected on an emulator)"
+"$S/app.sh" grant >/dev/null
+"$S/app.sh" launch >/dev/null
+"$S/ui.sh" wait scan_button 15 >/dev/null
+check "start enabled in real mode"  scan_enabled
+"$S/ui.sh" tap scan_button >/dev/null
+check "real scan indicator shown"   "$S/ui.sh" wait scan_indicator 5
+sleep 2
+check "no failure banner"           absent failure_banner
+check "platform scan started"       bash -c "'$S/logs.sh' | grep -q 'BtScan/Scan.*scan started'"
+sleep 1
+"$S/ui.sh" tap scan_button >/dev/null
+check "real scan stops"             button_text "Start scan"
+check "platform scan stopped"       bash -c "'$S/logs.sh' | grep -q 'BtScan/Scan.*scan stopped'"
+
 check "no crash in logs"            bash -c "! '$S/logs.sh' | grep -qE 'FATAL EXCEPTION|E/AndroidRuntime'"
 
 [ "$fails" -eq 0 ] && echo "SMOKE OK" || { echo "SMOKE FAILED ($fails)"; exit 1; }

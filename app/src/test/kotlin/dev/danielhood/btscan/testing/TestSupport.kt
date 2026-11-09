@@ -1,13 +1,16 @@
 package dev.danielhood.btscan.testing
 
+import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
+import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import java.time.Instant
 
@@ -54,4 +57,9 @@ fun TestScope.rawAd(
         isConnectable = connectable,
         timestamp = Instant.EPOCH.plusMillis(testScheduler.currentTime),
     )
+}
+
+/** Stand-in for the "real" adapter monitor in container tests. */
+object AlwaysOnAdapterMonitor : AdapterStateMonitor {
+    override val state: Flow<AdapterState> = flowOf(AdapterState.ON)
 }

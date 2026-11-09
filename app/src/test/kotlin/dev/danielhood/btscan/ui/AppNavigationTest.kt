@@ -14,7 +14,9 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.danielhood.btscan.AppContainer
 import dev.danielhood.btscan.DebugConfig
+import dev.danielhood.btscan.testing.AlwaysOnAdapterMonitor
 import dev.danielhood.btscan.testing.FakePermissionChecker
+import dev.danielhood.btscan.testing.ManualScanner
 import dev.danielhood.btscan.ui.common.TestTags
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +48,13 @@ class AppNavigationTest {
 
     @Before
     fun setUp() {
-        container = AppContainer(permissionChecker = FakePermissionChecker(), scope = scope)
+        container =
+            AppContainer(
+                permissionChecker = FakePermissionChecker(),
+                realScanner = ManualScanner(),
+                realAdapterMonitor = AlwaysOnAdapterMonitor,
+                scope = scope,
+            )
         container.debugConfig = DebugConfig(scanner = "fake", scenario = "default")
         rule.setContent { AppRoot(container = container, debugLabel = null, darkTheme = false) }
     }

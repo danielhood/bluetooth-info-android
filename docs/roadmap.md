@@ -115,15 +115,30 @@ Decisions and findings made during M4:
 
 Exit: met.
 
-## M5. Real Bluetooth [ ]
+## M5. Real Bluetooth [x]
 
-- [ ] `AndroidBleScanner` (`callbackFlow`, `SCAN_MODE_LOW_LATENCY`, error code mapping), `AndroidAdapterStateMonitor` (state broadcast + location state for API ≤ 30), `AndroidPermissionChecker`.
-- [ ] Wire real ports as the default in `AppContainer`.
-- [ ] Background-stop behaviour (acceptance 9).
-- [ ] **Spike S1** (time-boxed, see below).
-- [ ] **Manual:** real-device run (acceptance 10).
+- [x] `AndroidBleScanner` (`callbackFlow`, low-latency, extended advertisements included, error-code mapping, `SecurityException` mapped to `PERMISSION_MISSING`), `AndroidAdapterStateMonitor` (state and location broadcasts; location only matters on Android 11 and below), `AndroidPermissionChecker` (from M3).
+- [x] Real ports are the defaults in `AppContainer`; the debug overrides still replace them when a scenario is requested. The M2/M3 placeholders are deleted.
+- [x] Background-stop (acceptance 9) was done in M3/M4 and re-verified with the real scanner.
+- [x] **Spike S1** (below).
+- [x] **Real-device run on the Pixel 9a** (below).
 
-Exit: on a physical phone the app lists real nearby devices and detail looks right; `verify.sh --full` still green.
+Result: 158 JVM unit tests (11 new: error mapping, adapter on/off/unsupported, location on Android 11 under Robolectric sdk 30, permission checker on Android 12+ and 11); `verify.sh --full` passes, including a new smoke section that starts and stops the real scanner on the emulator.
+
+Real-device results (Pixel 9a, Android 17 / API 37, 2026-11-09):
+- `scripts/e2e-real.sh`: 15/15 checks. A real scan listed 8 devices within 25 s, sorted by signal, with real names (one with an emoji) and connectable flags; the detail screen showed a valid MAC address and plausible signal; back kept the scan running; stop and relaunch worked; no crashes.
+- `scripts/real-device-tests.sh` (instrumented, physical device only): 2/2, real advertisements arrive and parse without error; the adapter monitor reports on.
+- Acceptance 10 (manual real hardware) is met for Android 12+. The Android 8 to 11 location path is covered by Robolectric (sdk 30) only; no device on that range was available.
+
+Spike S1 (emulator Bluetooth): the Android 36 emulator image exposes a virtual Bluetooth adapter (netsim). The real scanner starts and stops cleanly on it and reports an empty list, which the smoke test now asserts. Injecting virtual beacons would need the netsim command-line or gRPC client, which is not shipped in this SDK (only `netsimd`); not pursued. Decision: the physical phone remains the only real-advertisement check, and the emulator covers the real code path without devices.
+
+Decisions and findings made during M5:
+- Scan settings use `setLegacy(false)` so extended advertisements are included; devices that only advertise legacy are unaffected.
+- The advertisement channel buffers 512 entries and drops on overflow; at the rates seen (tens of devices) nothing is lost, and the repository throttles what reaches the UI.
+- The architecture rule "nothing connects" scans source text for the permission name, so even a comment containing it fails the check; comments say "connect permission" instead.
+- Real-radio checks are separate scripts (`e2e-real.sh`, `real-device-tests.sh`) and are not part of `verify.sh --full`, because they need an unlocked physical phone with Bluetooth devices in range.
+
+Exit: met.
 
 ## M6. Hardening and wrap-up [ ]
 

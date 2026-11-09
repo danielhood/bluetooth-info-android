@@ -1,8 +1,6 @@
 package dev.danielhood.btscan
 
 import dev.danielhood.btscan.data.SystemClock
-import dev.danielhood.btscan.data.ble.PlaceholderAdapterStateMonitor
-import dev.danielhood.btscan.data.ble.UnavailableBleScanner
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
@@ -21,6 +19,8 @@ import kotlinx.coroutines.flow.flow
 /** Manual dependency injection root. The only place allowed to see every layer. */
 class AppContainer(
     val permissionChecker: PermissionChecker,
+    private val realScanner: BleScanner,
+    private val realAdapterMonitor: AdapterStateMonitor,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     val clock: Clock = SystemClock,
 ) {
@@ -35,7 +35,7 @@ class AppContainer(
         object : BleScanner {
             override fun scan(): Flow<RawAdvertisement> =
                 flow {
-                    val chosen = debugOverrides.scannerFor(debugConfig, clock) ?: UnavailableBleScanner
+                    val chosen = debugOverrides.scannerFor(debugConfig, clock) ?: realScanner
                     emitAll(chosen.scan())
                 }
         }
@@ -45,7 +45,7 @@ class AppContainer(
         object : AdapterStateMonitor {
             override val state: Flow<AdapterState> =
                 flow {
-                    val chosen = debugOverrides.adapterMonitorFor(debugConfig) ?: PlaceholderAdapterStateMonitor
+                    val chosen = debugOverrides.adapterMonitorFor(debugConfig) ?: realAdapterMonitor
                     emitAll(chosen.state)
                 }
         }

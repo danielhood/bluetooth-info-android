@@ -20,7 +20,8 @@ Plan and rationale live in `docs/` (start with `docs/README.md`, then `decisions
 | See the screen as structured text | `scripts/ui.sh dump` (also `find`, `tap`, `wait`, `back`, `text`) |
 | See the screen as an image | `scripts/shot.sh [name]` then read the PNG in `build/agent/shots/` |
 | App logs and crashes | `scripts/logs.sh` (`--follow`, `--clear`) |
-| Black-box smoke test | `scripts/e2e-smoke.sh` |
+| Black-box smoke test (fake scanner, plus real scanner start/stop) | `scripts/e2e-smoke.sh` |
+| Real-radio smoke on the phone | `ANDROID_SERIAL=<serial> scripts/e2e-real.sh` |
 
 Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; otherwise the single attached device. The physical phone (Pixel 9a) is for real-radio checks: `ANDROID_SERIAL=<serial> scripts/app.sh install`.
 
@@ -60,6 +61,6 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 - Kotlin warnings are errors. Compose test APIs: use the `v2` packages (`androidx.compose.ui.test.junit4.v2`).
 - compileSdk/targetSdk are 37 because current Compose/lifecycle require it; Robolectric is pinned to sdk 36 in `app/src/test/resources/robolectric.properties`.
 - Unit tests with coroutines: `advanceTimeBy(n)` does not run work scheduled exactly at `n`; call `runCurrent()` after it.
-- Until roadmap M5, a scan without `--scenario` fails with FEATURE_UNSUPPORTED (the real scanner is not written yet).
+- A scan without `--scenario` uses the real scanner. The emulator has a virtual Bluetooth adapter but no devices, so real mode shows an empty list there. Real-radio checks need the physical phone: `ANDROID_SERIAL=<serial> scripts/e2e-real.sh` and `scripts/real-device-tests.sh` (phone unlocked, Bluetooth on, devices nearby). Their screenshots show nearby devices; they stay in the git-ignored `build/agent/`.
 - Memory: `--full` runs Gradle plus up to two emulators; close browsers first on this 16 GB machine. Gradle/Kotlin heaps are capped in `gradle.properties` and `verify.sh` stops the Gradle daemon before the smoke stage.
 - `verify.sh --full` stops the exploration emulator (to free resources for the Managed Device) and restarts it for the smoke test.

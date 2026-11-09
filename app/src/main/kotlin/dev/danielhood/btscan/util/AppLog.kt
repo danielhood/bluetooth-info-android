@@ -6,6 +6,7 @@ import android.util.Log
 object AppLog {
     const val APP = "BtScan/App"
     const val UI = "BtScan/UI"
+    const val SCAN = "BtScan/Scan"
 
     fun i(tag: String, message: String) {
         Log.i(tag, message)

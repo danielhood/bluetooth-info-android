@@ -2,7 +2,11 @@ package dev.danielhood.btscan
 
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
+import dev.danielhood.btscan.testing.AlwaysOnAdapterMonitor
 import dev.danielhood.btscan.testing.FakePermissionChecker
+import dev.danielhood.btscan.testing.ManualScanner
+import dev.danielhood.btscan.testing.rawAd
+import dev.danielhood.btscan.testing.testClock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -13,12 +17,20 @@ import java.time.Instant
 /** Wiring: the debug launch config selects which scanner the repository uses. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppContainerTest {
+    private val realScanner = ManualScanner()
+
     private fun TestScope.container(): AppContainer {
         val clock =
             object : Clock {
                 override fun now(): Instant = Instant.EPOCH.plusMillis(testScheduler.currentTime)
             }
-        return AppContainer(permissionChecker = FakePermissionChecker(), scope = backgroundScope, clock = clock)
+        return AppContainer(
+            permissionChecker = FakePermissionChecker(),
+            realScanner = realScanner,
+            realAdapterMonitor = AlwaysOnAdapterMonitor,
+            scope = backgroundScope,
+            clock = clock,
+        )
     }
 
     private fun TestScope.advance(ms: Long) {
@@ -48,13 +60,42 @@ class AppContainerTest {
         }
 
     @Test
-    fun `without a debug config the real scanner slot is used, unavailable until M5`() =
+    fun `without a debug config the injected real scanner is used`() =
         runTest {
             val container = container()
             container.deviceRepository.startScan()
             advance(100)
+            realScanner.ads.emit(rawAd("REAL-1", name = "Real Device"))
+            advance(600)
             assertEquals(
-                ScanFailure.Kind.FEATURE_UNSUPPORTED,
+                listOf("REAL-1"),
+                container.deviceRepository.devices.value
+                    .map { it.address },
+            )
+        }
+
+    @Test
+    fun `a failing real scanner surfaces as a scan failure`() =
+        runTest {
+            val failing =
+                object : dev.danielhood.btscan.domain.port.BleScanner {
+                    override fun scan() =
+                        kotlinx.coroutines.flow.flow<dev.danielhood.btscan.domain.model.RawAdvertisement> {
+                            throw ScanFailure(ScanFailure.Kind.PERMISSION_MISSING)
+                        }
+                }
+            val container =
+                AppContainer(
+                    permissionChecker = FakePermissionChecker(),
+                    realScanner = failing,
+                    realAdapterMonitor = AlwaysOnAdapterMonitor,
+                    scope = backgroundScope,
+                    clock = testClock(),
+                )
+            container.deviceRepository.startScan()
+            advance(100)
+            assertEquals(
+                ScanFailure.Kind.PERMISSION_MISSING,
                 container.deviceRepository.failure.value
                     ?.kind,
             )
