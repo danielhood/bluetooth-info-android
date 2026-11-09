@@ -30,9 +30,25 @@ case "${1:-status}" in
     for k in window_animation_scale transition_animation_scale animator_duration_scale; do
       adb -s "$SER" shell settings put global $k 0
     done
+    # The emulator has no PIN: wake it, dismiss the keyguard and keep the screen on so UI checks work.
+    adb -s "$SER" shell input keyevent KEYCODE_WAKEUP
+    adb -s "$SER" shell wm dismiss-keyguard
+    adb -s "$SER" shell svc power stayon true
+    for _ in $(seq 1 20); do
+      adb -s "$SER" shell dumpsys window | grep -q 'mDreamingLockscreen=true' || break; sleep 1
+      adb -s "$SER" shell wm dismiss-keyguard
+    done
     echo "ready: $SER API $(adb -s "$SER" shell getprop ro.build.version.sdk | tr -d '\r')" ;;
   stop)
-    running && adb -s "$SER" emu kill >/dev/null || echo "not running" ;;
+    if running; then
+      adb -s "$SER" emu kill >/dev/null || true
+      # Wait for the emulator to be really gone, so an immediate `start` cannot race a dying instance.
+      for _ in $(seq 1 30); do
+        running || pgrep -f "avd $BTSCAN_AVD" >/dev/null || break
+        sleep 1
+      done
+      echo "stopped"
+    else echo "not running"; fi ;;
   status)
     running && echo "running ($SER)" || echo "stopped" ;;
   *) echo "usage: $0 create|start|wait|stop|status" >&2; exit 2 ;;

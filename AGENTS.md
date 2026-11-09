@@ -36,6 +36,8 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 - Layers: `ui -> domain <- data`. `ui` must not import `data`; `domain` imports no `android.*`; `android.bluetooth.*` only under `data/ble/android`.
 - ViewModels take no `Context`. Time and dispatchers are injected, never called directly.
 - Manual DI in `AppContainer` only. Fake/debug code lives in `app/src/debug`; `DebugOverrides` is the only seam. Release must never contain it (`verify.sh --full` checks).
+- Fake scanner scenarios: `app/src/debug/.../data/ble/fake/Scenarios.kt` (select with `app.sh launch --scenario NAME`; names listed in `docs/functional-spec.md`). To add one, add a `Scenario`, register it in `all`, and add a test.
+- Architecture rules are enforced by `ArchitectureTest` (import scanning); a failing rule names the offending file and import.
 - New screen recipe: `Screen.kt` + `ViewModel.kt` + `UiState.kt` + route + tags in `ui/common/TestTags.kt` + tests.
 - Every interactive/important composable gets a `Modifier.testTag` from `TestTags` (tags show up as `resource-id` in `ui.sh dump`). The container for a screen also needs a `contentDescription` or uiautomator will not expose it.
 
@@ -57,4 +59,6 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 - Robolectric needs `--add-exports=java.base/jdk.internal.access=ALL-UNNAMED` (already set in `app/build.gradle.kts`).
 - Kotlin warnings are errors. Compose test APIs: use the `v2` packages (`androidx.compose.ui.test.junit4.v2`).
 - compileSdk/targetSdk are 37 because current Compose/lifecycle require it; Robolectric is pinned to sdk 36 in `app/src/test/resources/robolectric.properties`.
+- Unit tests with coroutines: `advanceTimeBy(n)` does not run work scheduled exactly at `n`; call `runCurrent()` after it.
+- Until roadmap M5, a scan without `--scenario` fails with FEATURE_UNSUPPORTED (the real scanner is not written yet).
 - `verify.sh --full` stops the exploration emulator (to free resources for the Managed Device) and restarts it for the smoke test.

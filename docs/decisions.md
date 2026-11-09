@@ -43,7 +43,7 @@ Details in [architecture.md](architecture.md). Key rules:
 
 - The Android Bluetooth classes appear in **exactly one package** (`data.ble.android`).
 - Everything above that package is plain Kotlin that runs on the JVM.
-- Layer rules are enforced by an architecture test (Konsist, or a simple import-scanning test if Konsist does not support the pinned Kotlin), so an agent that violates them gets a failing test rather than a code review comment.
+- Layer rules are enforced by an architecture test (`ArchitectureTest`, plain import scanning; Konsist was rejected as an unnecessary dependency coupled to the Kotlin version), so an agent that violates them gets a failing test rather than a code review comment.
 
 *Agent fit:* tight, explicit boundaries are the best defence against agent drift. A fixed recipe ("new screen = Screen + ViewModel + UiState + route") makes every addition look like the last one.
 
@@ -125,7 +125,7 @@ No database, no DataStore, no history. State lives in memory for the app session
 | Compose UI and screenshots | Compose UI test + Robolectric + Roborazzi | JVM, no emulator |
 | Instrumented and end-to-end | Compose test rule + AndroidX Test, via Gradle Managed Device | Headless emulator |
 | Black-box smoke | `scripts/e2e-smoke.sh` driving the installed APK through `adb`/`uiautomator` | Emulator or device |
-| Architecture rules | Konsist (or import-scan fallback) | JVM |
+| Architecture rules | `ArchitectureTest` (import scanning) | JVM |
 
 *Agent fit:* the JVM screenshot tests produce PNGs an agent can open and *look at* in the same loop as editing code, without booting an emulator. Hand-written fakes avoid mocking-framework magic that agents misuse. Roborazzi compatibility with the chosen AGP/Compose versions must be confirmed in M1; fallback is Paparazzi.
 

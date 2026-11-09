@@ -12,6 +12,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val container = (application as BtScanApp).container
         val debugConfig = container.debugOverrides.configFrom(intent)
+        container.debugConfig = debugConfig
         AppLog.i(AppLog.APP, "launch debugConfig=${debugConfig.label ?: "none"}")
         enableEdgeToEdge()
         setContent { AppRoot(debugLabel = debugConfig.label) }

@@ -49,15 +49,27 @@ Findings and decisions made during M1:
 
 Exit: met. From a clean clone, `verify.sh --full` passes; an agent can launch the app on the emulator, dump the UI and see the placeholder tags, and take a screenshot.
 
-## M2. Domain and data with fakes [ ]
+## M2. Domain and data with fakes [x]
 
-- [ ] Models, ports, `Clock`.
-- [ ] `AdvertisementParser` with golden-vector tests (acceptance 8).
-- [ ] `DefaultDeviceRepository`: merge, staleness, throttle, ordering, failure (acceptance 5), all with virtual time.
-- [ ] `FakeBleScanner` + scenarios (emits raw bytes) in `src/debug`; `AppContainer` wiring through `DebugOverrides`.
-- [ ] Architecture tests.
+- [x] Models (`Bytes`, `RawAdvertisement`, `Advertisement`, `BleDevice`, `AdapterState`, `PermissionState`, `ScanFailure`), ports (`BleScanner`, `AdapterStateMonitor`, `PermissionChecker`, `Clock`).
+- [x] `AdvertisementParser` with 19 golden-vector tests (acceptance 8).
+- [x] `DefaultDeviceRepository`: merge, 30 s staleness, 500 ms throttle, ordering, failure, restart safety; 15 virtual-time tests (acceptance 5).
+- [x] `FakeBleScanner` + all eight scenarios + `AdBuilder` in `src/debug`; `AppContainer` wiring through `DebugOverrides.scannerFor`.
+- [x] Architecture tests (import scanning, see decisions D4).
 
-Exit: verify `--quick` green; no UI beyond placeholder; repository demonstrably correct under every fake scenario in unit tests.
+Result: 69 JVM unit tests; `verify.sh --full` passes. No UI beyond the M1 placeholder, by design.
+
+Decisions and findings made during M2:
+- **Architecture tests use plain import scanning** instead of Konsist: no dependency, no Kotlin-version coupling, and the negative case was checked (a forbidden import fails the test). The rules cover domain/ui/data layering, `android.bluetooth` confinement, ViewModels, fakes confined to `src/debug`, and "never connect".
+- **Clock port** returns `java.time.Instant` (available on minSdk 26 without desugaring); scanners stamp advertisements with it.
+- **`ScanFailure`** is a single exception class with a `Kind` enum and optional platform code; the repository catches only `ScanFailure`. Platform exceptions (for example `SecurityException`) must be mapped to it by the real scanner in M5.
+- **Repository scan generation counter:** a cancelled scan's cleanup must not flip `scanning` to false after a newer scan has started; covered by a test.
+- **Until M5** the "real" scanner slot is `UnavailableBleScanner`, which fails with `FEATURE_UNSUPPORTED`. Launching without a debug override and starting a scan therefore reports a failure; this is expected.
+- **Compose-free wiring check:** `AppContainerTest` proves the launch config selects the fake scanner and scenario.
+- Test pitfall: `advanceTimeBy(n)` does not run work scheduled exactly at `n`; tests use an `advance` helper that also calls `runCurrent()`.
+- `emu.sh` hardening found by full runs: `stop` now waits for the emulator to be gone, and `wait` wakes the screen and dismisses the keyguard (a fresh emulator could look "locked" and fail the smoke test).
+
+Exit: met. Repository correct under every fake scenario in unit tests.
 
 ## M3. List screen and environment states [ ]
 

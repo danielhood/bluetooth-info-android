@@ -1,11 +1,13 @@
 package dev.danielhood.btscan
 
 import android.content.Intent
+import dev.danielhood.btscan.domain.port.BleScanner
+import dev.danielhood.btscan.domain.port.Clock
 
 /**
  * Debug-only launch configuration, normally empty. In debug builds it is read from intent extras, e.g.
  * `adb shell am start -n dev.danielhood.btscan/.MainActivity --es scanner fake --es scenario default`.
- * Release builds always return [DebugConfig.NONE] (see src/release).
+ * Release builds always return [DebugConfig.NONE] and never substitute ports (see src/release).
  */
 data class DebugConfig(
     val scanner: String? = null,
@@ -29,4 +31,7 @@ data class DebugConfig(
 
 interface DebugOverrides {
     fun configFrom(intent: Intent?): DebugConfig
+
+    /** A replacement scanner for [config], or null to use the real one. Always null in release builds. */
+    fun scannerFor(config: DebugConfig, clock: Clock): BleScanner?
 }

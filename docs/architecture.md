@@ -69,9 +69,9 @@ app/src/androidTest/           instrumented tests
 data class RawAdvertisement(
     val address: String,          // MAC; may be a rotating private address
     val rssi: Int,                // dBm
-    val bytes: ByteArray,         // complete advertisement payload (+scan response)
+    val bytes: Bytes,             // immutable wrapper with value equality (never a raw ByteArray in a data class)
     val isConnectable: Boolean,
-    val timestamp: Instant,       // from injected Clock, not the platform
+    val timestamp: Instant,       // java.time.Instant from the injected Clock, not the platform
 )
 
 data class Advertisement(         // output of AdvertisementParser
@@ -93,7 +93,7 @@ data class BleDevice(             // aggregated, what the UI consumes
     val serviceData: List<ServiceData>,
     val manufacturerData: List<ManufacturerData>,
     val flags: Int?,
-    val rawBytes: ByteArray,
+    val rawBytes: Bytes,
     val firstSeen: Instant,
     val lastSeen: Instant,
     val advertisementCount: Int,
@@ -208,6 +208,13 @@ In debug fake mode only the first arrow changes (`FakeBleScanner` instead of `An
 ## Build variants
 
 Only `debug` and `release`. No flavors (D11). The fake scanner and `DumpStateReceiver` exist only in `src/debug`. `release` is minified and must still build in M6 to prove nothing references debug code.
+
+## Implementation notes (as built in M2)
+
+- `ScanFailure` is one `Exception` class with a `Kind` enum; `DefaultDeviceRepository` catches only it. The real scanner (M5) must map platform errors, including `SecurityException`, into it.
+- The repository keeps devices in a `ConcurrentHashMap`, publishes sorted snapshots from a ticker coroutine, and uses a generation counter so a cancelled scan cannot clobber a newer one's `scanning` flag.
+- `DebugOverrides` has two members: `configFrom(intent)` and `scannerFor(config, clock)`. `AppContainer` resolves the scanner at scan time from `debugConfig`, which `MainActivity` sets at launch.
+- Fake scenarios live in `src/debug/.../data/ble/fake` (`Scenarios`, `FakeBleScanner`, `AdBuilder`); time is a 100 ms tick on the coroutine clock, RSSI drift is a deterministic sine wave.
 
 ## Architecture tests (enforced in `verify.sh`)
 
