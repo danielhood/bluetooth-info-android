@@ -109,6 +109,7 @@ Decisions and findings made during M4:
 - **Fake RSSI drift sped up** (period about 4.4 s, amplitude 4 dB) so that "RSSI changes within 3 s" is observable.
 - **Detail age ticker uses `WhileSubscribed`**, so it does not run while the screen is not visible and does not keep test schedulers busy.
 - `androidx.compose.material:material-icons-core` was added for the back arrow (not pulled in by material3).
+- **Pixel 9a (API 37) smoke test passes** for the whole M3/M4 flow with the fake scanner (all 44 checks, run 2026-11-09), including the real permission dialog, list, detail, back and background stop. Real Bluetooth is still M5.
 - **Not yet exercised:** the minified release build compiles (leak check passes) but has not been run, so R8 behaviour of type-safe navigation is unverified. Scheduled for M6.
 - Memory: this full run started with only about 2.6 GB available (other applications); it completed, but close heavy apps first.
 
