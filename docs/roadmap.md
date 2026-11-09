@@ -4,12 +4,12 @@ Each milestone ends with a green `scripts/verify.sh` (from M1 on), a commit, and
 
 Status key: [ ] not started, [~] in progress, [x] done.
 
-## M0. Environment bootstrap [~]
+## M0. Environment bootstrap [x]
 
 Goal: the machine can build and run Android apps headlessly.
 
 - [x] **Human:** approve downloads; run `sdkmanager --licenses`.
-- [ ] **Human:** enable USB debugging on the Pixel 9a and accept the host key prompt (no device visible to `adb devices` yet).
+- [x] **Human:** enable USB debugging on the Pixel 9a and accept the host key prompt. Device: Pixel 9a, serial `5A151JEBF21180`, Android 17 (API 37), BLE supported.
 - [x] Install JDK 21 (apt), Android cmdline-tools 22.0, platform-tools 37.0.1, emulator 37.2.13, platform 36, build-tools 36.1.0, system images `android-36;google_apis` and `android-34;aosp_atd` (about 14 GB in `~/Android/Sdk`).
 - [x] Create the AVD (`btscan-api36`, pixel_6 profile, 3 GB RAM).
 - [x] Write `scripts/env.sh`, `scripts/env-check.sh`, `scripts/emu.sh`.
@@ -18,9 +18,10 @@ Findings:
 - Headless boot takes about 30 s; screenshot and `uiautomator dump` work.
 - The emulator image reports `android.hardware.bluetooth` and `bluetooth_le`, which is encouraging for spike S1.
 - `adb shell uiautomator dump /dev/tty` prints nothing useful; use `adb exec-out` (M1 `ui.sh` must handle this).
+- The Pixel runs API 37, newer than the installed platform 36. M1 decides `compileSdk`/`targetSdk` (36 vs 37) and installs `platforms;android-37.x` if needed. Scripts must honour `ANDROID_SERIAL` because the phone and emulator can be attached together.
 - `sdkmanager` is flagged deprecated in favour of Google's Android CLI (`android sdk`); evaluate in S2.
 
-Exit: `env-check.sh` all green (done); `emu.sh start && emu.sh wait` boots headless (done); Pixel 9a visible to adb (pending).
+Exit: `env-check.sh` all green (done); `emu.sh start && emu.sh wait` boots headless (done); Pixel 9a visible to adb (done).
 
 ## M1. Scaffold and harness [ ]
 
