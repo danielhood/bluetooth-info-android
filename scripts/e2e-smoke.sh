@@ -36,6 +36,15 @@ sorted_by_signal() { # rssi values in dump order must be non-increasing
     python3 -I -c 'import sys; v=[int(x) for x in sys.stdin.read().split()]; sys.exit(0 if len(v)>1 and v==sorted(v, reverse=True) else 1)'
 }
 count_text() { "$S/ui.sh" find device_count | grep -q "text='$1'"; }
+rssi_changes() { # detail rssi text must differ across samples within ~8 s
+  local first now i
+  first=$("$S/ui.sh" find detail_rssi | grep -oE "text='[^']*'")
+  for i in 1 2 3 4 5 6 7 8; do
+    sleep 1; now=$("$S/ui.sh" find detail_rssi | grep -oE "text='[^']*'")
+    [ "$now" != "$first" ] && return 0
+  done
+  return 1
+}
 tap_allow() { "$S/ui.sh" tap permission_allow_button || "$S/ui.sh" tap Allow; }
 
 "$S/app.sh" install
@@ -70,6 +79,26 @@ check "list sorted by signal"       sorted_by_signal
 check "counter matches"             bash -c "'$S/ui.sh' dump | grep -q \"id=device_count text='[56] devices'\""
 check "6th device arrives by 6s"    wait_rows 6 3
 "$S/shot.sh" smoke-scanning >/dev/null
+
+echo "-- detail screen (acceptance 2, 3, 4)"
+THERMO=device_row_C0:FF:EE:00:00:01
+"$S/ui.sh" tap "$THERMO" >/dev/null
+check "detail screen opens"         "$S/ui.sh" wait detail_screen 10
+check "title is the device name"    bash -c "'$S/ui.sh' find detail_name | grep -q \"text='Thermo Sensor'\""
+check "address matches the row"     bash -c "'$S/ui.sh' find detail_address | grep -q \"text='C0:FF:EE:00:00:01'\""
+check "connectable is yes"          bash -c "'$S/ui.sh' find detail_connectable | grep -q \"text='Yes'\""
+check "tx power -4 dBm"             bash -c "'$S/ui.sh' find detail_tx_power | grep -q \"text='-4 dBm'\""
+check "service name is shown"       "$S/ui.sh" find "Environmental Sensing"
+check "rssi changes within 8s"      rssi_changes
+"$S/shot.sh" smoke-detail >/dev/null
+"$S/ui.sh" tap back_button >/dev/null
+check "top bar back returns to list" "$S/ui.sh" wait device_list 5
+check "scanning continues after back" button_text "Stop scan"
+check "devices intact after back"   bash -c "[ \"\$($S/ui.sh dump | grep -c 'id=device_row_')\" -ge 5 ]"
+"$S/ui.sh" tap "$THERMO" >/dev/null
+"$S/ui.sh" wait detail_screen 10 >/dev/null
+adb shell input keyevent KEYCODE_BACK
+check "system back returns to list" "$S/ui.sh" wait device_list 5
 sleep 1
 "$S/ui.sh" tap scan_button >/dev/null
 check "stop keeps the devices"      bash -c "[ \"\$($S/ui.sh dump | grep -c 'id=device_row_')\" -ge 5 ]"

@@ -9,7 +9,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.danielhood.btscan.ui.common.SystemIntents
 
@@ -35,7 +37,10 @@ fun DeviceListRoute(
         }
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshEnvironment() }
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.onBackgrounded() }
+    // Stop scanning when the *app* leaves the foreground. The navigation entry's own lifecycle also reaches STOP
+    // when the detail screen opens, which must not stop the scan, so observe the activity instead.
+    val activityOwner = activity as? LifecycleOwner ?: LocalLifecycleOwner.current
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP, lifecycleOwner = activityOwner) { viewModel.onBackgrounded() }
 
     val actions =
         remember(viewModel, onDeviceClick) {

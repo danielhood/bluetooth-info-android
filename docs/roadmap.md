@@ -93,13 +93,26 @@ Decisions and findings made during M3:
 
 Exit: met.
 
-## M4. Detail screen and navigation [ ]
+## M4. Detail screen and navigation [x]
 
-- [ ] Routes, `AppNavHost`, `DeviceDetailViewModel`, detail UI for all F-D fields, lookup tables (company IDs, service UUIDs: small curated subset).
-- [ ] Out-of-range / not-found states.
-- [ ] Compose navigation tests; screenshots for loaded, sparse-fields, out-of-range, not-found.
+- [x] Type-safe routes (`ListDestination`, `DetailDestination(address)`), `AppRoot` with `NavHost`; list ViewModel scoped to its back-stack entry, detail ViewModel keyed by address.
+- [x] `DeviceDetailViewModel` (last-known data retained, out-of-range flag, once-a-second age ticker only while observed) and `DeviceDetailContent`: name, address (with the private-address note), live signal, connectable, TX power or "Not advertised", first/last seen, advertisement count, service UUIDs with friendly names, manufacturer data with company names, service data, decoded flags, raw bytes with Copy.
+- [x] Curated lookup tables (`CompanyIds`, `ServiceUuids`, `AdFlag`) with tests.
+- [x] Out-of-range and not-found states.
+- [x] 7 detail ViewModel tests, 9 detail Compose tests, 4 full-app navigation tests (real time, fake scanner), 5 detail screenshot references, 1 more instrumented test, smoke test extended with the detail flow.
 
-Exit: acceptance 2, 3, 4, 5 pass on JVM and emulator.
+Result: 148 JVM unit tests and 3 instrumented tests; `verify.sh --full` passes. Acceptance criteria covered: 2 (list to detail), 3 (live RSSI: navigation test and smoke), 4 (back keeps list and scanning: navigation test and smoke, both top-bar and system back), 5 (stale removal and out-of-range banner: repository and detail ViewModel tests on virtual time).
+
+Decisions and findings made during M4:
+- **Bug found by the navigation tests:** stop-on-background was wired to the navigation entry's lifecycle, which reaches STOP whenever the detail screen opens, so opening a device stopped the scan. It now observes the activity's lifecycle. Covered by the back/live-RSSI navigation tests.
+- **Merged semantics on detail containers** (`mergedTestTag`): service, manufacturer, service-data, flags and banner containers read as one node, so `ui.sh dump` shows their text as one line. List rows are deliberately not merged (the smoke test reads their child texts).
+- **Fake RSSI drift sped up** (period about 4.4 s, amplitude 4 dB) so that "RSSI changes within 3 s" is observable.
+- **Detail age ticker uses `WhileSubscribed`**, so it does not run while the screen is not visible and does not keep test schedulers busy.
+- `androidx.compose.material:material-icons-core` was added for the back arrow (not pulled in by material3).
+- **Not yet exercised:** the minified release build compiles (leak check passes) but has not been run, so R8 behaviour of type-safe navigation is unverified. Scheduled for M6.
+- Memory: this full run started with only about 2.6 GB available (other applications); it completed, but close heavy apps first.
+
+Exit: met.
 
 ## M5. Real Bluetooth [ ]
 
@@ -116,7 +129,7 @@ Exit: on a physical phone the app lists real nearby devices and detail looks rig
 - [ ] `many` scenario performance check (N-1); fix jank if present.
 - [ ] Rotation, background, Bluetooth-toggle mid-scan (N-2).
 - [ ] Accessibility pass (N-3) and dark theme screenshots (N-4).
-- [ ] `assembleRelease` with minification; fake-absent check (acceptance 11).
+- [ ] `assembleRelease` with minification; fake-absent check (acceptance 11); **install and run a minified build** (sign it with the debug key locally) to confirm R8 does not break type-safe navigation or serialization.
 - [ ] Optional debug state-dump receiver.
 - [ ] **Spike S2** (MCP evaluation) write-up.
 - [ ] Retrospective in `docs/retrospective.md`: what the agent did unaided, where a human had to step in, which tooling earned its keep.

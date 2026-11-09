@@ -10,30 +10,61 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import dev.danielhood.btscan.AppContainer
+import dev.danielhood.btscan.ui.detail.DeviceDetailRoute
+import dev.danielhood.btscan.ui.detail.DeviceDetailViewModel
 import dev.danielhood.btscan.ui.list.DeviceListRoute
 import dev.danielhood.btscan.ui.list.DeviceListViewModel
+import dev.danielhood.btscan.ui.nav.DetailDestination
+import dev.danielhood.btscan.ui.nav.ListDestination
 import dev.danielhood.btscan.ui.theme.BtScanTheme
 
-/** Everything the activity shows. */
+/** Everything the activity shows: theme, root surface and the two-screen navigation graph. */
 @Composable
 fun AppRoot(container: AppContainer, debugLabel: String?, darkTheme: Boolean = isSystemInDarkTheme()) {
-    val listViewModel: DeviceListViewModel =
-        viewModel(
-            factory =
-                viewModelFactory {
-                    initializer {
-                        DeviceListViewModel(
-                            repository = container.deviceRepository,
-                            adapterMonitor = container.adapterStateMonitor,
-                            permissions = container.permissionChecker,
-                            clock = container.clock,
-                        )
-                    }
-                },
-        )
     AppSurface(darkTheme) {
-        DeviceListRoute(viewModel = listViewModel, debugLabel = debugLabel, onDeviceClick = {})
+        val nav = rememberNavController()
+        NavHost(navController = nav, startDestination = ListDestination) {
+            composable<ListDestination> {
+                val viewModel: DeviceListViewModel =
+                    viewModel(
+                        factory =
+                            viewModelFactory {
+                                initializer {
+                                    DeviceListViewModel(
+                                        repository = container.deviceRepository,
+                                        adapterMonitor = container.adapterStateMonitor,
+                                        permissions = container.permissionChecker,
+                                        clock = container.clock,
+                                    )
+                                }
+                            },
+                    )
+                DeviceListRoute(
+                    viewModel = viewModel,
+                    debugLabel = debugLabel,
+                    onDeviceClick = { address -> nav.navigate(DetailDestination(address)) },
+                )
+            }
+            composable<DetailDestination> { entry ->
+                val address = entry.toRoute<DetailDestination>().address
+                val viewModel: DeviceDetailViewModel =
+                    viewModel(
+                        key = "detail-$address",
+                        factory =
+                            viewModelFactory {
+                                initializer {
+                                    DeviceDetailViewModel(address, container.deviceRepository, container.clock)
+                                }
+                            },
+                    )
+                DeviceDetailRoute(viewModel = viewModel, onBack = { nav.popBackStack() })
+            }
+        }
     }
 }
 

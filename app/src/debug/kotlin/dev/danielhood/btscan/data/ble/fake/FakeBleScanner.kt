@@ -11,7 +11,7 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 
 private const val RSSI_DRIFT_DB = 4.0
-private const val DRIFT_PERIOD_DIVISOR = 3000.0
+private const val DRIFT_PERIOD_DIVISOR = 700.0
 
 /**
  * Plays back a [Scenario] as raw advertisements, emitting exactly what a real scanner would (payload bytes), so

@@ -32,4 +32,36 @@
   <string name="scan_failed">Scan failed (%1$s).</string>
   <string name="scan_failed_too_frequent">Scanning too frequently. Wait a few seconds and try again.</string>
   <string name="retry">Retry</string>
+
+  <string name="back">Back</string>
+  <string name="detail_address">Address</string>
+  <string name="detail_address_note">May be a randomised private address</string>
+  <string name="detail_signal">Signal</string>
+  <string name="detail_connectable">Connectable</string>
+  <string name="yes">Yes</string>
+  <string name="no">No</string>
+  <string name="detail_tx_power">TX power</string>
+  <string name="not_advertised">Not advertised</string>
+  <string name="detail_first_seen">First seen</string>
+  <string name="detail_last_seen">Last seen</string>
+  <string name="detail_ad_count">Advertisements received</string>
+  <string name="seconds_ago">%1$d s ago</string>
+  <string name="minutes_ago">%1$d min ago</string>
+  <string name="hours_ago">%1$d h ago</string>
+  <string name="detail_services">Service UUIDs</string>
+  <string name="none_advertised">None advertised</string>
+  <string name="detail_manufacturer">Manufacturer data</string>
+  <string name="company_unknown">Unknown company</string>
+  <string name="detail_service_data">Service data</string>
+  <string name="detail_flags">Advertising flags</string>
+  <string name="flag_le_limited_discoverable">LE Limited Discoverable Mode</string>
+  <string name="flag_le_general_discoverable">LE General Discoverable Mode</string>
+  <string name="flag_br_edr_not_supported">BR/EDR not supported</string>
+  <string name="flag_simultaneous_controller">Simultaneous LE and BR/EDR (controller)</string>
+  <string name="flag_simultaneous_host">Simultaneous LE and BR/EDR (host)</string>
+  <string name="detail_raw">Raw advertisement</string>
+  <string name="copy">Copy</string>
+  <string name="out_of_range_banner">Out of range, last seen %1$s</string>
+  <string name="not_found">Device not found</string>
+  <string name="back_to_list">Back to list</string>
 </resources>

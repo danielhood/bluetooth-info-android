@@ -71,4 +71,20 @@ class MainActivityTest {
         compose.onNodeWithTag(TestTags.deviceRow("C0:FF:EE:00:00:01")).assertIsDisplayed()
         compose.onNodeWithTag(TestTags.SCAN_BUTTON).assertTextContains("Stop scan")
     }
+
+    @Test
+    fun tappingARowOpensTheDetailScreenAndBackReturns() {
+        launch("default")
+        compose.onNodeWithTag(TestTags.SCAN_BUTTON).performClick()
+        val row = TestTags.deviceRow("C0:FF:EE:00:00:01")
+        compose.waitUntil(timeoutMillis = 10_000) { compose.onAllNodesWithTag(row).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithTag(row).performClick()
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodesWithTag(TestTags.DETAIL_SCREEN).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag(TestTags.DETAIL_NAME).assertTextEquals("Thermo Sensor")
+        compose.onNodeWithTag(TestTags.BACK_BUTTON).performClick()
+        compose.waitUntil(timeoutMillis = 10_000) { rowCount() == 1 }
+        compose.onNodeWithTag(TestTags.SCAN_BUTTON).assertTextContains("Stop scan")
+    }
 }

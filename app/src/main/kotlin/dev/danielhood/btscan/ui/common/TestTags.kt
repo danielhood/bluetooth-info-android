@@ -16,5 +16,28 @@ object TestTags {
     const val RETRY_BUTTON = "retry_button"
     const val DEBUG_LABEL = "debug_label"
 
+    const val DETAIL_SCREEN = "detail_screen"
+    const val BACK_BUTTON = "back_button"
+    const val DETAIL_NAME = "detail_name"
+    const val DETAIL_ADDRESS = "detail_address"
+    const val DETAIL_RSSI = "detail_rssi"
+    const val DETAIL_CONNECTABLE = "detail_connectable"
+    const val DETAIL_TX_POWER = "detail_tx_power"
+    const val DETAIL_FIRST_SEEN = "detail_first_seen"
+    const val DETAIL_LAST_SEEN = "detail_last_seen"
+    const val DETAIL_AD_COUNT = "detail_ad_count"
+    const val DETAIL_FLAGS = "detail_flags"
+    const val DETAIL_RAW = "detail_raw"
+    const val COPY_RAW_BUTTON = "copy_raw_button"
+    const val OUT_OF_RANGE_BANNER = "out_of_range_banner"
+    const val NOT_FOUND_MESSAGE = "not_found_message"
+    const val NOT_FOUND_BACK = "not_found_back_button"
+
     fun deviceRow(address: String) = "device_row_$address"
+
+    fun detailService(index: Int) = "detail_service_$index"
+
+    fun detailManufacturer(index: Int) = "detail_manufacturer_$index"
+
+    fun detailServiceData(index: Int) = "detail_service_data_$index"
 }
