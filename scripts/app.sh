@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# App control on the target device. Usage:
+#   app.sh install [--no-build] | launch [--scenario NAME] [--scanner fake|real] | stop | clear | grant | revoke | state
+# Target: $ANDROID_SERIAL, else the emulator if attached, else the single attached device.
+set -euo pipefail
+. "$(dirname "$0")/lib.sh"
+resolve_serial; echo "target: $ANDROID_SERIAL" >&2
+APK="$REPO_ROOT/app/build/outputs/apk/debug/app-debug.apk"
+
+perm() { # runtime permission the scan needs on this device
+  local sdk; sdk=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
+  if [ "$sdk" -ge 31 ]; then echo android.permission.BLUETOOTH_SCAN; else echo android.permission.ACCESS_FINE_LOCATION; fi
+}
+
+cmd="${1:-}"; shift || true
+case "$cmd" in
+  install)
+    [ "${1:-}" = "--no-build" ] || "$REPO_ROOT/scripts/gw.sh" -q assembleDebug
+    adb install -r -t "$APK" ;;
+  launch)
+    scenario=""; scanner=""
+    while [ $# -gt 0 ]; do case "$1" in
+      --scenario) scenario="$2"; shift 2 ;; --scanner) scanner="$2"; shift 2 ;; *) echo "unknown arg $1" >&2; exit 2 ;; esac; done
+    [ -n "$scenario" ] && [ -z "$scanner" ] && scanner=fake
+    extras=()
+    [ -n "$scanner" ] && extras+=(--es scanner "$scanner")
+    [ -n "$scenario" ] && extras+=(--es scenario "$scenario")
+    adb logcat -c
+    adb shell am force-stop "$PKG"
+    adb shell am start -W -n "$PKG/.MainActivity" "${extras[@]}" | grep -E 'Status|Error|Warning' || true ;;
+  stop)  adb shell am force-stop "$PKG" ;;
+  clear) adb shell pm clear "$PKG" ;;
+  grant) adb shell pm grant "$PKG" "$(perm)" && echo "granted $(perm)" ;;
+  revoke) adb shell pm revoke "$PKG" "$(perm)" && echo "revoked $(perm)" ;;
+  state)
+    echo "pid: $(adb shell pidof "$PKG" | tr -d '\r' || true)"
+    adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|ResumedActivity' || true
+    echo "permission $(perm): $(adb shell dumpsys package "$PKG" | grep -m1 "$(perm):" | sed 's/^ *//')" ;;
+  *) echo "usage: $0 install|launch|stop|clear|grant|revoke|state" >&2; exit 2 ;;
+esac

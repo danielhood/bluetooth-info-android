@@ -23,18 +23,31 @@ Findings:
 
 Exit: `env-check.sh` all green (done); `emu.sh start && emu.sh wait` boots headless (done); Pixel 9a visible to adb (done).
 
-## M1. Scaffold and harness [ ]
+## M1. Scaffold and harness [x]
 
 Goal: an empty-but-real app plus the full verify loop.
 
-- [ ] Gradle project: wrapper, `libs.versions.toml` with resolved latest-stable versions (check AGP/Spotless/detekt/Roborazzi compatibility, record choices), single `:app`.
-- [ ] Manifest with the permissions from D9, `debug`/`release` source sets with `DebugOverrides`.
-- [ ] A placeholder `DeviceListScreen` ("Hello") with a test tag and root `testTagsAsResourceId`.
-- [ ] Spotless, detekt, lint, warnings-as-errors configured; one trivial unit test, one Roborazzi test, one Managed-Device instrumented test.
-- [ ] `app.sh`, `ui.sh`, `shot.sh`, `logs.sh`, `verify.sh`, `e2e-smoke.sh` (smoke: launch, dump, assert the tag is present, screenshot).
-- [ ] `AGENTS.md`, `CLAUDE.md`, `.gitignore`.
+- [x] Gradle project: wrapper (Gradle 9.9.0, checksum pinned), `libs.versions.toml` with latest-stable versions, single `:app`.
+- [x] Manifest with the permissions from D9; `debug`/`release` source sets with `DebugOverrides`.
+- [x] Placeholder `DeviceListScreen` with test tags; `AppRoot` sets `testTagsAsResourceId`.
+- [x] Spotless (ktlint), detekt, lint, warnings-as-errors; unit tests, Roborazzi screenshot tests, one Managed-Device instrumented test.
+- [x] `gw.sh`, `app.sh`, `ui.sh`, `shot.sh`, `logs.sh`, `verify.sh`, `e2e-smoke.sh`, `check-release.py`.
+- [x] `AGENTS.md`, `CLAUDE.md`, `.gitignore`, `.editorconfig`.
 
-Exit: from a clean clone, `verify.sh --full` passes; an agent can launch the app on the emulator, dump the UI and see the placeholder tag, and take a screenshot.
+Result: `scripts/verify.sh --full` passes (about 2 min cold, about 1 min warm). Smoke passes on the emulator.
+
+Pinned versions (as resolved 2026-11-08): AGP 9.5.1, Kotlin 2.4.21, Gradle 9.9.0, Compose BOM 2026.09.00, Roborazzi 1.78.0, Robolectric 4.17, Spotless 8.11.0 (ktlint 1.8.0), detekt 1.23.8. `compileSdk`/`targetSdk` 37 (the Pixel's API level; the newest Compose/lifecycle libraries require compileSdk 37). Robolectric runs at sdk 36.
+
+Findings and decisions made during M1:
+- **detekt 1.23.8** works with Kotlin 2.4 only because its own classpath is pinned to Kotlin 2.0.21 (root `build.gradle.kts`). Revisit when detekt 2.0 is stable.
+- **Gradle build cache is off.** It served a stale resource-compile result after a folder rename; a tiny project gains nothing from it.
+- **Robolectric** on JDK 21 needs `--add-exports=java.base/jdk.internal.access=ALL-UNNAMED`.
+- **Compose test rules:** use the `v2` packages; the v1 ones are deprecated and warnings are errors.
+- **uiautomator** exposes a Compose container only if it has semantics beyond `testTag` (we add a `contentDescription` to the screen container).
+- `verify.sh --full` stops the exploration emulator before the Managed Device test and the smoke test restarts it.
+- The smoke test passes on the emulator. On the Pixel 9a the app installs and launches, but UI checks need an unlocked screen; the script now says so instead of failing obscurely. Re-run with `ANDROID_SERIAL=5A151JEBF21180 scripts/e2e-smoke.sh` while the phone is unlocked.
+
+Exit: met. From a clean clone, `verify.sh --full` passes; an agent can launch the app on the emulator, dump the UI and see the placeholder tags, and take a screenshot.
 
 ## M2. Domain and data with fakes [ ]
 

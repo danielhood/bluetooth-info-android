@@ -2,7 +2,7 @@
 
 Format: **decision**, then *why it suits agentic coding*, then rejected alternatives. IDs are stable so other docs and commits can cite them.
 
-Version numbers are intentionally **not** fixed here. Milestone M1 resolves the latest stable versions at scaffold time and records them in `gradle/libs.versions.toml`, which becomes the single source of truth. Research during planning suggests the AGP 9.x line is current; AGP 9 changes how Kotlin is wired into the build, so M1 must confirm that every plugin below (Spotless, detekt, Roborazzi) supports the chosen AGP before pinning.
+Version numbers are intentionally **not** fixed here (see `gradle/libs.versions.toml`; pinned values are also recorded in roadmap.md under M1). Milestone M1 resolves the latest stable versions at scaffold time and records them in `gradle/libs.versions.toml`, which becomes the single source of truth. Research during planning suggests the AGP 9.x line is current; AGP 9 changes how Kotlin is wired into the build, so M1 must confirm that every plugin below (Spotless, detekt, Roborazzi) supports the chosen AGP before pinning.
 
 ---
 

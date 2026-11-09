@@ -15,7 +15,7 @@ chk() { # name path hint
 chk cmdline-tools "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "see docs/dev-tooling.md section 1"
 chk platform-tools "$ANDROID_HOME/platform-tools/adb" "sdkmanager platform-tools"
 chk emulator "$ANDROID_HOME/emulator/emulator" "sdkmanager emulator"
-chk platform-36 "$ANDROID_HOME/platforms/android-36" "sdkmanager 'platforms;android-36'"
+chk platform-37 "$ANDROID_HOME/platforms/android-37.0" "sdkmanager 'platforms;android-37.0'"
 chk build-tools "$ANDROID_HOME/build-tools/36.1.0" "sdkmanager 'build-tools;36.1.0'"
 chk sysimg-36 "$ANDROID_HOME/system-images/android-36/google_apis/x86_64" "sdkmanager 'system-images;android-36;google_apis;x86_64'"
 chk sysimg-atd-34 "$ANDROID_HOME/system-images/android-34/aosp_atd/x86_64" "sdkmanager 'system-images;android-34;aosp_atd;x86_64'"

@@ -1,6 +1,6 @@
 # BT Scanner POC: Project Plan
 
-**Status:** Draft v1 (2026-11-08). Nothing is built yet. This folder is the source of truth until `AGENTS.md` exists at the repo root (created in milestone M1).
+**Status:** Plan v1 (2026-11-08). Milestones M0 and M1 are done (toolchain and scaffold); see roadmap.md. `AGENTS.md` at the repo root holds the day-to-day agent instructions; this folder holds the plan and rationale.
 
 ## What this is
 
