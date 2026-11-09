@@ -1,6 +1,7 @@
 package dev.danielhood.btscan
 
 import android.content.Intent
+import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
 
@@ -9,4 +10,6 @@ class DebugOverridesImpl : DebugOverrides {
     override fun configFrom(intent: Intent?): DebugConfig = DebugConfig.NONE
 
     override fun scannerFor(config: DebugConfig, clock: Clock): BleScanner? = null
+
+    override fun adapterMonitorFor(config: DebugConfig): AdapterStateMonitor? = null
 }

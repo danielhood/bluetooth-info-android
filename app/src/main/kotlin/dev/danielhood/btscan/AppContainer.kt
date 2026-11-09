@@ -1,10 +1,14 @@
 package dev.danielhood.btscan
 
 import dev.danielhood.btscan.data.SystemClock
+import dev.danielhood.btscan.data.ble.PlaceholderAdapterStateMonitor
 import dev.danielhood.btscan.data.ble.UnavailableBleScanner
+import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
+import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
+import dev.danielhood.btscan.domain.port.PermissionChecker
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
 import dev.danielhood.btscan.domain.repo.DeviceRepository
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +20,7 @@ import kotlinx.coroutines.flow.flow
 
 /** Manual dependency injection root. The only place allowed to see every layer. */
 class AppContainer(
+    val permissionChecker: PermissionChecker,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     val clock: Clock = SystemClock,
 ) {
@@ -32,6 +37,16 @@ class AppContainer(
                 flow {
                     val chosen = debugOverrides.scannerFor(debugConfig, clock) ?: UnavailableBleScanner
                     emitAll(chosen.scan())
+                }
+        }
+
+    /** Resolved at collection time for the same reason as [scanner]. */
+    val adapterStateMonitor: AdapterStateMonitor =
+        object : AdapterStateMonitor {
+            override val state: Flow<AdapterState> =
+                flow {
+                    val chosen = debugOverrides.adapterMonitorFor(debugConfig) ?: PlaceholderAdapterStateMonitor
+                    emitAll(chosen.state)
                 }
         }
 

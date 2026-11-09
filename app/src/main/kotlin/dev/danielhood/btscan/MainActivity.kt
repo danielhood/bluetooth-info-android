@@ -15,6 +15,6 @@ class MainActivity : ComponentActivity() {
         container.debugConfig = debugConfig
         AppLog.i(AppLog.APP, "launch debugConfig=${debugConfig.label ?: "none"}")
         enableEdgeToEdge()
-        setContent { AppRoot(debugLabel = debugConfig.label) }
+        setContent { AppRoot(container = container, debugLabel = debugConfig.label) }
     }
 }

@@ -2,6 +2,7 @@ package dev.danielhood.btscan
 
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
+import dev.danielhood.btscan.testing.FakePermissionChecker
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -17,7 +18,7 @@ class AppContainerTest {
             object : Clock {
                 override fun now(): Instant = Instant.EPOCH.plusMillis(testScheduler.currentTime)
             }
-        return AppContainer(scope = backgroundScope, clock = clock)
+        return AppContainer(permissionChecker = FakePermissionChecker(), scope = backgroundScope, clock = clock)
     }
 
     private fun TestScope.advance(ms: Long) {

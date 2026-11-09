@@ -16,6 +16,9 @@ interface AdapterStateMonitor {
 }
 
 interface PermissionChecker {
+    /** Runtime permission names the scan needs on this Android version (for the UI to request). */
+    val requiredPermissions: List<String>
+
     fun current(): PermissionState
 }
 

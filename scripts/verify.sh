@@ -45,6 +45,9 @@ stage "screenshot tests (verify)"    "$GW" -q verifyRoborazziDebug
 if [ "$mode" = "--full" ]; then
   stage "release build + leak check"  release_check
   stage "instrumented (managed dev)"  managed_device_tests
+  # Release the Gradle/Kotlin daemons' memory before the exploration emulator boots (the smoke test uses no Gradle
+  # build except the debug APK, which is already built; the daemon restarts on demand).
+  stage "free daemon memory"          "$GW" --stop
   stage "emulator smoke"              "$REPO_ROOT/scripts/e2e-smoke.sh"
 fi
 echo "VERIFY OK ($mode)"

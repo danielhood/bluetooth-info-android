@@ -71,14 +71,27 @@ Decisions and findings made during M2:
 
 Exit: met. Repository correct under every fake scenario in unit tests.
 
-## M3. List screen and environment states [ ]
+## M3. List screen and environment states [x]
 
-- [ ] `DeviceListViewModel` + `DeviceListUiState`; all `ListStatus` states.
-- [ ] Compose list, Start/Stop/Clear, empty states, hide-unnamed, counter, signal indicator.
-- [ ] Permission request flow, adapter monitor, resume re-evaluation (using the fake adapter monitor for now; the real ones land in M5).
-- [ ] ViewModel tests with Turbine; Roborazzi screenshots for each status; reference images committed to `docs/screens/` after an agent has reviewed them.
+- [x] `DeviceListViewModel` + `DeviceListUiState`; all `ListStatus` states derived by a pure function (`deriveStatus`).
+- [x] Compose list: Start/Stop, Clear, hide-unnamed, counter, static scanning indicator, signal bars, empty states, failure banner with Retry.
+- [x] Permission request flow (real `AndroidPermissionChecker`; BLUETOOTH_SCAN on API 31+, fine location below), adapter monitor port with fake and placeholder implementations, resume re-evaluation, stop on background.
+- [x] 20 ViewModel tests, 19 Compose behaviour tests, 14 screenshot references in `docs/screens/` (every status, light and dark).
+- [x] Instrumented tests on the Managed Device (scenario `default` lists devices) and the extended emulator smoke test.
 
-Exit: acceptance 1, 6, 7 pass (the E2E part with the fake scanner on the emulator); agent has *looked at* the screenshots of every state.
+Result: 118 JVM unit tests, 2 instrumented tests; `verify.sh --full` passes. Acceptance criteria covered: 1 (scan to list; ViewModel, instrumented and smoke), 6 (permission paths; smoke runs the real system dialog, permanent denial is unit-tested), 7 (adapter paths; screenshots and smoke), 9 (background stop; smoke).
+
+Decisions and findings made during M3:
+- **Permission-needed is shown as soon as the screen loads**, not only after tapping Start. Start is disabled in that state and the explanation carries the Grant button. This satisfies acceptance 6 ("Start leads to the permission-needed state") more directly. Permanent denial is detected from the result of the request (`shouldShowRequestPermissionRationale` false after a denial) and held in the ViewModel.
+- **Clear returns the list to the initial hint** ("Tap Start scan..."), not "No devices found"; the latter appears only after a scan that found nothing.
+- **Failure** is a banner above the retained list (Retry re-runs the scan), while permission, Bluetooth-off, location-off and unsupported replace the list area.
+- **Scanning indicator is static** (a dot plus text): no infinite animation, so uiautomator can always reach an idle state.
+- **"Turn on Bluetooth" opens the system Bluetooth settings** instead of using `BluetoothAdapter.ACTION_REQUEST_ENABLE`, which would break the rule that `android.bluetooth` stays in `data/ble/android`.
+- Until M5, real mode uses `UnavailableBleScanner` and `PlaceholderAdapterStateMonitor` (always on).
+- **Memory:** a full run was killed by the OS (Claude desktop process) while Gradle (3 GB), the Kotlin daemon and two emulators were up beside a loaded desktop. Mitigations: Gradle heap 2 GB, Kotlin daemon 1 GB, 4 workers, exploration emulator 2 GB, and `verify.sh` stops the Gradle daemon before the smoke stage. Peak system use in a full run was about 10.5 GB of 14.8 GB. Close heavy applications (browsers) before `--full`.
+- **emu.sh** now identifies its own AVD (a Gradle Managed Device can grab port 5554) and waits for the port to free before starting.
+
+Exit: met.
 
 ## M4. Detail screen and navigation [ ]
 

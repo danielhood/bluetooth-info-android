@@ -61,4 +61,5 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 - compileSdk/targetSdk are 37 because current Compose/lifecycle require it; Robolectric is pinned to sdk 36 in `app/src/test/resources/robolectric.properties`.
 - Unit tests with coroutines: `advanceTimeBy(n)` does not run work scheduled exactly at `n`; call `runCurrent()` after it.
 - Until roadmap M5, a scan without `--scenario` fails with FEATURE_UNSUPPORTED (the real scanner is not written yet).
+- Memory: `--full` runs Gradle plus up to two emulators; close browsers first on this 16 GB machine. Gradle/Kotlin heaps are capped in `gradle.properties` and `verify.sh` stops the Gradle daemon before the smoke stage.
 - `verify.sh --full` stops the exploration emulator (to free resources for the Managed Device) and restarts it for the smoke test.

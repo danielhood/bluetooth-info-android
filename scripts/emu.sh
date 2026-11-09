@@ -6,7 +6,9 @@ SER="$BTSCAN_EMU_SERIAL"
 LOG="${TMPDIR:-/tmp}/btscan-emulator.log"
 IMG="system-images;android-36;google_apis;x86_64"
 
-running() { adb devices | grep -q "^$SER[[:space:]]*device"; }
+present() { adb devices | grep -q "^$SER[[:space:]]*device"; }
+# Our AVD is running (not, say, a Gradle Managed Device that grabbed the same port).
+running() { present && [ "$(adb -s "$SER" emu avd name 2>/dev/null | head -1 | tr -d '\r')" = "$BTSCAN_AVD" ]; }
 
 case "${1:-status}" in
   create)
@@ -14,10 +16,13 @@ case "${1:-status}" in
     echo no | avdmanager create avd -n "$BTSCAN_AVD" -k "$IMG" -d pixel_6 >/dev/null
     cfg="$HOME/.android/avd/$BTSCAN_AVD.avd/config.ini"
     sed -i '/^hw.ramSize=/d;/^hw.keyboard=/d;/^disk.dataPartition.size=/d' "$cfg"
-    printf 'hw.ramSize=3072\nhw.keyboard=yes\ndisk.dataPartition.size=6G\n' >> "$cfg"
+    printf 'hw.ramSize=2048\nhw.keyboard=yes\ndisk.dataPartition.size=6G\n' >> "$cfg"
     echo "created $BTSCAN_AVD" ;;
   start)
     if running; then echo "already running ($SER)"; exit 0; fi
+    # Another emulator (e.g. a Gradle Managed Device) may still hold our port while shutting down.
+    for _ in $(seq 1 60); do present || break; sleep 1; done
+    present && { echo "port of $SER is held by another device" >&2; exit 1; }
     nohup emulator -avd "$BTSCAN_AVD" -no-window -no-audio -no-snapshot -no-boot-anim \
       -gpu swiftshader_indirect -port "${SER##*-}" >"$LOG" 2>&1 &
     echo "starting $BTSCAN_AVD (log: $LOG); run: scripts/emu.sh wait" ;;

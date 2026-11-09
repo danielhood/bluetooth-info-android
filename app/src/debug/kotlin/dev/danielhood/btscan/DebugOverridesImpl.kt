@@ -1,8 +1,10 @@
 package dev.danielhood.btscan
 
 import android.content.Intent
+import dev.danielhood.btscan.data.ble.fake.FakeAdapterStateMonitor
 import dev.danielhood.btscan.data.ble.fake.FakeBleScanner
 import dev.danielhood.btscan.data.ble.fake.Scenarios
+import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.util.AppLog
@@ -24,6 +26,22 @@ class DebugOverridesImpl : DebugOverrides {
             null, SCANNER_REAL -> null
             SCANNER_FAKE -> FakeBleScanner(Scenarios.require(config.scenario ?: Scenarios.DEFAULT), clock)
             else -> throw IllegalArgumentException("Unknown scanner '${config.scanner}'. Use 'fake' or 'real'.")
+        }
+
+    override fun adapterMonitorFor(config: DebugConfig): AdapterStateMonitor? =
+        when (config.scanner) {
+            null, SCANNER_REAL -> {
+                null
+            }
+
+            SCANNER_FAKE -> {
+                val scenario = Scenarios.require(config.scenario ?: Scenarios.DEFAULT)
+                FakeAdapterStateMonitor(scenario.adapterState)
+            }
+
+            else -> {
+                throw IllegalArgumentException("Unknown scanner '${config.scanner}'. Use 'fake' or 'real'.")
+            }
         }
 
     private companion object {

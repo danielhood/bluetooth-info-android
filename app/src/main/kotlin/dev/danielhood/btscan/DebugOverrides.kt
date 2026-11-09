@@ -1,6 +1,7 @@
 package dev.danielhood.btscan
 
 import android.content.Intent
+import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
 
@@ -34,4 +35,7 @@ interface DebugOverrides {
 
     /** A replacement scanner for [config], or null to use the real one. Always null in release builds. */
     fun scannerFor(config: DebugConfig, clock: Clock): BleScanner?
+
+    /** A replacement adapter monitor for [config], or null to use the real one. Always null in release builds. */
+    fun adapterMonitorFor(config: DebugConfig): AdapterStateMonitor?
 }

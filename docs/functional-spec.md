@@ -17,7 +17,7 @@ IDs (`F-…`) are for citing in tests and commits. Priority: **M** must, **S** s
 | F-L5 | M | Tapping a row opens the Device Detail screen for that address. |
 | F-L6 | M | A counter shows "N devices". |
 | F-L7 | M | While scanning, a visible scanning indicator is shown (non-animating when system animations are disabled, see tooling doc). |
-| F-L8 | M | Devices stay listed after Stop. A **Clear** action empties the list. |
+| F-L8 | M | Devices stay listed after Stop. A **Clear** action empties the list and returns to the initial hint ("Tap Start scan..."). |
 | F-L9 | S | "Hide unnamed devices" switch (default off). |
 | F-L10 | M | Empty states: before first scan, "Tap Start scan to look for nearby devices"; scanning with no results yet, "Searching…"; stopped with zero results, "No devices found". |
 | F-L11 | M | Devices unseen for 30 s while scanning are removed. |
@@ -57,7 +57,7 @@ The list screen derives one status from permission, adapter and scan state. Each
 | Unsupported | No BLE hardware / no adapter | "This device does not support Bluetooth LE" | None |
 | Failed | Scanner reports an error | Plain-language message with the platform code; scan-too-frequent says "Wait a few seconds and try again" | **Retry** |
 
-The environment is re-evaluated on every resume (the user may have changed settings) and when the adapter state broadcast changes. Granting a permission or turning Bluetooth on never auto-starts a scan; the user taps Start.
+The permission-needed state is shown as soon as the list screen loads (not only after tapping Start), with Start disabled. The environment is re-evaluated on every resume (the user may have changed settings) and when the adapter state broadcast changes. Granting a permission or turning Bluetooth on never auto-starts a scan; the user taps Start.
 
 The Start/Stop button is debounced (about 1 s) because Android throttles repeated scan starts (about 5 per 30 s window).
 
