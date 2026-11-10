@@ -21,6 +21,7 @@ The app is deliberately small. The real goal of the POC is to find out how relia
 | [functional-spec.md](functional-spec.md) | Screens, states, permission and Bluetooth edge cases, fields shown, acceptance criteria. |
 | [dev-tooling.md](dev-tooling.md) | Toolchain to install, the agent harness (scripts, emulator, UI inspection), the verification pyramid, `AGENTS.md` contents. |
 | [roadmap.md](roadmap.md) | Milestones M0 to M6 with exit criteria, results, spikes, risks. |
+| [phase2/README.md](phase2/README.md) | **Phase 2 plans** (not started): Tier 1 advertisement decoding, Tier 2 system info and classic discovery, Tier 3 GATT inspection, plus the policy and guardrails they depend on. |
 | [retrospective.md](retrospective.md) | What the agent did unaided, where a human was needed, what worked, what is unproven. |
 
 ## Summary of key decisions

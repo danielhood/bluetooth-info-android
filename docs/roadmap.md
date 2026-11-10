@@ -166,6 +166,10 @@ Spike S2 result: Google's own Android CLI (the `android` binary in cmdline-tools
 
 Exit: met. All acceptance criteria are met; known gaps: the Android 8 to 11 location path is verified only under Robolectric (no device on that range), and text contrast is not checked automatically (Material 3 defaults are used).
 
+## What comes next
+
+Phase 2 (three tiers of learning more from neighbouring devices) is planned, not started: see [phase2/README.md](phase2/README.md).
+
 ## Spikes
 
 | ID | Question | Time-box | Method | Decision it feeds |
