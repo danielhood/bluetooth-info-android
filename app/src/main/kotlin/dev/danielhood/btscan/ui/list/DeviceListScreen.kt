@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,6 +32,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
@@ -92,12 +95,19 @@ private fun Controls(state: DeviceListUiState, actions: DeviceListActions) {
                 modifier = Modifier.testTag(TestTags.CLEAR_BUTTON),
             ) { Text(stringResource(R.string.clear)) }
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Switch(
-                checked = state.hideUnnamed,
-                onCheckedChange = actions.onHideUnnamedChange,
-                modifier = Modifier.testTag(TestTags.HIDE_UNNAMED_SWITCH),
-            )
+        // The whole row toggles (label included), which also gives screen readers one labelled switch.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+                Modifier
+                    .heightIn(min = 48.dp)
+                    .toggleable(
+                        value = state.hideUnnamed,
+                        role = Role.Switch,
+                        onValueChange = actions.onHideUnnamedChange,
+                    ).testTag(TestTags.HIDE_UNNAMED_SWITCH),
+        ) {
+            Switch(checked = state.hideUnnamed, onCheckedChange = null)
             Text(stringResource(R.string.hide_unnamed), modifier = Modifier.padding(start = 12.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -21,6 +21,8 @@ Plan and rationale live in `docs/` (start with `docs/README.md`, then `decisions
 | See the screen as an image | `scripts/shot.sh [name]` then read the PNG in `build/agent/shots/` |
 | App logs and crashes | `scripts/logs.sh` (`--follow`, `--clear`) |
 | Black-box smoke test (fake scanner, plus real scanner start/stop) | `scripts/e2e-smoke.sh` |
+| Run the minified release build (R8) | `scripts/release-smoke.sh` (part of `--full`; also run it on the phone for the detail flow) |
+| Frame check with 200 fake devices | `scripts/perf.sh` (phone for meaningful numbers) |
 | Real-radio smoke on the phone | `ANDROID_SERIAL=<serial> scripts/e2e-real.sh` |
 
 Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; otherwise the single attached device. The physical phone (Pixel 9a) is for real-radio checks: `ANDROID_SERIAL=<serial> scripts/app.sh install`.
@@ -63,4 +65,7 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 - Unit tests with coroutines: `advanceTimeBy(n)` does not run work scheduled exactly at `n`; call `runCurrent()` after it.
 - A scan without `--scenario` uses the real scanner. The emulator has a virtual Bluetooth adapter but no devices, so real mode shows an empty list there. Real-radio checks need the physical phone: `ANDROID_SERIAL=<serial> scripts/e2e-real.sh` and `scripts/real-device-tests.sh` (phone unlocked, Bluetooth on, devices nearby). Their screenshots show nearby devices; they stay in the git-ignored `build/agent/`.
 - Memory: `--full` runs Gradle plus up to two emulators; close browsers first on this 16 GB machine. Gradle/Kotlin heaps are capped in `gradle.properties` and `verify.sh` stops the Gradle daemon before the smoke stage.
+- Scan lifecycle rules (each guarded by a test): the scan stops when the app is backgrounded, but not on rotation (`isChangingConfigurations`) and not when a navigation screen stops; it also stops when the adapter leaves ON. Observe the *activity* lifecycle, never a navigation entry's, for "app in background".
+- Google's `android` CLI exists in cmdline-tools. Its first run downloads components and it sends usage metrics unless `--no-metrics` is given; `android layout` installs an instrumentation server on the device. Prefer the `scripts/`; use it only on the emulator.
+- The Start/Stop button ignores taps within 1 s of the previous one; scripts must wait about 1.5 s between toggles.
 - `verify.sh --full` stops the exploration emulator (to free resources for the Managed Device) and restarts it for the smoke test.

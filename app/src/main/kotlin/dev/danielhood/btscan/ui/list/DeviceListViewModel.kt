@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.Duration
 import java.time.Instant
 
@@ -36,6 +37,16 @@ class DeviceListViewModel(
 
     private val local = MutableStateFlow(Local(permissions.current()))
     private var lastToggle: Instant? = null
+
+    init {
+        // When Bluetooth (or location, on old Android) goes away the platform silently ends the scan, so stop ours too;
+        // otherwise the screen would claim to be scanning after Bluetooth comes back. The user starts again.
+        viewModelScope.launch {
+            adapterMonitor.state.collect { adapter ->
+                if (adapter != AdapterState.ON && repository.scanning.value) repository.stopScan()
+            }
+        }
+    }
 
     /** Runtime permissions the UI should request when the user chooses "Grant permission". */
     val permissionsToRequest: List<String> get() = permissions.requiredPermissions

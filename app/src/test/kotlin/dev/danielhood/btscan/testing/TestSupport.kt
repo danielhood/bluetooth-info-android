@@ -63,3 +63,17 @@ fun TestScope.rawAd(
 object AlwaysOnAdapterMonitor : AdapterStateMonitor {
     override val state: Flow<AdapterState> = flowOf(AdapterState.ON)
 }
+
+/** Application for whole-app JVM tests: fake scanner on the default scenario, permission granted, adapter on. */
+class TestApp :
+    android.app.Application(),
+    dev.danielhood.btscan.ContainerHolder {
+    override val container: dev.danielhood.btscan.AppContainer by lazy {
+        dev.danielhood.btscan
+            .AppContainer(
+                permissionChecker = FakePermissionChecker(),
+                realScanner = ManualScanner(),
+                realAdapterMonitor = AlwaysOnAdapterMonitor,
+            ).also { it.debugConfig = dev.danielhood.btscan.DebugConfig(scanner = "fake", scenario = "default") }
+    }
+}

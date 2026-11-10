@@ -142,7 +142,7 @@ All four run inside `scripts/verify.sh`.
 
 Baseline (no third-party code): `adb`-based scripts in `scripts/` that wrap `uiautomator dump`, `screencap`, `input`, `am`, `pm grant/revoke` and filtered `logcat`, producing compact, parseable output. Details in [dev-tooling.md](dev-tooling.md).
 
-Optional add-on, evaluated in spike S2 rather than adopted up front: a third-party Android MCP server or Google's Android CLI. Search during planning found only community MCP servers (for example CursorTouch's Android-MCP) and mentions of a Google "Android CLI" with agent skills; none verified. They can execute arbitrary UI actions and are third-party code, so the scripts remain the supported path and any MCP is used against the emulator only.
+Optional add-on, evaluated in spike S2 (outcome: not adopted as baseline; Google's `android` CLI is a usable complement with `--no-metrics`, see roadmap M6): a third-party Android MCP server or Google's Android CLI. Search during planning found only community MCP servers (for example CursorTouch's Android-MCP) and mentions of a Google "Android CLI" with agent skills; none verified. They can execute arbitrary UI actions and are third-party code, so the scripts remain the supported path and any MCP is used against the emulator only.
 
 ## D16. Emulator: headless AVD for exploration, Gradle Managed Device for tests
 

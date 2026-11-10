@@ -1,6 +1,5 @@
 package dev.danielhood.btscan.ui
 
-import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,18 +11,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import dev.danielhood.btscan.AppContainer
-import dev.danielhood.btscan.DebugConfig
-import dev.danielhood.btscan.testing.AlwaysOnAdapterMonitor
-import dev.danielhood.btscan.testing.FakePermissionChecker
-import dev.danielhood.btscan.testing.ManualScanner
+import dev.danielhood.btscan.MainActivity
+import dev.danielhood.btscan.testing.TestApp
 import dev.danielhood.btscan.ui.common.TestTags
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import org.junit.After
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,31 +26,12 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(qualifiers = "w360dp-h900dp-xhdpi")
+@Config(application = TestApp::class, qualifiers = "w360dp-h900dp-xhdpi")
 class AppNavigationTest {
     @get:Rule
-    val rule = createAndroidComposeRule<ComponentActivity>()
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private lateinit var container: AppContainer
+    val rule = createAndroidComposeRule<MainActivity>()
 
     private val thermo = "C0:FF:EE:00:00:01"
-
-    @Before
-    fun setUp() {
-        container =
-            AppContainer(
-                permissionChecker = FakePermissionChecker(),
-                realScanner = ManualScanner(),
-                realAdapterMonitor = AlwaysOnAdapterMonitor,
-                scope = scope,
-            )
-        container.debugConfig = DebugConfig(scanner = "fake", scenario = "default")
-        rule.setContent { AppRoot(container = container, debugLabel = null, darkTheme = false) }
-    }
-
-    @After
-    fun tearDown() = scope.cancel()
 
     private fun startScanAndOpenThermo() {
         rule.onNodeWithTag(TestTags.SCAN_BUTTON).performClick()
@@ -128,5 +99,31 @@ class AppNavigationTest {
         rule.waitUntil(timeoutMillis = 5_000) {
             rule.onAllNodesWithTag(TestTags.DEVICE_LIST).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    @Test
+    fun `recreating the activity on the list keeps devices and scanning (rotation)`() {
+        rule.onNodeWithTag(TestTags.SCAN_BUTTON).performClick()
+        rule.waitUntil(timeoutMillis = 10_000) {
+            rule.onAllNodesWithTag(TestTags.deviceRow(thermo)).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.activityRule.scenario.recreate()
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithTag(TestTags.deviceRow(thermo)).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithTag(TestTags.SCAN_BUTTON).assertTextContains("Stop scan")
+    }
+
+    @Test
+    fun `recreating the activity on the detail screen keeps it open (rotation)`() {
+        startScanAndOpenThermo()
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithTag(TestTags.DETAIL_SCREEN).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.activityRule.scenario.recreate()
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithTag(TestTags.DETAIL_SCREEN).fetchSemanticsNodes().isNotEmpty()
+        }
+        rule.onNodeWithTag(TestTags.DETAIL_NAME).assertTextEquals("Thermo Sensor")
     }
 }

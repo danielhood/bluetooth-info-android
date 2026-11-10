@@ -1,6 +1,6 @@
 # BT Scanner POC: Project Plan
 
-**Status:** Plan v1 (2026-11-08). Milestones M0 and M1 are done (toolchain and scaffold); see roadmap.md. `AGENTS.md` at the repo root holds the day-to-day agent instructions; this folder holds the plan and rationale.
+**Status:** All milestones (M0 to M6) are done as of 2026-11-09; see roadmap.md for results and retrospective.md for what was learned. `AGENTS.md` at the repo root holds the day-to-day agent instructions; this folder holds the plan and rationale.
 
 ## What this is
 
@@ -20,7 +20,8 @@ The app is deliberately small. The real goal of the POC is to find out how relia
 | [architecture.md](architecture.md) | Layers, module/package layout, data flow, state models, threading, the BLE port/adapter split, build variants. |
 | [functional-spec.md](functional-spec.md) | Screens, states, permission and Bluetooth edge cases, fields shown, acceptance criteria. |
 | [dev-tooling.md](dev-tooling.md) | Toolchain to install, the agent harness (scripts, emulator, UI inspection), the verification pyramid, `AGENTS.md` contents. |
-| [roadmap.md](roadmap.md) | Milestones M0 to M6 with exit criteria, spikes, risks. |
+| [roadmap.md](roadmap.md) | Milestones M0 to M6 with exit criteria, results, spikes, risks. |
+| [retrospective.md](retrospective.md) | What the agent did unaided, where a human was needed, what worked, what is unproven. |
 
 ## Summary of key decisions
 

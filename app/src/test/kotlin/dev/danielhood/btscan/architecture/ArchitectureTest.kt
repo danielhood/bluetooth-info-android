@@ -119,4 +119,22 @@ class ArchitectureTest {
             }
         assertNone("the app must never connect or request BLUETOOTH_CONNECT", offenders.map { it.path })
     }
+
+    @Test
+    fun `manifest requests neither internet nor the connect permission`() {
+        val manifest = File("src/main/AndroidManifest.xml").readText()
+        val requested =
+            Regex("""android:name="android\.permission\.([A-Z_]+)"""")
+                .findAll(manifest)
+                .map {
+                    it.groupValues[1]
+                }.toSet()
+        assertTrue("manifest should declare permissions: $requested", "BLUETOOTH_SCAN" in requested)
+        assertTrue(
+            "no network and no connect permission, found: $requested",
+            requested.none {
+                it == "INTERNET" || it == "BLUETOOTH_CONNECT" || it == "ACCESS_NETWORK_STATE"
+            },
+        )
+    }
 }

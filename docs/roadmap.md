@@ -140,24 +140,38 @@ Decisions and findings made during M5:
 
 Exit: met.
 
-## M6. Hardening and wrap-up [ ]
+## M6. Hardening and wrap-up [x]
 
-- [ ] `many` scenario performance check (N-1); fix jank if present.
-- [ ] Rotation, background, Bluetooth-toggle mid-scan (N-2).
-- [ ] Accessibility pass (N-3) and dark theme screenshots (N-4).
-- [ ] `assembleRelease` with minification; fake-absent check (acceptance 11); **install and run a minified build** (sign it with the debug key locally) to confirm R8 does not break type-safe navigation or serialization.
-- [ ] Optional debug state-dump receiver.
-- [ ] **Spike S2** (MCP evaluation) write-up.
-- [ ] Retrospective in `docs/retrospective.md`: what the agent did unaided, where a human had to step in, which tooling earned its keep.
+- [x] 200-device performance check (N-1): `scripts/perf.sh`.
+- [x] Rotation, background, Bluetooth toggled mid-scan (N-2): two real bugs found and fixed (below).
+- [x] Accessibility pass (N-3): labelled switch row, automated touch-target (48 dp) and "every interactive element is labelled" checks on the list and detail screens.
+- [x] Dark theme screenshots (N-4): list, permission-needed, failed and detail states.
+- [x] Minified release build installed and run (`scripts/release-smoke.sh`, now a `--full` stage); also run on the Pixel with real devices, including opening a detail screen.
+- [x] Manifest check: no INTERNET and no connect permission (N-5, test).
+- [ ] ~~Optional debug state-dump receiver~~ not built: `ui.sh dump` plus the logs already give ground truth, and nothing needed more.
+- [x] **Spike S2** (below).
+- [x] Retrospective: [retrospective.md](retrospective.md).
 
-Exit: all acceptance criteria met or explicitly listed as known gaps.
+Result: 171 JVM unit tests, 3 Managed-Device tests, 2 on-device tests; `verify.sh --full` passes.
+
+Measurements (fake scenario `many`, 200 devices updating, list scrolled for 12 s):
+- Pixel 9a: 636 frames, 3.9% janky, median frame 7 ms, 95th percentile 27 ms, no ANR; memory about 150 MB PSS.
+- Emulator (software rendering, so not representative): 691 frames, 6.1% janky, median 24 ms.
+
+Bugs found and fixed in M6:
+- **Scan kept running behind "Bluetooth is turned off".** When Bluetooth (or location, on Android 11 and below) is lost, the platform silently ends the scan; the app still believed it was scanning and showed a phantom "Scanning" after Bluetooth returned. The ViewModel now stops the scan when the adapter leaves ON. Unit tests plus a smoke step that toggles Bluetooth on the emulator.
+- **Rotation stopped the scan.** Stop-on-background fired on the configuration-change stop. It now ignores stops where `isChangingConfigurations` is true. Found by an activity-recreation test that now guards it (list and detail both survive rotation).
+
+Spike S2 result: Google's own Android CLI (the `android` binary in cmdline-tools) is capable: `layout --flat` returns JSON of the UI, `screen capture [--annotate]` screenshots, plus `input`, `run`, `emulator`, `docs`, `preview` (renders Compose previews to PNG). Measured against `ui.sh dump`: both about 2 s per call, JSON about 2.7 KB versus 1.3 KB of text lines. Costs: the first call silently downloads an embedded installation, usage metrics are on unless `--no-metrics` is passed, and `layout` installs an instrumentation server on the device. Decision: not adopted as the baseline. The scripts have no dependencies, understand Compose test tags directly, and are already wired into the gates. The CLI is a reasonable complement (annotated screenshots, `preview`), always with `--no-metrics` and only on the emulator. Third-party MCP servers were not installed or evaluated: they run arbitrary UI actions with no benefit over the scripts shown here, and are supply-chain risk.
+
+Exit: met. All acceptance criteria are met; known gaps: the Android 8 to 11 location path is verified only under Robolectric (no device on that range), and text contrast is not checked automatically (Material 3 defaults are used).
 
 ## Spikes
 
 | ID | Question | Time-box | Method | Decision it feeds |
 |---|---|---|---|---|
-| S1 | Can the emulator's virtual Bluetooth radio (netsim, which advertises built-in virtual BLE beacons on emulator 33.1.14+) let the **real** `AndroidBleScanner` find devices in a headless emulator? | 2 h | Start the AVD with netsim, run the real-mode app, check the list; try `emulator -netsim-args` options | If yes: add a real-radio E2E test to `--full` and reduce reliance on a physical phone. If no: physical phone stays the only real-radio check. Note: netsim cannot be bridged to a host USB radio at the same time. |
-| S2 | Does an Android MCP server or Google's Android CLI beat the `scripts/` harness on reliability and token cost? | 2 h | Same three tasks via each route (launch + assert a tag, grant permission via dialog, capture screenshot); compare steps, tokens, flakiness | Adopt, or document and drop |
+| S1 (done: adapter yes, beacon injection no; see M5) | Can the emulator's virtual Bluetooth radio (netsim, which advertises built-in virtual BLE beacons on emulator 33.1.14+) let the **real** `AndroidBleScanner` find devices in a headless emulator? | 2 h | Start the AVD with netsim, run the real-mode app, check the list; try `emulator -netsim-args` options | If yes: add a real-radio E2E test to `--full` and reduce reliance on a physical phone. If no: physical phone stays the only real-radio check. Note: netsim cannot be bridged to a host USB radio at the same time. |
+| S2 (done: see M6) | Does an Android MCP server or Google's Android CLI beat the `scripts/` harness on reliability and token cost? | 2 h | Same three tasks via each route (launch + assert a tag, grant permission via dialog, capture screenshot); compare steps, tokens, flakiness | Adopt, or document and drop |
 
 ## Risk register
 

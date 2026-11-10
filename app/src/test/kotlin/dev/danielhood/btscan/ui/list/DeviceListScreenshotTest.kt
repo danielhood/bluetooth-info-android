@@ -80,4 +80,15 @@ class DeviceListScreenshotTest {
 
     @Test
     fun failed() = shoot("failed", SampleUi.failed)
+
+    @Test
+    fun permissionNeededDark() =
+        shoot(
+            "permission-needed-dark",
+            SampleUi.state(ListStatus.PermissionNeeded(false)),
+            dark = true,
+        )
+
+    @Test
+    fun failedDark() = shoot("failed-dark", SampleUi.failed, dark = true)
 }

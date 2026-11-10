@@ -1,14 +1,19 @@
 package dev.danielhood.btscan.ui.detail
 
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.danielhood.btscan.testing.SampleDetail
+import dev.danielhood.btscan.testing.assertAllInteractiveNodesLabelled
+import dev.danielhood.btscan.testing.assertTouchTargetAtLeast48dp
 import dev.danielhood.btscan.ui.AppSurface
 import dev.danielhood.btscan.ui.common.TestTags
 import org.junit.Assert.assertEquals
@@ -124,5 +129,18 @@ class DeviceDetailContentTest {
         show(SampleDetail.loaded())
         rule.onNodeWithTag(TestTags.BACK_BUTTON).performClick()
         assertEquals(listOf("back"), calls)
+    }
+
+    @Test
+    fun `every interactive element is labelled on the detail and not found screens`() {
+        show(SampleDetail.loaded())
+        rule.assertAllInteractiveNodesLabelled()
+    }
+
+    @Test
+    fun `back button has a content description and a 48dp target`() {
+        show(SampleDetail.loaded())
+        rule.assertTouchTargetAtLeast48dp(TestTags.BACK_BUTTON)
+        rule.onNodeWithContentDescription("Back", useUnmergedTree = true).assertIsDisplayed()
     }
 }

@@ -153,6 +153,18 @@ sleep 1
 check "real scan stops"             button_text "Start scan"
 check "platform scan stopped"       bash -c "'$S/logs.sh' | grep -q 'BtScan/Scan.*scan stopped'"
 
+echo "-- Bluetooth toggled while scanning (real scanner, emulator adapter)"
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "scanning again"              "$S/ui.sh" wait scan_indicator 5
+adb shell svc bluetooth disable
+check "bluetooth off message"       "$S/ui.sh" wait "Bluetooth is turned off" 20
+check "scan stopped, not phantom"   absent scan_indicator
+adb shell svc bluetooth enable
+check "idle again when bluetooth returns" "$S/ui.sh" wait empty_message 30
+check "start offered again"         scan_enabled
+check "no phantom scanning"         absent scan_indicator
+
 check "no crash in logs"            bash -c "! '$S/logs.sh' | grep -qE 'FATAL EXCEPTION|E/AndroidRuntime'"
 
 [ "$fails" -eq 0 ] && echo "SMOKE OK" || { echo "SMOKE FAILED ($fails)"; exit 1; }

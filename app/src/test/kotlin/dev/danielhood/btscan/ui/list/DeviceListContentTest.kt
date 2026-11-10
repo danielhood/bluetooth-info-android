@@ -1,17 +1,22 @@
 package dev.danielhood.btscan.ui.list
 
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.testing.SampleUi
+import dev.danielhood.btscan.testing.assertAllInteractiveNodesLabelled
+import dev.danielhood.btscan.testing.assertTouchTargetAtLeast48dp
 import dev.danielhood.btscan.ui.AppSurface
 import dev.danielhood.btscan.ui.common.TestTags
 import org.junit.Assert.assertEquals
@@ -201,5 +206,36 @@ class DeviceListContentTest {
     fun `debug label is shown when provided`() {
         show(SampleUi.state(), debugLabel = "scanner=fake scenario=default")
         rule.onNodeWithTag(TestTags.DEBUG_LABEL).assertTextEquals("scanner=fake scenario=default")
+    }
+
+    @Test
+    fun `touch targets are at least 48dp (accessibility)`() {
+        show(SampleUi.state(ListStatus.Scanning, SampleUi.devices))
+        listOf(
+            TestTags.SCAN_BUTTON,
+            TestTags.CLEAR_BUTTON,
+            TestTags.HIDE_UNNAMED_SWITCH,
+            TestTags.deviceRow("C0:FF:EE:00:00:01"),
+        ).forEach { tag ->
+            rule.assertTouchTargetAtLeast48dp(tag)
+        }
+    }
+
+    @Test
+    fun `every interactive element is labelled in the list states`() {
+        show(SampleUi.state(ListStatus.Scanning, SampleUi.devices))
+        rule.assertAllInteractiveNodesLabelled()
+    }
+
+    @Test
+    fun `every interactive element is labelled in the failure and permission states`() {
+        show(SampleUi.failed)
+        rule.assertAllInteractiveNodesLabelled()
+    }
+
+    @Test
+    fun `signal bars carry a description`() {
+        show(SampleUi.state(ListStatus.Scanning, SampleUi.devices.take(1)))
+        rule.onNodeWithContentDescription("Signal 4 of 4", useUnmergedTree = true).assertIsDisplayed()
     }
 }

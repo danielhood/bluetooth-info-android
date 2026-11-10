@@ -2,6 +2,7 @@
 # THE gate. Usage: verify.sh [--quick|--full]   (default: --quick)
 #   quick: format, detekt + lint, compile (warnings as errors), JVM unit tests, screenshot verification
 #   full:  quick + release build/debug-leak check + instrumented tests (Gradle Managed Device) + emulator smoke test
+#          + the minified release build run on the emulator
 # On failure prints the tail of the failing stage and the path to its full log; exit 1.
 set -uo pipefail
 . "$(dirname "$0")/lib.sh"
@@ -49,5 +50,6 @@ if [ "$mode" = "--full" ]; then
   # build except the debug APK, which is already built; the daemon restarts on demand).
   stage "free daemon memory"          "$GW" --stop
   stage "emulator smoke"              "$REPO_ROOT/scripts/e2e-smoke.sh"
+  stage "minified release smoke"      "$REPO_ROOT/scripts/release-smoke.sh"
 fi
 echo "VERIFY OK ($mode)"

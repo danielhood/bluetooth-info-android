@@ -148,7 +148,7 @@ class DeviceListViewModelTest {
         }
 
     @Test
-    fun `turning bluetooth off mid scan switches to the bluetooth off status`() =
+    fun `turning bluetooth off mid scan stops the scan and shows bluetooth off`() =
         runTest {
             val f = fixture()
             f.vm.toggleScan()
@@ -157,6 +157,36 @@ class DeviceListViewModelTest {
             f.adapter.set(AdapterState.OFF)
             advance(0)
             assertEquals(ListStatus.BluetoothOff, f.state.status)
+            assertFalse("scan must not keep running behind the message", f.repo.scanning.value)
+        }
+
+    @Test
+    fun `bluetooth coming back after a mid scan loss is idle, not a phantom scan`() =
+        runTest {
+            val f = fixture()
+            f.vm.toggleScan()
+            advance(100)
+            f.adapter.set(AdapterState.OFF)
+            advance(0)
+            f.adapter.set(AdapterState.ON)
+            advance(0)
+            assertEquals(ListStatus.Idle, f.state.status)
+            advance(1_500)
+            f.vm.toggleScan()
+            advance(100)
+            assertEquals(ListStatus.Scanning, f.state.status)
+        }
+
+    @Test
+    fun `losing location on old android also stops the scan`() =
+        runTest {
+            val f = fixture()
+            f.vm.toggleScan()
+            advance(100)
+            f.adapter.set(AdapterState.LOCATION_OFF)
+            advance(0)
+            assertEquals(ListStatus.LocationOff, f.state.status)
+            assertFalse(f.repo.scanning.value)
         }
 
     @Test

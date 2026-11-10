@@ -10,9 +10,10 @@ import dev.danielhood.btscan.util.AppLog
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val container = (application as BtScanApp).container
+        val container = (application as ContainerHolder).container
         val debugConfig = container.debugOverrides.configFrom(intent)
-        container.debugConfig = debugConfig
+        // Only an explicit launch override replaces the container's configuration (tests preconfigure it).
+        if (debugConfig != DebugConfig.NONE) container.debugConfig = debugConfig
         AppLog.i(AppLog.APP, "launch debugConfig=${debugConfig.label ?: "none"}")
         enableEdgeToEdge()
         setContent { AppRoot(container = container, debugLabel = debugConfig.label) }

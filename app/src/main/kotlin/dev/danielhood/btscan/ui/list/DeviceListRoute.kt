@@ -40,7 +40,10 @@ fun DeviceListRoute(
     // Stop scanning when the *app* leaves the foreground. The navigation entry's own lifecycle also reaches STOP
     // when the detail screen opens, which must not stop the scan, so observe the activity instead.
     val activityOwner = activity as? LifecycleOwner ?: LocalLifecycleOwner.current
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP, lifecycleOwner = activityOwner) { viewModel.onBackgrounded() }
+    // A rotation (configuration change) also stops the activity but must not stop the scan.
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP, lifecycleOwner = activityOwner) {
+        if (activity?.isChangingConfigurations != true) viewModel.onBackgrounded()
+    }
 
     val actions =
         remember(viewModel, onDeviceClick) {

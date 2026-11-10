@@ -6,6 +6,14 @@ set -euo pipefail
 . "$(dirname "$0")/lib.sh"
 resolve_serial; echo "target: $ANDROID_SERIAL" >&2
 APK="$REPO_ROOT/app/build/outputs/apk/debug/app-debug.apk"
+RELEASE_APK="$REPO_ROOT/app/build/outputs/apk/release/app-release-unsigned.apk"
+SIGNED_RELEASE_APK="$OUT/app-release-debugsigned.apk"
+
+# Local-only signing of the release build with the standard Android debug key, so a minified build can be run.
+sign_release() {
+  "$ANDROID_HOME/build-tools/36.1.0/apksigner" sign --ks "$HOME/.android/debug.keystore" \
+    --ks-pass pass:android --key-pass pass:android --out "$SIGNED_RELEASE_APK" "$RELEASE_APK"
+}
 
 perm() { # runtime permission the scan needs on this device
   local sdk; sdk=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
@@ -15,8 +23,14 @@ perm() { # runtime permission the scan needs on this device
 cmd="${1:-}"; shift || true
 case "$cmd" in
   install)
-    [ "${1:-}" = "--no-build" ] || "$REPO_ROOT/scripts/gw.sh" -q assembleDebug
-    adb install -r -t "$APK" ;;
+    # BTSCAN_VARIANT=release installs the minified release build, signed locally with the debug key.
+    if [ "${BTSCAN_VARIANT:-debug}" = release ]; then
+      [ "${1:-}" = "--no-build" ] || "$REPO_ROOT/scripts/gw.sh" -q assembleRelease
+      sign_release && adb install -r "$SIGNED_RELEASE_APK"
+    else
+      [ "${1:-}" = "--no-build" ] || "$REPO_ROOT/scripts/gw.sh" -q assembleDebug
+      adb install -r -t "$APK"
+    fi ;;
   launch)
     scenario=""; scanner=""
     while [ $# -gt 0 ]; do case "$1" in
