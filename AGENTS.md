@@ -47,6 +47,8 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 ## Do not
 
 - Call `connectGatt`, request `BLUETOOTH_CONNECT`, or make network calls.
+- Write a characteristic, create/remove a bond, or use reflection on Bluetooth classes, in any phase (`ArchitectureTest` fails on the tokens, even in comments). Read `docs/phase2/policy-and-guardrails.md` before touching permissions or device contact.
+- Add a manifest permission without updating the exact-set allowlist in `ArchitectureTest` and the policy doc in the same commit.
 - Add a dependency without adding it to `gradle/libs.versions.toml` and stating why in the commit. No hardcoded versions elsewhere.
 - Silence a finding with `@Suppress`, a lint baseline, or by loosening config to make a check pass, unless the commit message explains why it is a false positive.
 - Edit generated files or anything under `build/`.

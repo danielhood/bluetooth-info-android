@@ -120,21 +120,106 @@ class ArchitectureTest {
         assertNone("the app must never connect or request BLUETOOTH_CONNECT", offenders.map { it.path })
     }
 
+    // ---- Phase 2 guardrails (docs/phase2/policy-and-guardrails.md section 3) ----
+
+    /** Every Kotlin file under app/src, except this test (which names the forbidden tokens). */
+    private val allSourcesIncludingTests: List<File> =
+        File("src")
+            .walkTopDown()
+            .filter { f -> f.isFile && f.extension == "kt" && f.name != "ArchitectureTest.kt" }
+            .toList()
+
+    private fun offendersContaining(files: List<File>, tokens: List<String>): List<String> =
+        files.flatMap { f ->
+            val text = f.readText()
+            tokens.filter { it in text }.map { "${f.path}: $it" }
+        }
+
     @Test
-    fun `manifest requests neither internet nor the connect permission`() {
-        val manifest = File("src/main/AndroidManifest.xml").readText()
-        val requested =
-            Regex("""android:name="android\.permission\.([A-Z_]+)"""")
-                .findAll(manifest)
-                .map {
-                    it.groupValues[1]
-                }.toSet()
-        assertTrue("manifest should declare permissions: $requested", "BLUETOOTH_SCAN" in requested)
-        assertTrue(
-            "no network and no connect permission, found: $requested",
-            requested.none {
-                it == "INTERNET" || it == "BLUETOOTH_CONNECT" || it == "ACCESS_NETWORK_STATE"
+    fun `the app never writes a characteristic`() {
+        assertNone(
+            "policy: read-only; characteristic writes are forbidden",
+            offendersContaining(allSourcesIncludingTests, listOf("writeCharacteristic")),
+        )
+    }
+
+    @Test
+    fun `the app never creates or changes a bond`() {
+        assertNone(
+            "policy: no pairing, ever",
+            offendersContaining(
+                allSourcesIncludingTests,
+                listOf("createBond", "removeBond", "setPin", "setPairingConfirmation", "cancelBondProcess"),
+            ),
+        )
+    }
+
+    @Test
+    fun `no reflection into bluetooth classes`() {
+        val bluetoothFiles =
+            allSourcesIncludingTests.filter { f ->
+                f.relative().startsWith("data/ble/") || "import android.bluetooth" in f.readText()
+            }
+        assertNone(
+            "policy: only public Bluetooth APIs, no reflection",
+            offendersContaining(bluetoothFiles, listOf("getDeclaredMethod", "getMethod(", "Class.forName")),
+        )
+    }
+
+    @Test
+    fun `main code uses no network classes`() {
+        assertNone(
+            "policy: nothing is sent anywhere",
+            violations(sources("main", "release")) {
+                it.startsWith("java.net.") ||
+                    it.startsWith("javax.net.") ||
+                    it.startsWith("okhttp3.") ||
+                    it.startsWith("retrofit2.") ||
+                    (it.startsWith("android.net.") && it != "android.net.Uri")
             },
         )
+    }
+
+    @Test
+    fun `manifest requests exactly the allowed permissions`() {
+        val allowed =
+            setOf(
+                "BLUETOOTH_SCAN",
+                "BLUETOOTH",
+                "BLUETOOTH_ADMIN",
+                "ACCESS_FINE_LOCATION",
+            )
+        val manifests = File("src").walkTopDown().filter { it.name == "AndroidManifest.xml" }.toList()
+        assertTrue("expected the main manifest, found: $manifests", manifests.any { it.path.contains("src/main/") })
+        val requested =
+            manifests
+                .flatMap { m ->
+                    Regex("""<uses-permission(?:-sdk-23)?\s[^>]*?android:name="android\.permission\.([A-Z_]+)"""")
+                        .findAll(m.readText())
+                        .map { it.groupValues[1] }
+                        .toList()
+                }.toSet()
+        assertTrue(
+            "permission set changed without updating the policy: requested=$requested allowed=$allowed. " +
+                "Update docs/phase2/policy-and-guardrails.md and this list in the same commit.",
+            requested == allowed,
+        )
+    }
+
+    @Test
+    fun `legacy and scan permissions keep their restrictions`() {
+        val manifest = File("src/main/AndroidManifest.xml").readText()
+        val entries =
+            Regex("""<uses-permission\s[^>]*?/>""", RegexOption.DOT_MATCHES_ALL)
+                .findAll(manifest)
+                .map {
+                    it.value
+                }.toList()
+
+        fun entry(name: String) = entries.single { "android.permission.$name\"" in it }
+        assertTrue("scan must stay neverForLocation", "neverForLocation" in entry("BLUETOOTH_SCAN"))
+        listOf("BLUETOOTH", "BLUETOOTH_ADMIN", "ACCESS_FINE_LOCATION").forEach {
+            assertTrue("$it must be limited to API 30 and below", "android:maxSdkVersion=\"30\"" in entry(it))
+        }
     }
 }

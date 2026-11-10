@@ -1,6 +1,6 @@
 # Policy and Guardrails for Phase 2
 
-**Status:** Plan. Implement the "X2" items below **before** starting Tier 2 or Tier 3, so each later tier changes a rule deliberately and visibly rather than by drift. Phase 1's guardrails (architecture tests, manifest test, `AGENTS.md` prohibitions) are what kept the app within its stated scope; Phase 2 widens the scope, so those guardrails must widen in a controlled way, not be removed.
+**Status:** X2 implemented 2026-11-09 (checks marked Done below, in `ArchitectureTest`, each proven to fail on a deliberate violation); the rest is Plan. Implement the "X2" items below **before** starting Tier 2 or Tier 3, so each later tier changes a rule deliberately and visibly rather than by drift. Phase 1's guardrails (architecture tests, manifest test, `AGENTS.md` prohibitions) are what kept the app within its stated scope; Phase 2 widens the scope, so those guardrails must widen in a controlled way, not be removed.
 
 ## 1. Principles
 
@@ -33,15 +33,15 @@ All checks extend the existing `ArchitectureTest` (import and text scanning, no 
 
 | Check | When added | Rule |
 |---|---|---|
-| Forbid characteristic writes | **Now** (X2) | No source text containing `writeCharacteristic` anywhere in `app/src` |
-| Forbid pairing and bond changes | **Now** (X2) | No `createBond`, `removeBond`, `setPin`, `setPairingConfirmation`, `cancelBondProcess` |
-| Forbid reflection into Bluetooth internals | **Now** (X2) | No `getDeclaredMethod`/`getMethod`/`Class.forName` in files under `data/ble` or that import `android.bluetooth` |
+| Forbid characteristic writes | **Done (X2)** | No source text containing `writeCharacteristic` anywhere in `app/src` |
+| Forbid pairing and bond changes | **Done (X2)** | No `createBond`, `removeBond`, `setPin`, `setPairingConfirmation`, `cancelBondProcess` |
+| Forbid reflection into Bluetooth internals | **Done (X2)** | No `getDeclaredMethod`/`getMethod`/`Class.forName` in files under `data/ble` or that import `android.bluetooth` |
 | Decoders and parsers are pure | Tier 1 | Files under `domain/decode` and `domain/gatt/parsers` import no `android.*` (already covered by the domain rule; add an explicit test so a future package move cannot escape it) |
-| Manifest permissions are an explicit allowlist | **Now** (X2), updated per tier | The manifest test asserts the *exact set* of requested permissions instead of only forbidding some. Tier 1: unchanged set. Tier 2 adds `BLUETOOTH_CONNECT` (API 31+). A new permission fails the test until the policy doc and the test are updated together. |
+| Manifest permissions are an explicit allowlist | **Done (X2)**, updated per tier | The manifest test asserts the *exact set* of requested permissions instead of only forbidding some. Tier 1: unchanged set. Tier 2 adds `BLUETOOTH_CONNECT` (API 31+). A new permission fails the test until the policy doc and the test are updated together. |
 | `connectGatt` confined | Tier 3 | Allowed only in `AndroidGattInspector.kt`; the Tier 2 "forbidden everywhere" check is narrowed in the same commit |
 | `writeDescriptor` confined | Tier 3 v2 | Only in the file containing the notification helper, and only referencing the CCCD constant `0x2902` |
 | Logging hygiene | Tier 2 | In `src/main` and `src/release`, `AppLog`/`Log` calls must not interpolate `address`, `name`, `serial`, `value` or `rawBytes` identifiers. Implemented as a text rule on log call arguments (simple, conservative, with an allowlisted escape comment for justified cases). Debug-only code (`src/debug`) is exempt. |
-| No `INTERNET` / network classes | Existing | Keep; also forbid imports of `java.net.*`, `okhttp`, `retrofit` in main code |
+| No `INTERNET` / network classes | Existing; import rule **done (X2)**, `android.net.Uri` is the only allowed `android.net` class | Keep; also forbid imports of `java.net.*`, `okhttp`, `retrofit` in main code |
 | One GATT session at a time | Tier 3 | Unit test on the session coordinator |
 | Consent required before contact | Tier 2c, Tier 3 | A ViewModel test asserts that the "start" intent without an accepted confirmation never calls the port (fake records zero calls) |
 

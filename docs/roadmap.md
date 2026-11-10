@@ -168,7 +168,7 @@ Exit: met. All acceptance criteria are met; known gaps: the Android 8 to 11 loca
 
 ## What comes next
 
-Phase 2 (three tiers of learning more from neighbouring devices) is planned, not started: see [phase2/README.md](phase2/README.md).
+Phase 2 (three tiers of learning more from neighbouring devices) is planned; **X2 (policy guardrail tests) is done**, the tiers are not started: see [phase2/README.md](phase2/README.md).
 
 ## Spikes
 
