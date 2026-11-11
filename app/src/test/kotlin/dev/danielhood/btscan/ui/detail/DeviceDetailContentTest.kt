@@ -8,6 +8,7 @@ import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -221,5 +222,52 @@ class DeviceDetailContentTest {
                 TestTags.decodedField("apple_continuity", "apple_message"),
             ).performScrollTo()
             .assertTextEquals("Find My network")
+    }
+
+    @Test
+    fun `radio section shows reported values and labelled estimates`() {
+        show(SampleDetail.loaded(SampleDetail.radio))
+        rule.onNodeWithTag(TestTags.detailRadio("primary_phy")).performScrollTo().assertTextEquals("LE 1M")
+        rule.onNodeWithTag(TestTags.detailRadio("secondary_phy")).assertTextEquals("LE 2M")
+        rule.onNodeWithTag(TestTags.detailRadio("advertising_type")).assertTextEquals("Extended")
+        rule.onNodeWithTag(TestTags.detailRadio("sid")).assertTextEquals("3")
+        rule.onNodeWithTag(TestTags.detailRadio("tx_power")).assertTextEquals("8 dBm")
+        rule.onNodeWithTag(TestTags.detailRadio("periodic_interval")).assertTextEquals("100 ms")
+        rule.onNodeWithTag(TestTags.detailRadio("data_status")).assertTextEquals("Complete")
+        rule.onNodeWithTag(TestTags.detailRadio("interval")).assertTextEquals("about 500 ms between packets")
+        rule.onNodeWithTag(TestTags.detailRadio("distance")).performScrollTo().assertTextEquals("About 1 m")
+        rule.onNodeWithText("Packet interval (estimate)").assertExists()
+        rule.onNodeWithText("Distance (rough estimate)").assertExists()
+    }
+
+    @Test
+    fun `unavailable radio values are omitted and a device without radio data has no radio section`() {
+        val partial =
+            SampleDetail.radio.copy(
+                radio =
+                    SampleDetail.radio.radio!!.copy(
+                        secondaryPhy = null,
+                        advertisingSid = null,
+                        txPowerDbm = null,
+                        periodicIntervalUnits = null,
+                        dataStatus = null,
+                    ),
+                intervalEstimateMs = null,
+                distanceBand = null,
+            )
+        show(SampleDetail.loaded(partial))
+        rule.onNodeWithTag(TestTags.detailRadio("primary_phy")).performScrollTo().assertExists()
+        rule.onNodeWithTag(TestTags.detailRadio("secondary_phy")).assertDoesNotExist()
+        rule.onNodeWithTag(TestTags.detailRadio("sid")).assertDoesNotExist()
+        rule.onNodeWithTag(TestTags.detailRadio("tx_power")).assertDoesNotExist()
+        rule.onNodeWithTag(TestTags.detailRadio("interval")).assertDoesNotExist()
+        rule.onNodeWithTag(TestTags.detailRadio("distance")).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a device with no radio data shows no radio section`() {
+        show(SampleDetail.loaded())
+        rule.onNodeWithTag(TestTags.detailRadio("primary_phy")).assertDoesNotExist()
+        rule.onNodeWithText("Radio").assertDoesNotExist()
     }
 }

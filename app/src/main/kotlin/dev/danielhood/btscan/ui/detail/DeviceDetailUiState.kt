@@ -1,7 +1,10 @@
 package dev.danielhood.btscan.ui.detail
 
 import dev.danielhood.btscan.domain.decode.Decoded
+import dev.danielhood.btscan.domain.estimate.DistanceBand
+import dev.danielhood.btscan.domain.estimate.Estimates
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.parser.AdFlag
 import dev.danielhood.btscan.domain.parser.CompanyIds
 import dev.danielhood.btscan.domain.parser.ServiceUuids
@@ -42,6 +45,11 @@ data class DeviceDetailUi(
     val flags: List<AdFlag>,
     val rawHex: String,
     val decoded: List<Decoded> = emptyList(),
+    val radio: RadioInfo? = null,
+    /** Estimated average milliseconds between received packets; null until enough packets were seen. */
+    val intervalEstimateMs: Long? = null,
+    /** Rough distance band; null unless the device advertises a calibrated reference power. */
+    val distanceBand: DistanceBand? = null,
 )
 
 sealed interface DeviceDetailUiState {
@@ -99,6 +107,9 @@ internal fun BleDevice.toDetailUi() =
         flags = flags?.let { AdFlag.decode(it) } ?: emptyList(),
         rawHex = rawBytes.toHex(" "),
         decoded = decoded,
+        radio = radio,
+        intervalEstimateMs = Estimates.advertisingIntervalMs(this),
+        distanceBand = Estimates.distanceBand(this),
     )
 
 internal fun secondsBetween(from: Instant, to: Instant): Long = Duration.between(from, to).seconds.coerceAtLeast(0)

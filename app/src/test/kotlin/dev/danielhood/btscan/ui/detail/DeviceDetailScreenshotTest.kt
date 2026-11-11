@@ -49,6 +49,9 @@ class DeviceDetailScreenshotTest {
     fun vendor() = shoot("vendor", SampleDetail.loaded(SampleDetail.vendor))
 
     @Test
+    fun radio() = shoot("radio", SampleDetail.loaded(SampleDetail.radio))
+
+    @Test
     fun outOfRange() = shoot("out-of-range", SampleDetail.loaded(outOfRange = true))
 
     @Test

@@ -2,6 +2,9 @@ package dev.danielhood.btscan.data.ble.fake
 
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.Bytes
+import dev.danielhood.btscan.domain.model.DataStatus
+import dev.danielhood.btscan.domain.model.Phy
+import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
 
 private const val MANY_COUNT = 200
@@ -244,6 +247,56 @@ object Scenarios {
     private fun vendor(n: Int, payload: Bytes, rssi: Int) =
         FakeDevice(address = addr(n), advertisement = payload, baseRssi = rssi, phaseMs = (n % 5) * 100L)
 
+    /**
+     * Radio metadata and interval estimates: extended advertising on 2M with a set id and periodic interval,
+     * a coded-PHY device whose radio reports no TX power, a truncated extended report, a slow legacy device and
+     * a fast calibrated iBeacon (distance band). Packet intervals are 500, 500, 500, 1000 and 100 ms.
+     * Signal levels are 12 dB apart so rows keep their order despite drift.
+     */
+    private val radio =
+        Scenario(
+            name = "radio",
+            devices =
+                listOf(
+                    FakeDevice(
+                        address = addr(1),
+                        advertisement = advertisement { flags(0x06) },
+                        baseRssi = -45,
+                        radio = RadioInfo(Phy.LE_1M, Phy.LE_2M, false, 3, 8, 80, DataStatus.COMPLETE),
+                    ),
+                    FakeDevice(
+                        address = addr(2),
+                        advertisement = advertisement { flags(0x06) },
+                        baseRssi = -57,
+                        phaseMs = 100,
+                        radio = RadioInfo(Phy.LE_CODED, Phy.LE_CODED, false, 1, null, null, DataStatus.COMPLETE),
+                    ),
+                    FakeDevice(
+                        address = addr(3),
+                        advertisement = advertisement { flags(0x06) },
+                        baseRssi = -81,
+                        phaseMs = 200,
+                        radio = RadioInfo(Phy.LE_1M, Phy.LE_1M, false, null, 0, null, DataStatus.TRUNCATED),
+                    ),
+                    FakeDevice(
+                        address = addr(4),
+                        advertisement = advertisement { flags(0x06) },
+                        baseRssi = -93,
+                        intervalMs = 1000,
+                        phaseMs = 300,
+                        radio = RadioInfo(Phy.LE_1M, null, true, null, null, null, null),
+                    ),
+                    FakeDevice(
+                        address = addr(5),
+                        advertisement = BeaconFrames.ibeacon(),
+                        baseRssi = -69,
+                        intervalMs = 100,
+                        isConnectable = false,
+                        radio = RadioInfo(Phy.LE_1M, null, true, null, null, null, null),
+                    ),
+                ),
+        )
+
     private val scanFails =
         Scenario(
             name = "scan-fails",
@@ -281,6 +334,7 @@ object Scenarios {
             beacons,
             sensors,
             vendors,
+            radio,
             scanFails,
             tooFrequent,
             bluetoothOff,

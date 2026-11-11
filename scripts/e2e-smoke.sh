@@ -45,6 +45,16 @@ rssi_changes() { # detail rssi text must differ across samples within ~8 s
   done
   return 1
 }
+open_device() { # address: tap its row and confirm that exact device opened (rows can swap as RSSI drifts); retry
+  local addr="$1" try
+  for try in 1 2 3; do
+    "$S/ui.sh" tap "device_row_$addr" >/dev/null 2>&1 || true
+    if "$S/ui.sh" wait detail_screen 5 >/dev/null 2>&1 && "$S/ui.sh" find detail_address 2>/dev/null | grep -q "text='$addr'"; then return 0; fi
+    "$S/ui.sh" back >/dev/null 2>&1 || true
+    "$S/ui.sh" wait device_list 5 >/dev/null 2>&1 || true
+  done
+  return 1
+}
 tap_allow() { "$S/ui.sh" tap permission_allow_button || "$S/ui.sh" tap Allow; }
 
 "$S/app.sh" install
@@ -138,7 +148,7 @@ echo "-- beacon decoding (Tier 1)"
 sleep 1.5
 "$S/ui.sh" tap scan_button >/dev/null
 check "four beacon devices"         wait_rows 4 6
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
+open_device C0:FF:EE:00:00:01 || true
 check "ibeacon detail opens"        "$S/ui.sh" wait detail_screen 10
 check "ibeacon section present"     "$S/ui.sh" wait detail_decoded_ibeacon 5
 check "ibeacon uuid decoded"        bash -c "'$S/ui.sh' find decoded_ibeacon_beacon_uuid | grep -q \"text='E2C56DB5-DFFB-48D2-B060-D0F5A71096E0'\""
@@ -147,14 +157,14 @@ check "ibeacon power -59 dBm"       bash -c "'$S/ui.sh' find decoded_ibeacon_mea
 "$S/shot.sh" smoke-ibeacon >/dev/null
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:02 >/dev/null
+open_device C0:FF:EE:00:00:02 || true
 check "eddystone detail opens"      "$S/ui.sh" wait detail_screen 10
 check "eddystone uid frame shown"   "$S/ui.sh" wait detail_decoded_eddystone_uid 8
 check "eddystone url decoded"       bash -c "'$S/ui.sh' wait decoded_eddystone_url_eddystone_url 8 && '$S/ui.sh' find decoded_eddystone_url_eddystone_url | grep -q 'https://example.com/'"
 "$S/shot.sh" smoke-eddystone >/dev/null
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:04 >/dev/null
+open_device C0:FF:EE:00:00:04 || true
 check "altbeacon section present"   "$S/ui.sh" wait detail_decoded_altbeacon 8
 check "altbeacon uuid decoded"      bash -c "'$S/ui.sh' find decoded_altbeacon_beacon_uuid | grep -q '2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6'"
 
@@ -164,18 +174,18 @@ echo "-- sensor decoding (Tier 1)"
 sleep 1.5
 "$S/ui.sh" tap scan_button >/dev/null
 check "three sensor devices"        wait_rows 3 6
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
+open_device C0:FF:EE:00:00:01 || true
 check "ruuvi section present"       "$S/ui.sh" wait detail_decoded_ruuvi_v5 8
 check "ruuvi temperature 24.3"      bash -c "'$S/ui.sh' find decoded_ruuvi_v5_temperature_c | grep -q '24.3 '"
 check "ruuvi humidity 53.49 %"      bash -c "'$S/ui.sh' find decoded_ruuvi_v5_humidity_percent | grep -q '53.49 %'"
 "$S/shot.sh" smoke-ruuvi >/dev/null
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:02 >/dev/null
+open_device C0:FF:EE:00:00:02 || true
 check "bthome temperature 25.06"    bash -c "'$S/ui.sh' wait decoded_bthome_temperature_c 8 && '$S/ui.sh' find decoded_bthome_temperature_c | grep -q '25.06 '"
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:03 >/dev/null
+open_device C0:FF:EE:00:00:03 || true
 check "encrypted bthome flagged"    bash -c "'$S/ui.sh' wait decoded_bthome_confidence 8 && '$S/ui.sh' find decoded_bthome_confidence | grep -q 'Encrypted'"
 check "encrypted shows no values"   absent decoded_bthome_temperature_c
 
@@ -185,15 +195,46 @@ echo "-- vendor hints (Tier 1)"
 sleep 1.5
 "$S/ui.sh" tap scan_button >/dev/null
 check "vendor devices appear"       wait_rows 6 8
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
+open_device C0:FF:EE:00:00:01 || true
 check "find my hint section"        "$S/ui.sh" wait detail_decoded_tracker_hint 8
 check "hint says unofficial"        bash -c "'$S/ui.sh' find decoded_tracker_hint_confidence | grep -q 'Unofficial hint'"
 check "title says unverified"       bash -c "'$S/ui.sh' find detail_decoded_tracker_hint | grep -q 'unverified'"
 "$S/shot.sh" smoke-vendor-hint >/dev/null
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
-"$S/ui.sh" tap device_row_C0:FF:EE:00:00:05 >/dev/null
+open_device C0:FF:EE:00:00:05 || true
 check "fast pair model id shown"    bash -c "'$S/ui.sh' wait decoded_fast_pair_fast_pair_model_id 8 && '$S/ui.sh' find decoded_fast_pair_fast_pair_model_id | grep -q '2A 3B 4C'"
+
+echo "-- radio metadata, estimates and kind chips (Tier 1)"
+"$S/app.sh" launch --scenario radio >/dev/null
+"$S/ui.sh" wait device_list_screen 10 >/dev/null
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "five radio devices"          wait_rows 5 8
+check "ibeacon row has a chip"      bash -c "'$S/ui.sh' find kind_chip_C0:FF:EE:00:00:05 | grep -q \"text='iBeacon'\""
+check "plain row has no chip"       absent kind_chip_C0:FF:EE:00:00:01
+open_device C0:FF:EE:00:00:01 || true
+check "radio section phy shown"     "$S/ui.sh" wait detail_radio_primary_phy 8
+check "secondary phy is LE 2M"      bash -c "'$S/ui.sh' find detail_radio_secondary_phy | grep -q 'LE 2M'"
+adb shell input swipe 540 1900 540 700 300
+sleep 1
+check "advertising set id is 3"     bash -c "'$S/ui.sh' find detail_radio_sid | grep -q \"text='3'\""
+check "periodic interval 100 ms"    bash -c "'$S/ui.sh' find detail_radio_periodic_interval | grep -q '100 ms'"
+check "interval estimate appears"   bash -c "'$S/ui.sh' wait detail_radio_interval 10 && '$S/ui.sh' find detail_radio_interval | grep -q 'ms between packets'"
+"$S/shot.sh" smoke-radio >/dev/null
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+open_device C0:FF:EE:00:00:02 || true
+check "coded phy shown"             bash -c "'$S/ui.sh' wait detail_radio_primary_phy 8 && '$S/ui.sh' find detail_radio_primary_phy | grep -q 'Coded'"
+check "no distance without calibration" absent detail_radio_distance
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+open_device C0:FF:EE:00:00:05 || true
+adb shell input swipe 540 1900 540 400 300
+sleep 0.5
+adb shell input swipe 540 1900 540 400 300
+sleep 1
+check "calibrated beacon has a distance" bash -c "'$S/ui.sh' wait detail_radio_distance 10"
 
 echo "-- launch without overrides"
 "$S/app.sh" launch >/dev/null

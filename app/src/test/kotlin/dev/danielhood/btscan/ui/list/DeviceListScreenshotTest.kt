@@ -42,6 +42,9 @@ class DeviceListScreenshotTest {
     fun scanningWithDevices() = shoot("scanning-devices", SampleUi.state(ListStatus.Scanning, SampleUi.devices))
 
     @Test
+    fun kindChips() = shoot("kind-chips", SampleUi.state(ListStatus.Scanning, SampleUi.devicesWithKinds))
+
+    @Test
     fun scanningWithDevicesDark() =
         shoot("scanning-devices-dark", SampleUi.state(ListStatus.Scanning, SampleUi.devices), dark = true)
 

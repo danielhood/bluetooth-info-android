@@ -238,4 +238,22 @@ class DeviceListContentTest {
         show(SampleUi.state(ListStatus.Scanning, SampleUi.devices.take(1)))
         rule.onNodeWithContentDescription("Signal 4 of 4", useUnmergedTree = true).assertIsDisplayed()
     }
+
+    @Test
+    fun `rows show a kind chip only when a decoder matched`() {
+        show(SampleUi.state(ListStatus.Scanning, SampleUi.devicesWithKinds))
+        rule
+            .onNodeWithTag(
+                TestTags.kindChip("C0:FF:EE:00:00:01"),
+                useUnmergedTree = true,
+            ).assertTextEquals("Ruuvi sensor")
+        rule.onNodeWithTag(TestTags.kindChip("C0:FF:EE:00:00:02"), useUnmergedTree = true).assertTextEquals("iBeacon")
+        rule.onNodeWithTag(TestTags.kindChip("C0:FF:EE:00:00:03"), useUnmergedTree = true).assertTextEquals("Eddystone")
+        rule
+            .onNodeWithTag(
+                TestTags.kindChip("C0:FF:EE:00:00:04"),
+                useUnmergedTree = true,
+            ).assertTextEquals("Tracker? (unverified)")
+        rule.onNodeWithTag(TestTags.kindChip("C0:FF:EE:00:00:05"), useUnmergedTree = true).assertDoesNotExist()
+    }
 }

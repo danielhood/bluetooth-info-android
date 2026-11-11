@@ -9,9 +9,13 @@ import dev.danielhood.btscan.domain.decode.FieldKey
 import dev.danielhood.btscan.domain.decode.FieldValue
 import dev.danielhood.btscan.domain.decode.Unit
 import dev.danielhood.btscan.domain.decode.decoders.RuuviV5Decoder
+import dev.danielhood.btscan.domain.estimate.DistanceBand
 import dev.danielhood.btscan.domain.model.Advertisement
 import dev.danielhood.btscan.domain.model.Bytes
+import dev.danielhood.btscan.domain.model.DataStatus
 import dev.danielhood.btscan.domain.model.ManufacturerData
+import dev.danielhood.btscan.domain.model.Phy
+import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.ui.list.DeviceListUiState
 import dev.danielhood.btscan.ui.list.DeviceRowUi
@@ -26,6 +30,16 @@ object SampleUi {
             DeviceRowUi("C0:FF:EE:00:00:03", null, -72, 2, false),
             DeviceRowUi("C0:FF:EE:00:00:04", null, -80, 2, true),
             DeviceRowUi("C0:FF:EE:00:00:05", null, -85, 1, true),
+        )
+
+    /** Rows as the beacons, sensors and vendors scenarios would show them. */
+    val devicesWithKinds =
+        listOf(
+            DeviceRowUi("C0:FF:EE:00:00:01", "Ruuvi 884F", -48, 4, true, DecoderId.RUUVI_V5),
+            DeviceRowUi("C0:FF:EE:00:00:02", null, -55, 4, false, DecoderId.IBEACON),
+            DeviceRowUi("C0:FF:EE:00:00:03", null, -62, 3, false, DecoderId.EDDYSTONE_UID),
+            DeviceRowUi("C0:FF:EE:00:00:04", null, -70, 2, false, DecoderId.TRACKER_HINT),
+            DeviceRowUi("C0:FF:EE:00:00:05", "Plain Device", -78, 2, true),
         )
 
     fun state(
@@ -140,6 +154,15 @@ object SampleDetail {
                         manufacturerData = listOf(ManufacturerData(0x004C, Bytes(byteArrayOf(0x12, 0x01, 0x00)))),
                     ),
                 ),
+        )
+
+    /** Extended advertising with every radio field present plus both estimates. */
+    val radio =
+        thermo.copy(
+            name = "Radio Demo",
+            radio = RadioInfo(Phy.LE_1M, Phy.LE_2M, false, 3, 8, 80, DataStatus.COMPLETE),
+            intervalEstimateMs = 500,
+            distanceBand = DistanceBand.ABOUT_ONE_METRE,
         )
 
     val sparse =

@@ -37,6 +37,7 @@ class FakeBleScanner(
                                 bytes = payloadAt(device, elapsedMs),
                                 isConnectable = device.isConnectable,
                                 timestamp = clock.now(),
+                                radio = device.radio,
                             ),
                         )
                     }

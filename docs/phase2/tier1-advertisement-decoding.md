@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** T1-M1 to T1-M3 done (2026-11-10); T1-M0 spike, T1-M4 and T1-M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
+**Status:** T1-M1 to T1-M4 done (2026-11-10); T1-M0 spike and T1-M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -140,7 +140,7 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 | T1-M1 | `RadioInfo`, decoder framework, iBeacon and Eddystone decoders, `beacons` scenario, detail "Decoded data" section | AC T1-1, T1-2 green; `verify.sh --full` passes. **Done.** Notes below. |
 | T1-M2 | Ruuvi, BTHome (and AltBeacon), `sensors` scenario | AC T1-3. **Done.** Notes below. |
 | T1-M3 | Fast Pair, Swift Pair, Apple type labels, tracker hint, `vendors` scenario, wording review | AC T1-4. **Done except Swift Pair (deferred).** Notes below. |
-| T1-M4 | Radio section, interval and distance estimates, list kind chips, `radio` scenario | AC T1-5, T1-6 |
+| T1-M4 | Radio section, interval and distance estimates, list kind chips, `radio` scenario | AC T1-5, T1-6. **Done.** Notes below. |
 | T1-M5 | Real-device validation with X1 profiles and with real neighbours; roadmap and AGENTS.md updates | AC T1-7 |
 
 ### T1-M1 implementation notes
@@ -163,6 +163,16 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 - **Swift Pair is deferred.** Microsoft's pages do not state the Microsoft Beacon ID value (0x03 was my assumption) and the payload layouts are only in figures; the page confirms vendor id 0x0006, sub-scenarios 0x00/0x01/0x02 and the reserved RSSI byte 0x80. It can be added once the layout is confirmed against a primary source or a real capture; until then Microsoft data shows only in the existing manufacturer-data list.
 - **Not claimed.** Other Apple types (0x03, 0x06, 0x08 to 0x0F ...) were not verified, so they show as "Other message (not named by this app)" with the code. Tile 0xFD84 was not found in sources and is not used.
 - **Wording rules, enforced by tests.** Hints use a closed set of labels (`LabelKey`), never free text; `DecodersTest` asserts (in the fuzz loop) that no unofficial hint carries a `Text` value; Apple payload bytes are never read or shown; Fast Pair's model ID is shown as a number and never mapped to a product; the tracker card is titled "Looks like a location tracker (unverified)" and its family label says "resembles", with phrases such as "Tile-style identifier".
+
+### T1-M4 implementation notes
+
+- **Estimates live in the domain** (`domain/estimate/Estimates.kt`, pure, unit-tested): the packet interval is observed time divided by gaps and appears only with at least 5 packets and 2 s observed; the distance band uses free-space path loss (exponent 2) and appears only for devices with a calibrated reference (iBeacon measured power and AltBeacon reference RSSI as 1 m values, Eddystone 0 m power minus 41 dB). Zero, positive or implausible reference values count as uncalibrated. Bands are VERY_CLOSE (under 0.5 m), ABOUT_ONE_METRE (under 2 m), A_FEW_METRES (under 10 m), FAR; never decimals.
+- **Wording:** both estimates carry "(estimate)" or "rough estimate" in their labels plus a one-line caveat (missed packets lengthen the interval; walls and bodies change distance a lot).
+- **Kind chips:** one chip per row from `List<Decoded>.primaryKind()` with an explicit priority list (a test asserts it covers every decoder). The tracker chip reads "Tracker? (unverified)". T1-L2 (the filter control) is not done; it was a "could".
+- **Radio section** shows only what the platform reported; unavailable values are null in the model and not rendered. Android fills radio data from the `ScanResult` getters (unit-tested sentinel mapping); real-hardware values are only seen at T1-M5.
+- **Performance (T1-8, emulator):** `perf.sh` with 200 fake devices after T1-M4: 638 frames, 6.74% janky, median 21 ms (Phase 1 baseline 6.1% and 24 ms; software rendering, within noise). The `many` scenario carries no decodable data, so this mostly measures the decoders' short-circuit cost; a Pixel run with real neighbours belongs to T1-M5.
+- **Smoke lesson:** rows re-sort as RSSI drifts, so tapping a row by id can open a neighbour. The smoke script now opens devices through `open_device`, which confirms the address and retries; the `radio` scenario also spaces signal levels 12 dB apart.
+- The T1-M0 spike (address type API) is still open.
 
 ## 6. Acceptance criteria
 

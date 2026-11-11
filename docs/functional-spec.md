@@ -85,6 +85,7 @@ Selected with `--es scenario <name>`; each is deterministic (seeded) so screensh
 | `beacons` | An iBeacon, an Eddystone device rotating UID/URL/TLM frames, an Eddystone-EID and an AltBeacon (exact bytes in `BeaconFrames.kt`) | Tier 1 decoders, frames accumulating on one device |
 | `sensors` | Ruuvi format 5 (the documentation example), BTHome plain, BTHome encrypted (exact bytes in `SensorFrames.kt`) | Tier 1 sensor decoders, encrypted handling |
 | `vendors` | Apple Find My / AirDrop / Proximity Pairing / unnamed message, Fast Pair (both modes), Tile- and SmartTag-style identifiers, a plain device (exact bytes in `VendorFrames.kt`; payloads are filler) | Tier 1 vendor hints and wording rules |
+| `radio` | Extended advertising with 2M PHY, set id and periodic interval; coded PHY without TX power; truncated report; slow legacy device; fast calibrated iBeacon (intervals 500/500/500/1000/100 ms) | Radio section, omitted unavailable values, interval and distance estimates |
 | `bluetooth-off` | Adapter reports Off | Bluetooth-off state |
 | `unsupported` | Adapter reports Unsupported | Unsupported state |
 | `scan-fails` | Scanner throws `ScanFailure` after 2 s | Failed state and Retry |

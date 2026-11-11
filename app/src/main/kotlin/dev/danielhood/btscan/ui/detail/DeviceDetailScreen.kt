@@ -134,6 +134,7 @@ private fun Loaded(state: DeviceDetailUiState.Loaded, onCopyRaw: (String) -> Uni
             Field(R.string.detail_ad_count, device.advertisementCount.toString(), TestTags.DETAIL_AD_COUNT)
         }
         DecodedSections(device.decoded)
+        RadioSection(device)
         HorizontalDivider()
         ServicesSection(device)
         HorizontalDivider()

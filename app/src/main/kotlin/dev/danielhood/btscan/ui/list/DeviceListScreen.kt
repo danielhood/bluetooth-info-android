@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import dev.danielhood.btscan.R
+import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.ui.common.TestTags
 
@@ -272,6 +274,7 @@ private fun DeviceRow(device: DeviceRowUi, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+            if (device.kind != null) KindChip(device.address, device.kind)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.rssi_dbm, device.rssi), style = MaterialTheme.typography.bodyMedium)
@@ -279,3 +282,54 @@ private fun DeviceRow(device: DeviceRowUi, onClick: () -> Unit) {
         }
     }
 }
+
+@Composable
+private fun KindChip(address: String, kind: DecoderId) {
+    Text(
+        text = stringResource(kindChipLabel(kind)),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier =
+            Modifier
+                .padding(top = 4.dp)
+                .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+                .testTag(TestTags.kindChip(address)),
+    )
+}
+
+/** Short chip text per decoder; hint-style kinds carry their caution in the words. */
+internal fun kindChipLabel(kind: DecoderId): Int =
+    when (kind) {
+        DecoderId.IBEACON -> {
+            R.string.chip_ibeacon
+        }
+
+        DecoderId.EDDYSTONE_UID, DecoderId.EDDYSTONE_URL, DecoderId.EDDYSTONE_TLM, DecoderId.EDDYSTONE_EID -> {
+            R.string.chip_eddystone
+        }
+
+        DecoderId.ALTBEACON -> {
+            R.string.chip_altbeacon
+        }
+
+        DecoderId.RUUVI_V5 -> {
+            R.string.chip_ruuvi
+        }
+
+        DecoderId.BTHOME -> {
+            R.string.chip_bthome
+        }
+
+        DecoderId.FAST_PAIR -> {
+            R.string.chip_fast_pair
+        }
+
+        DecoderId.APPLE_CONTINUITY -> {
+            R.string.chip_apple
+        }
+
+        DecoderId.TRACKER_HINT -> {
+            R.string.chip_tracker_hint
+        }
+    }

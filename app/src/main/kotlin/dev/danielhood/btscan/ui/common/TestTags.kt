@@ -35,6 +35,12 @@ object TestTags {
 
     fun deviceRow(address: String) = "device_row_$address"
 
+    /** Kind chip in a list row, for example `kind_chip_C0:FF:EE:00:00:01`. */
+    fun kindChip(address: String) = "kind_chip_$address"
+
+    /** One line of the detail Radio section, for example `detail_radio_primary_phy`. */
+    fun detailRadio(field: String) = "detail_radio_$field"
+
     fun detailService(index: Int) = "detail_service_$index"
 
     fun detailManufacturer(index: Int) = "detail_manufacturer_$index"

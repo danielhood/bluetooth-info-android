@@ -4,6 +4,9 @@ import dev.danielhood.btscan.domain.decode.Confidence
 import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.decode.FieldKey
 import dev.danielhood.btscan.domain.decode.FieldValue
+import dev.danielhood.btscan.domain.estimate.Estimates
+import dev.danielhood.btscan.domain.model.DataStatus
+import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
@@ -12,6 +15,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
@@ -165,6 +170,28 @@ class FakeScenarioWithRepositoryTest {
                             setOf(DecoderId.APPLE_CONTINUITY, DecoderId.TRACKER_HINT)
                     }.all { it.confidence == Confidence.UNOFFICIAL_HINT },
             )
+        }
+
+    @Test
+    fun `radio scenario reports phy and set data, omits unavailable values and estimates intervals`() =
+        runTest {
+            val repo = repoFor("radio")
+            repo.startScan()
+            advance(6_000)
+            val byAddress = repo.devices.value.associateBy { it.address.takeLast(2) }
+            val extended = byAddress.getValue("01").radio!!
+            assertEquals(Phy.LE_2M, extended.secondaryPhy)
+            assertEquals(3, extended.advertisingSid)
+            assertEquals(80, extended.periodicIntervalUnits)
+            val coded = byAddress.getValue("02").radio!!
+            assertNull(coded.txPowerDbm)
+            assertEquals(DataStatus.TRUNCATED, byAddress.getValue("03").radio!!.dataStatus)
+            assertEquals(true, byAddress.getValue("04").radio!!.isLegacy)
+            assertEquals(500L, Estimates.advertisingIntervalMs(byAddress.getValue("01")))
+            assertEquals(1000L, Estimates.advertisingIntervalMs(byAddress.getValue("04")))
+            assertEquals(100L, Estimates.advertisingIntervalMs(byAddress.getValue("05")))
+            assertNotNull(Estimates.distanceBand(byAddress.getValue("05")))
+            assertNull(Estimates.distanceBand(byAddress.getValue("01")))
         }
 
     @Test

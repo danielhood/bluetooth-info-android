@@ -1,5 +1,7 @@
 package dev.danielhood.btscan.ui.list
 
+import dev.danielhood.btscan.domain.decode.DecoderId
+import dev.danielhood.btscan.domain.decode.primaryKind
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.BleDevice
 import dev.danielhood.btscan.domain.model.PermissionState
@@ -37,6 +39,8 @@ data class DeviceRowUi(
     /** 0..4 bars. */
     val signalLevel: Int,
     val isConnectable: Boolean,
+    /** What a decoder recognised in the advertisement, shown as a small chip; null when nothing matched. */
+    val kind: DecoderId? = null,
 )
 
 data class DeviceListUiState(
@@ -84,6 +88,7 @@ internal fun BleDevice.toRowUi() =
         rssi = rssi,
         signalLevel = signalLevel(rssi),
         isConnectable = isConnectable,
+        kind = decoded.primaryKind(),
     )
 
 /** Pure derivation of the screen status. Order matters: the first applicable blocker wins. */
