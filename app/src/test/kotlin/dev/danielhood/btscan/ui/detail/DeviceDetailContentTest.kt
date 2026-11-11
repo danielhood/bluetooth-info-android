@@ -178,4 +178,27 @@ class DeviceDetailContentTest {
         show(SampleDetail.loaded())
         rule.onNodeWithTag(TestTags.detailDecoded("ibeacon")).assertDoesNotExist()
     }
+
+    @Test
+    fun `sensor readings show with units and small values keep their precision`() {
+        show(SampleDetail.loaded(SampleDetail.sensor))
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("ruuvi_v5", "temperature_c"),
+            ).performScrollTo()
+            .assertTextEquals("24.3 \u00B0C")
+        rule.onNodeWithTag(TestTags.decodedField("ruuvi_v5", "humidity_percent")).assertTextEquals("53.49 %")
+        rule.onNodeWithTag(TestTags.decodedField("ruuvi_v5", "pressure_hpa")).assertTextEquals("1000.44 hPa")
+        rule.onNodeWithTag(TestTags.decodedField("ruuvi_v5", "accel_x_g")).performScrollTo().assertTextEquals("0.004 G")
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("ruuvi_v5", "battery_mv"),
+            ).performScrollTo()
+            .assertTextEquals("2977 mV")
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("ruuvi_v5", "device_mac"),
+            ).performScrollTo()
+            .assertTextEquals("CB B8 33 4C 88 4F")
+    }
 }

@@ -28,7 +28,8 @@ class DecodersTest {
     @Test
     fun `fuzz inputs never throw and numbers are finite`() {
         val random = Random(SEED)
-        val prefixes = listOf("", "0215", "00", "10", "20", "20 00", "30", "02")
+        val prefixes =
+            listOf("", "0215", "00", "10", "20", "20 00", "30", "02", "05", "BEAC", "40", "41", "4001", "4002")
         repeat(ITERATIONS) {
             val tail = ByteArray(random.nextInt(MAX_LEN)).also { random.nextBytes(it) }
             val prefix = hex(prefixes[random.nextInt(prefixes.size)]).toByteArray()
@@ -36,8 +37,16 @@ class DecodersTest {
             val ad =
                 Advertisement(
                     serviceData =
-                        listOf(ServiceData(AdvertisementParser.uuidFromShort(0xFEAA), data)),
-                    manufacturerData = listOf(ManufacturerData(0x004C, data)),
+                        listOf(
+                            ServiceData(AdvertisementParser.uuidFromShort(0xFEAA), data),
+                            ServiceData(AdvertisementParser.uuidFromShort(0xFCD2), data),
+                        ),
+                    manufacturerData =
+                        listOf(
+                            ManufacturerData(0x004C, data),
+                            ManufacturerData(0x0499, data),
+                            ManufacturerData(0x0118, data),
+                        ),
                 )
             Decoders
                 .decode(ad)

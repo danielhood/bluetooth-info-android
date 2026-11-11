@@ -34,8 +34,6 @@ private const val TLM_COUNT_OFFSET = 6
 private const val TLM_UPTIME_OFFSET = 10
 private const val FIXED_POINT_DIVISOR = 256.0
 private const val DECISECOND = 10.0
-private const val SIGN_BIT_16 = 0x10000
-private const val SIGN_LIMIT_16 = 0x8000
 private const val PRINTABLE_FIRST = 0x21
 private const val PRINTABLE_LAST = 0x7E
 private const val EXPANSION_LAST = 0x0D
@@ -147,7 +145,7 @@ object EddystoneDecoder : PayloadDecoder {
                 add(DecodedField(FieldKey.BATTERY_MV, FieldValue.Number(voltage.toDouble(), Unit.MILLIVOLT)))
             }
             if (rawTemperature != TLM_UNSUPPORTED_TEMPERATURE) {
-                val signed = if (rawTemperature >= SIGN_LIMIT_16) rawTemperature - SIGN_BIT_16 else rawTemperature
+                val signed = signed16(rawTemperature)
                 add(DecodedField(FieldKey.TEMPERATURE_C, FieldValue.Number(signed / FIXED_POINT_DIVISOR, Unit.CELSIUS)))
             }
             add(

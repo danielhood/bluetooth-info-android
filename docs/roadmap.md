@@ -168,7 +168,7 @@ Exit: met. All acceptance criteria are met; known gaps: the Android 8 to 11 loca
 
 ## What comes next
 
-Phase 2 (three tiers of learning more from neighbouring devices) is planned; **X2 (policy guardrail tests) is done**; Tier 1 milestone T1-M1 is done (RadioInfo, decoder framework, iBeacon and Eddystone decoders, `beacons` scenario, detail "Decoded data" section); the rest is not started: see [phase2/README.md](phase2/README.md).
+Phase 2 (three tiers of learning more from neighbouring devices) is planned; **X2 (policy guardrail tests) is done**; Tier 1 milestones T1-M1 (decoder framework, iBeacon, Eddystone, `beacons`) and T1-M2 (Ruuvi, BTHome, AltBeacon, `sensors`) are done; the rest is not started: see [phase2/README.md](phase2/README.md).
 
 ## Spikes
 

@@ -86,4 +86,24 @@
   <string name="field_temperature">Temperature</string>
   <string name="field_advertisement_count">Packets sent</string>
   <string name="field_uptime">Time since power-on</string>
+  <string name="decoder_altbeacon">AltBeacon</string>
+  <string name="decoder_ruuvi_v5">Ruuvi sensor (data format 5)</string>
+  <string name="decoder_bthome">BTHome sensor</string>
+  <string name="field_humidity">Humidity</string>
+  <string name="field_pressure">Air pressure</string>
+  <string name="field_accel_x">Acceleration X</string>
+  <string name="field_accel_y">Acceleration Y</string>
+  <string name="field_accel_z">Acceleration Z</string>
+  <string name="field_tx_power_reported">Transmit power (reported)</string>
+  <string name="field_movement_counter">Movement counter</string>
+  <string name="field_sequence_number">Measurement sequence</string>
+  <string name="field_device_mac">Device-reported MAC</string>
+  <string name="field_battery_percent">Battery</string>
+  <string name="field_illuminance">Illuminance</string>
+  <string name="field_voltage">Voltage</string>
+  <string name="field_pm25">PM2.5</string>
+  <string name="field_pm10">PM10</string>
+  <string name="field_co2">CO2</string>
+  <string name="field_tvoc">TVOC</string>
+  <string name="field_packet_id">Packet id</string>
 </resources>

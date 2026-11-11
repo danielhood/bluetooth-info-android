@@ -84,7 +84,7 @@ internal fun formatValue(value: FieldValue): String =
         }
 
         is FieldValue.Number -> {
-            val text = DecimalFormat("0.##", DecimalFormatSymbols(Locale.getDefault())).format(value.value)
+            val text = DecimalFormat("0.###", DecimalFormatSymbols(Locale.getDefault())).format(value.value)
             unitSuffix(value.unit)?.let { "$text $it" } ?: text
         }
     }
@@ -96,37 +96,67 @@ private fun unitSuffix(unit: Unit): String? =
         Unit.MILLIVOLT -> "mV"
         Unit.CELSIUS -> "°C"
         Unit.SECONDS -> "s"
+        Unit.PERCENT -> "%"
+        Unit.HECTOPASCAL -> "hPa"
+        Unit.G_FORCE -> "G"
+        Unit.VOLT -> "V"
+        Unit.LUX -> "lx"
+        Unit.PPM -> "ppm"
+        Unit.MICROGRAM_PER_CUBIC_METRE -> "\u00B5g/m\u00B3"
     }
 
-private fun decoderTitle(id: DecoderId): Int =
+internal fun decoderTitle(id: DecoderId): Int =
     when (id) {
         DecoderId.IBEACON -> R.string.decoder_ibeacon
         DecoderId.EDDYSTONE_UID -> R.string.decoder_eddystone_uid
         DecoderId.EDDYSTONE_URL -> R.string.decoder_eddystone_url
         DecoderId.EDDYSTONE_TLM -> R.string.decoder_eddystone_tlm
         DecoderId.EDDYSTONE_EID -> R.string.decoder_eddystone_eid
+        DecoderId.ALTBEACON -> R.string.decoder_altbeacon
+        DecoderId.RUUVI_V5 -> R.string.decoder_ruuvi_v5
+        DecoderId.BTHOME -> R.string.decoder_bthome
     }
 
-private fun confidenceLabel(confidence: Confidence): Int =
+internal fun confidenceLabel(confidence: Confidence): Int =
     when (confidence) {
         Confidence.SPECIFICATION -> R.string.confidence_specification
         Confidence.UNOFFICIAL_HINT -> R.string.confidence_hint
         Confidence.ENCRYPTED -> R.string.confidence_encrypted
     }
 
-private fun fieldLabel(key: FieldKey): Int =
-    when (key) {
-        FieldKey.BEACON_UUID -> R.string.field_beacon_uuid
-        FieldKey.BEACON_MAJOR -> R.string.field_beacon_major
-        FieldKey.BEACON_MINOR -> R.string.field_beacon_minor
-        FieldKey.MEASURED_POWER_1M_DBM -> R.string.field_measured_power_1m
-        FieldKey.TX_POWER_0M_DBM -> R.string.field_tx_power_0m
-        FieldKey.EDDYSTONE_NAMESPACE -> R.string.field_eddystone_namespace
-        FieldKey.EDDYSTONE_INSTANCE -> R.string.field_eddystone_instance
-        FieldKey.EDDYSTONE_URL -> R.string.field_eddystone_url
-        FieldKey.EDDYSTONE_EID -> R.string.field_eddystone_eid
-        FieldKey.BATTERY_MV -> R.string.field_battery
-        FieldKey.TEMPERATURE_C -> R.string.field_temperature
-        FieldKey.ADVERTISEMENT_COUNT -> R.string.field_advertisement_count
-        FieldKey.UPTIME_SECONDS -> R.string.field_uptime
-    }
+/** String resource per field key; `DecodedSectionsTest` asserts every [FieldKey] has an entry. */
+private val FIELD_LABELS: Map<FieldKey, Int> =
+    mapOf(
+        FieldKey.BEACON_UUID to R.string.field_beacon_uuid,
+        FieldKey.BEACON_MAJOR to R.string.field_beacon_major,
+        FieldKey.BEACON_MINOR to R.string.field_beacon_minor,
+        FieldKey.MEASURED_POWER_1M_DBM to R.string.field_measured_power_1m,
+        FieldKey.TX_POWER_0M_DBM to R.string.field_tx_power_0m,
+        FieldKey.EDDYSTONE_NAMESPACE to R.string.field_eddystone_namespace,
+        FieldKey.EDDYSTONE_INSTANCE to R.string.field_eddystone_instance,
+        FieldKey.EDDYSTONE_URL to R.string.field_eddystone_url,
+        FieldKey.EDDYSTONE_EID to R.string.field_eddystone_eid,
+        FieldKey.BATTERY_MV to R.string.field_battery,
+        FieldKey.TEMPERATURE_C to R.string.field_temperature,
+        FieldKey.ADVERTISEMENT_COUNT to R.string.field_advertisement_count,
+        FieldKey.UPTIME_SECONDS to R.string.field_uptime,
+        FieldKey.HUMIDITY_PERCENT to R.string.field_humidity,
+        FieldKey.PRESSURE_HPA to R.string.field_pressure,
+        FieldKey.ACCEL_X_G to R.string.field_accel_x,
+        FieldKey.ACCEL_Y_G to R.string.field_accel_y,
+        FieldKey.ACCEL_Z_G to R.string.field_accel_z,
+        FieldKey.TX_POWER_DBM to R.string.field_tx_power_reported,
+        FieldKey.MOVEMENT_COUNTER to R.string.field_movement_counter,
+        FieldKey.SEQUENCE_NUMBER to R.string.field_sequence_number,
+        FieldKey.DEVICE_MAC to R.string.field_device_mac,
+        FieldKey.BATTERY_PERCENT to R.string.field_battery_percent,
+        FieldKey.ILLUMINANCE_LUX to R.string.field_illuminance,
+        FieldKey.VOLTAGE_V to R.string.field_voltage,
+        FieldKey.PM25 to R.string.field_pm25,
+        FieldKey.PM10 to R.string.field_pm10,
+        FieldKey.CO2_PPM to R.string.field_co2,
+        FieldKey.TVOC to R.string.field_tvoc,
+        FieldKey.PACKET_ID to R.string.field_packet_id,
+    )
+
+internal fun fieldLabel(key: FieldKey): Int = FIELD_LABELS.getValue(key)

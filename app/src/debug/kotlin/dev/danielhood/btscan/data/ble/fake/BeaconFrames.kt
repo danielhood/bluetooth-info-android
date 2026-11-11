@@ -4,18 +4,8 @@ import dev.danielhood.btscan.domain.model.Bytes
 
 private const val APPLE = 0x004C
 private const val EDDYSTONE = 0xFEAA
+private const val ALTBEACON_COMPANY = 0x0118
 private const val FLAGS_GENERAL = 0x06
-private const val HEX_RADIX = 16
-private const val HEX_PAIR = 2
-
-private fun hex(s: String): Bytes {
-    val clean = s.replace(" ", "")
-    return Bytes(
-        ByteArray(clean.length / HEX_PAIR) {
-            clean.substring(it * HEX_PAIR, it * HEX_PAIR + HEX_PAIR).toInt(HEX_RADIX).toByte()
-        },
-    )
-}
 
 /**
  * Exact beacon payloads shared by the fake scenarios. The same byte strings appear in the decoder tests
@@ -32,13 +22,13 @@ object BeaconFrames {
         advertisement {
             flags(FLAGS_GENERAL)
             uuids16(EDDYSTONE)
-            serviceData16(EDDYSTONE, hex(frame))
+            serviceData16(EDDYSTONE, hexBytes(frame))
         }
 
     fun ibeacon(): Bytes =
         advertisement {
             flags(FLAGS_GENERAL)
-            manufacturer(APPLE, hex("02 15 E2C56DB5DFFB48D2B060D0F5A71096E0 0001 0002 C5"))
+            manufacturer(APPLE, hexBytes("02 15 E2C56DB5DFFB48D2B060D0F5A71096E0 0001 0002 C5"))
         }
 
     fun eddystoneUid(): Bytes = eddystone("00 EB 00112233445566778899 AABBCCDDEEFF 0000")
@@ -46,6 +36,13 @@ object BeaconFrames {
     fun eddystoneUrl(): Bytes = eddystone("10 EB 03 6578616D706C65 00")
 
     fun eddystoneTlm(): Bytes = eddystone("20 00 0BB8 1880 000003E8 00008CA0")
+
+    /** AltBeacon: UUID 2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6, major 1, minor 2, reference RSSI -59 dBm. */
+    fun altBeacon(): Bytes =
+        advertisement {
+            flags(FLAGS_GENERAL)
+            manufacturer(ALTBEACON_COMPANY, hexBytes("BEAC 2F234454CF6D4A0FADF2F4911BA9FFA6 0001 0002 C5 01"))
+        }
 
     fun eddystoneEid(): Bytes = eddystone("30 EB 0123456789ABCDEF")
 }

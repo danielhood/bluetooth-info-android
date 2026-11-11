@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** T1-M1 done (2026-11-10); T1-M0 spike and T1-M2 to M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
+**Status:** T1-M1 and T1-M2 done (2026-11-10); T1-M0 spike and T1-M3 to M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -138,7 +138,7 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 |---|---|---|
 | T1-M0 | Spike T1-S1 (address type API and its permission); decide OUI scope; confirm vector sources | Decision recorded here |
 | T1-M1 | `RadioInfo`, decoder framework, iBeacon and Eddystone decoders, `beacons` scenario, detail "Decoded data" section | AC T1-1, T1-2 green; `verify.sh --full` passes. **Done.** Notes below. |
-| T1-M2 | Ruuvi, BTHome (and AltBeacon), `sensors` scenario | AC T1-3 |
+| T1-M2 | Ruuvi, BTHome (and AltBeacon), `sensors` scenario | AC T1-3. **Done.** Notes below. |
 | T1-M3 | Fast Pair, Swift Pair, Apple type labels, tracker hint, `vendors` scenario, wording review | AC T1-4 |
 | T1-M4 | Radio section, interval and distance estimates, list kind chips, `radio` scenario | AC T1-5, T1-6 |
 | T1-M5 | Real-device validation with X1 profiles and with real neighbours; roadmap and AGENTS.md updates | AC T1-7 |
@@ -149,6 +149,13 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 - `RadioInfo` is captured and sentinel-mapped (`radioInfoOf`, unit-tested) and stored on `BleDevice.radio`, but not shown yet (the Radio section is T1-M4).
 - Test vectors are constructed from the published layouts, not copied from the specs' worked examples (the iBeacon layout is documented by third parties, Apple's text is licensed); the Eddystone URL `http://www.google.com` vector follows the specification's encoding table. A second reading by someone independent is still recommended (risk table below).
 - Test peripherals (X1) and spike T1-S1 (address type API permission) are untouched; beacon filtering by `neverForLocation` on real hardware is still unverified until T1-M5.
+
+### T1-M2 implementation notes
+
+- **Vector provenance.** Ruuvi's valid-data vector and decoded values are the official example from docs.ruuvi.com (data format 5); its extreme and invalid vectors are derived from the same field table, not copied. BTHome vectors are the examples printed on bthome.io/format (full example and per-object table). AltBeacon follows github.com/AltBeacon/spec. Details of each source are in the test file comments. A correction made along the way: `0xFFDE` is the largest valid Ruuvi power word (3646 mV, 20 dBm), not an invalid one.
+- **BTHome scope.** 13 object ids with verified layouts (packet id, battery, temperature x2 scales, humidity x2, pressure, illuminance, voltage, PM2.5, PM10, CO2, TVOC). Parsing stops at the first unknown or truncated object and keeps what was read, because an unknown object's length cannot be known. Encrypted frames are reported as encrypted with no values. Other documented objects (power, energy, dew point, rotation, binary sensors, events) are not decoded yet.
+- **Ruuvi** invalid markers are omitted from the output, never shown as raw sentinels. Pressure and acceleration are converted to hPa and G.
+- AltBeacon is in the `beacons` scenario; the 20-byte id is displayed as UUID plus two 16-bit values (convention; the spec only defines a 20-byte id).
 
 ## 6. Acceptance criteria
 

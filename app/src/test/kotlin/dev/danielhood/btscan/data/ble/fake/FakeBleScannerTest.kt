@@ -49,6 +49,7 @@ class FakeBleScannerTest {
                 "many",
                 "sparse-fields",
                 "beacons",
+                "sensors",
                 "scan-fails",
                 "too-frequent",
                 "bluetooth-off",

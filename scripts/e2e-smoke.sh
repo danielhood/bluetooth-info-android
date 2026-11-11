@@ -137,7 +137,7 @@ echo "-- beacon decoding (Tier 1)"
 "$S/ui.sh" wait device_list_screen 10 >/dev/null
 sleep 1.5
 "$S/ui.sh" tap scan_button >/dev/null
-check "three beacon devices"        wait_rows 3 6
+check "four beacon devices"         wait_rows 4 6
 "$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
 check "ibeacon detail opens"        "$S/ui.sh" wait detail_screen 10
 check "ibeacon section present"     "$S/ui.sh" wait detail_decoded_ibeacon 5
@@ -152,6 +152,32 @@ check "eddystone detail opens"      "$S/ui.sh" wait detail_screen 10
 check "eddystone uid frame shown"   "$S/ui.sh" wait detail_decoded_eddystone_uid 8
 check "eddystone url decoded"       bash -c "'$S/ui.sh' wait decoded_eddystone_url_eddystone_url 8 && '$S/ui.sh' find decoded_eddystone_url_eddystone_url | grep -q 'https://example.com/'"
 "$S/shot.sh" smoke-eddystone >/dev/null
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:04 >/dev/null
+check "altbeacon section present"   "$S/ui.sh" wait detail_decoded_altbeacon 8
+check "altbeacon uuid decoded"      bash -c "'$S/ui.sh' find decoded_altbeacon_beacon_uuid | grep -q '2F234454-CF6D-4A0F-ADF2-F4911BA9FFA6'"
+
+echo "-- sensor decoding (Tier 1)"
+"$S/app.sh" launch --scenario sensors >/dev/null
+"$S/ui.sh" wait device_list_screen 10 >/dev/null
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "three sensor devices"        wait_rows 3 6
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
+check "ruuvi section present"       "$S/ui.sh" wait detail_decoded_ruuvi_v5 8
+check "ruuvi temperature 24.3"      bash -c "'$S/ui.sh' find decoded_ruuvi_v5_temperature_c | grep -q '24.3 '"
+check "ruuvi humidity 53.49 %"      bash -c "'$S/ui.sh' find decoded_ruuvi_v5_humidity_percent | grep -q '53.49 %'"
+"$S/shot.sh" smoke-ruuvi >/dev/null
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:02 >/dev/null
+check "bthome temperature 25.06"    bash -c "'$S/ui.sh' wait decoded_bthome_temperature_c 8 && '$S/ui.sh' find decoded_bthome_temperature_c | grep -q '25.06 '"
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:03 >/dev/null
+check "encrypted bthome flagged"    bash -c "'$S/ui.sh' wait decoded_bthome_confidence 8 && '$S/ui.sh' find decoded_bthome_confidence | grep -q 'Encrypted'"
+check "encrypted shows no values"   absent decoded_bthome_temperature_c
 
 echo "-- launch without overrides"
 "$S/app.sh" launch >/dev/null

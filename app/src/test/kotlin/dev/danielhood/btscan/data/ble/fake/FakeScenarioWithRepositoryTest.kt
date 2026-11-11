@@ -1,6 +1,9 @@
 package dev.danielhood.btscan.data.ble.fake
 
+import dev.danielhood.btscan.domain.decode.Confidence
 import dev.danielhood.btscan.domain.decode.DecoderId
+import dev.danielhood.btscan.domain.decode.FieldKey
+import dev.danielhood.btscan.domain.decode.FieldValue
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
@@ -92,6 +95,47 @@ class FakeScenarioWithRepositoryTest {
                     .toSet(),
             )
             assertEquals(listOf(DecoderId.EDDYSTONE_EID), byAddress.getValue("03").decoded.map { it.decoder })
+            assertEquals(listOf(DecoderId.ALTBEACON), byAddress.getValue("04").decoded.map { it.decoder })
+        }
+
+    @Test
+    fun `sensors scenario decodes ruuvi and bthome and flags the encrypted frame`() =
+        runTest {
+            val repo = repoFor("sensors")
+            repo.startScan()
+            advance(2_000)
+            val byAddress = repo.devices.value.associateBy { it.address.takeLast(2) }
+            val ruuvi = byAddress.getValue("01").decoded.single()
+            assertEquals(DecoderId.RUUVI_V5, ruuvi.decoder)
+            assertEquals(
+                24.3,
+                (ruuvi.fields.first { it.key == FieldKey.TEMPERATURE_C }.value as FieldValue.Number).value,
+                1e-9,
+            )
+            assertEquals(
+                DecoderId.BTHOME,
+                byAddress
+                    .getValue("02")
+                    .decoded
+                    .single()
+                    .decoder,
+            )
+            assertEquals(
+                Confidence.SPECIFICATION,
+                byAddress
+                    .getValue("02")
+                    .decoded
+                    .single()
+                    .confidence,
+            )
+            assertEquals(
+                Confidence.ENCRYPTED,
+                byAddress
+                    .getValue("03")
+                    .decoded
+                    .single()
+                    .confidence,
+            )
         }
 
     @Test

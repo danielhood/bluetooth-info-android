@@ -67,3 +67,16 @@ class AdBuilder {
 }
 
 fun advertisement(block: AdBuilder.() -> Unit): Bytes = AdBuilder().apply(block).build()
+
+private const val HEX_RADIX = 16
+private const val HEX_PAIR = 2
+
+/** Parses hex text (spaces ignored) into bytes; used to write payloads exactly as the specifications print them. */
+fun hexBytes(text: String): Bytes {
+    val clean = text.replace(" ", "")
+    return Bytes(
+        ByteArray(clean.length / HEX_PAIR) {
+            clean.substring(it * HEX_PAIR, it * HEX_PAIR + HEX_PAIR).toInt(HEX_RADIX).toByte()
+        },
+    )
+}

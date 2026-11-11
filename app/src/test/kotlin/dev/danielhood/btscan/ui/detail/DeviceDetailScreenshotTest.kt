@@ -43,6 +43,9 @@ class DeviceDetailScreenshotTest {
     fun beaconDark() = shoot("beacon-dark", SampleDetail.loaded(SampleDetail.beacon), dark = true)
 
     @Test
+    fun sensor() = shoot("sensor", SampleDetail.loaded(SampleDetail.sensor))
+
+    @Test
     fun outOfRange() = shoot("out-of-range", SampleDetail.loaded(outOfRange = true))
 
     @Test

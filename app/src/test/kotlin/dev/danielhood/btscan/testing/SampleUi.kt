@@ -7,7 +7,10 @@ import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.decode.FieldKey
 import dev.danielhood.btscan.domain.decode.FieldValue
 import dev.danielhood.btscan.domain.decode.Unit
+import dev.danielhood.btscan.domain.decode.decoders.RuuviV5Decoder
+import dev.danielhood.btscan.domain.model.Advertisement
 import dev.danielhood.btscan.domain.model.Bytes
+import dev.danielhood.btscan.domain.model.ManufacturerData
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.ui.list.DeviceListUiState
 import dev.danielhood.btscan.ui.list.DeviceRowUi
@@ -99,6 +102,29 @@ object SampleDetail {
                         listOf(
                             DecodedField(FieldKey.EDDYSTONE_EID, FieldValue.Hex(Bytes(ByteArray(8) { it.toByte() }))),
                         ),
+                    ),
+                ),
+        )
+
+    /** Ruuvi format 5 documentation example plus an encrypted BTHome frame, decoded by the real decoders. */
+    val sensor =
+        thermo.copy(
+            name = "Ruuvi 884F",
+            decoded =
+                RuuviV5Decoder.decode(
+                    Advertisement(
+                        manufacturerData =
+                            listOf(
+                                ManufacturerData(
+                                    0x0499,
+                                    Bytes(
+                                        "0512FC5394C37C0004FFFC040CAC364200CDCBB8334C884F"
+                                            .chunked(2)
+                                            .map { it.toInt(16).toByte() }
+                                            .toByteArray(),
+                                    ),
+                                ),
+                            ),
                     ),
                 ),
         )

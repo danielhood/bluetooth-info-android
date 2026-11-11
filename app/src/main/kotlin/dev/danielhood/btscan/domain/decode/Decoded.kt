@@ -9,6 +9,9 @@ enum class DecoderId {
     EDDYSTONE_URL,
     EDDYSTONE_TLM,
     EDDYSTONE_EID,
+    ALTBEACON,
+    RUUVI_V5,
+    BTHOME,
 }
 
 /** How far a decoded result can be trusted. Shown to the user; see docs/phase2/policy-and-guardrails.md. */
@@ -38,6 +41,23 @@ enum class FieldKey {
     TEMPERATURE_C,
     ADVERTISEMENT_COUNT,
     UPTIME_SECONDS,
+    HUMIDITY_PERCENT,
+    PRESSURE_HPA,
+    ACCEL_X_G,
+    ACCEL_Y_G,
+    ACCEL_Z_G,
+    TX_POWER_DBM,
+    MOVEMENT_COUNTER,
+    SEQUENCE_NUMBER,
+    DEVICE_MAC,
+    BATTERY_PERCENT,
+    ILLUMINANCE_LUX,
+    VOLTAGE_V,
+    PM25,
+    PM10,
+    CO2_PPM,
+    TVOC,
+    PACKET_ID,
 }
 
 /** Units for [FieldValue.Number]; the UI formats them. */
@@ -47,6 +67,13 @@ enum class Unit {
     MILLIVOLT,
     CELSIUS,
     SECONDS,
+    PERCENT,
+    HECTOPASCAL,
+    G_FORCE,
+    VOLT,
+    LUX,
+    PPM,
+    MICROGRAM_PER_CUBIC_METRE,
 }
 
 sealed interface FieldValue {

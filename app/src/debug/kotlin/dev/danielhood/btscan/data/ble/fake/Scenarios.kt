@@ -160,7 +160,7 @@ object Scenarios {
 
     /**
      * Beacon formats with exact bytes (see the decoder tests for the field values they must produce):
-     * an iBeacon, one Eddystone device rotating UID/URL/TLM frames, and a rotating Eddystone-EID.
+     * an iBeacon, one Eddystone device rotating UID/URL/TLM frames, a rotating Eddystone-EID and an AltBeacon.
      */
     private val beacons =
         Scenario(
@@ -185,6 +185,37 @@ object Scenarios {
                         address = addr(3),
                         advertisement = BeaconFrames.eddystoneEid(),
                         baseRssi = -75,
+                        isConnectable = false,
+                        phaseMs = 200,
+                    ),
+                    FakeDevice(
+                        address = addr(4),
+                        advertisement = BeaconFrames.altBeacon(),
+                        baseRssi = -80,
+                        isConnectable = false,
+                        phaseMs = 300,
+                    ),
+                ),
+        )
+
+    /** Sensor formats with exact bytes (see SensorFrames): Ruuvi format 5, BTHome plain and BTHome encrypted. */
+    private val sensors =
+        Scenario(
+            name = "sensors",
+            devices =
+                listOf(
+                    FakeDevice(address = addr(1), advertisement = SensorFrames.ruuvi(), baseRssi = -52),
+                    FakeDevice(
+                        address = addr(2),
+                        advertisement = SensorFrames.bthome(),
+                        baseRssi = -62,
+                        isConnectable = false,
+                        phaseMs = 100,
+                    ),
+                    FakeDevice(
+                        address = addr(3),
+                        advertisement = SensorFrames.bthomeEncrypted(),
+                        baseRssi = -72,
                         isConnectable = false,
                         phaseMs = 200,
                     ),
@@ -220,7 +251,7 @@ object Scenarios {
         )
 
     val all: Map<String, Scenario> =
-        listOf(default, empty, many, sparseFields, beacons, scanFails, tooFrequent, bluetoothOff, unsupported)
+        listOf(default, empty, many, sparseFields, beacons, sensors, scanFails, tooFrequent, bluetoothOff, unsupported)
             .associateBy { it.name }
 
     /** Looks a scenario up by name; fails loudly (listing valid names) so a typo cannot silently pass. */
