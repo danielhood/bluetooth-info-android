@@ -1,0 +1,129 @@
+{
+  "_comment": "Advertisement profiles for the host BlueZ controller (scripts/peripheral.sh). Hex strings are the same bytes as BeaconFrames.kt / SensorFrames.kt in app/src/debug (a unit test compares them). Company ids and 16-bit service UUIDs are hex. Type 'peripheral' advertises from the controller's public address (deterministic); 'broadcast' instances use random addresses.",
+  "ibeacon": {
+    "type": "peripheral",
+    "manufacturer": {
+      "004C": "02 15 E2C56DB5DFFB48D2B060D0F5A71096E0 0001 0002 C5"
+    }
+  },
+  "altbeacon": {
+    "type": "peripheral",
+    "manufacturer": {
+      "0118": "BEAC 2F234454CF6D4A0FADF2F4911BA9FFA6 0001 0002 C5 01"
+    }
+  },
+  "eddystone-uid": {
+    "type": "peripheral",
+    "service_uuids": [
+      "FEAA"
+    ],
+    "service_data": {
+      "FEAA": "00 EB 00112233445566778899 AABBCCDDEEFF 0000"
+    }
+  },
+  "eddystone-url": {
+    "type": "peripheral",
+    "service_uuids": [
+      "FEAA"
+    ],
+    "service_data": {
+      "FEAA": "10 EB 03 6578616D706C65 00"
+    }
+  },
+  "eddystone-tlm": {
+    "type": "peripheral",
+    "service_uuids": [
+      "FEAA"
+    ],
+    "service_data": {
+      "FEAA": "20 00 0BB8 1880 000003E8 00008CA0"
+    }
+  },
+  "ruuvi": {
+    "type": "peripheral",
+    "manufacturer": {
+      "0499": "05 12FC 5394 C37C 0004 FFFC 040C AC36 42 00CD CBB8334C884F"
+    }
+  },
+  "ruuvi-2m": {
+    "type": "peripheral",
+    "secondary_channel": "2M",
+    "interval_ms": 100,
+    "manufacturer": {
+      "0499": "05 12FC 5394 C37C 0004 FFFC 040C AC36 42 00CD CBB8334C884F"
+    }
+  },
+  "bthome": {
+    "type": "peripheral",
+    "service_data": {
+      "FCD2": "40 0009 0161 02CA09 03BF13 04138A01"
+    }
+  },
+  "bthome-encrypted": {
+    "type": "peripheral",
+    "service_data": {
+      "FCD2": "41 A1B2C3D4E5F60718 00000001 DEADBEEF"
+    }
+  },
+  "ruuvi-100ms": {
+    "type": "peripheral",
+    "interval_ms": 100,
+    "manufacturer": {
+      "0499": "05 12FC 5394 C37C 0004 FFFC 040C AC36 42 00CD CBB8334C884F"
+    }
+  },
+  "named-min": {
+    "type": "peripheral",
+    "discoverable": true,
+    "local_name": "X1TEST",
+    "tx_power": 13
+  },
+  "ruuvi-disc": {
+    "type": "peripheral",
+    "discoverable": true,
+    "manufacturer": {
+      "0499": "05 12FC 5394 C37C 0004 FFFC 040C AC36 42 00CD CBB8334C884F"
+    }
+  },
+  "mfr-small-disc": {
+    "type": "peripheral",
+    "discoverable": true,
+    "manufacturer": {
+      "0499": "05 12FC"
+    }
+  },
+  "x-name": {
+    "type": "peripheral",
+    "discoverable": true,
+    "local_name": "X1NAME"
+  },
+  "x-mfr-nordic": {
+    "type": "peripheral",
+    "discoverable": true,
+    "manufacturer": {
+      "0059": "01 02 03"
+    }
+  },
+  "x-uuid-battery": {
+    "type": "peripheral",
+    "discoverable": true,
+    "service_uuids": [
+      "180F"
+    ]
+  },
+  "x-svcdata-battery": {
+    "type": "peripheral",
+    "discoverable": true,
+    "service_data": {
+      "180F": "64"
+    }
+  },
+  "x-name-mfr": {
+    "type": "peripheral",
+    "discoverable": true,
+    "local_name": "X1",
+    "manufacturer": {
+      "0499": "05 12"
+    }
+  }
+}

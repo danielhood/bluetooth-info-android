@@ -43,6 +43,11 @@ android {
             all {
                 // Robolectric (SDK 36+) needs access to JDK internals on JDK 21.
                 it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED")
+                // PeripheralProfilesTest reads this file at run time; declare it so editing it re-runs the tests.
+                it.inputs
+                    .file(
+                        rootProject.file("scripts/peripheral/profiles.json"),
+                    ).withPropertyName("peripheralProfiles")
             }
         }
         animationsDisabled = true

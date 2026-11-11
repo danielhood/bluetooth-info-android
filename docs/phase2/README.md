@@ -56,7 +56,7 @@ Phase 1's weakest point was that real advertisements were only ever seen on one 
 | **C. Dedicated dev board** (for example an nRF52 DK) running a stock GATT/beacon sample. | Deterministic, battery-powered, independent of the host. | Hardware purchase; not needed if A works. |
 | **D. A second phone** running a peripheral simulator app. | No new hardware. | Manual, not scriptable, third-party app on a personal device. |
 
-Spike **X1-S1** (time-box 3 h): prove option A for advertising (iBeacon + manufacturer data visible on the Pixel through the app) and for a minimal GATT server (Device Information with known strings, Battery 87%). Spike **X1-S2** (time-box 3 h): attempt option B against the emulator. Outcome decides which scripts are written: `scripts/peripheral.sh start|stop <profile>` for A, and/or a netsim script for B. Profiles correspond one-to-one with the fake-scanner scenarios so JVM and radio tests assert the same values.
+**X1-S1 is done (2026-11-10): see [x1-findings.md](x1-findings.md).** Spike **X1-S1** (time-box 3 h): prove option A for advertising (iBeacon + manufacturer data visible on the Pixel through the app) and for a minimal GATT server (Device Information with known strings, Battery 87%). Spike **X1-S2** (time-box 3 h): attempt option B against the emulator. Outcome decides which scripts are written: `scripts/peripheral.sh start|stop <profile>` for A, and/or a netsim script for B. Profiles correspond one-to-one with the fake-scanner scenarios so JVM and radio tests assert the same values.
 
 ### X2. Policy and guardrails
 
@@ -77,6 +77,7 @@ Each tier adds to `verify.sh` (new scenarios in the smoke test, new golden-vecto
 | D-P2-5 | Test peripheral: spend effort on option B (Bumble/netsim) or stop at option A? | Try B in a time-boxed spike; keep A regardless |
 | D-P2-6 | Should the app ever persist anything (device history, consent) across runs? | No (keeps decision D12); consent is per process |
 | D-P2-7 | Minimum Android version for Tier 2/3 features | Same as app (26); features degrade gracefully where an API is newer |
+| D-P2-8 | Keep `neverForLocation` (iBeacon, Eddystone and extended advertising are then invisible on real devices) or remove it and require Location? See [x1-findings.md](x1-findings.md) | Remove it (option B) |
 
 ## Risks across the phase
 

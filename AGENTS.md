@@ -24,6 +24,7 @@ Plan and rationale live in `docs/` (start with `docs/README.md`, then `decisions
 | Run the minified release build (R8) | `scripts/release-smoke.sh` (part of `--full`; also run it on the phone for the detail flow) |
 | Frame check with 200 fake devices | `scripts/perf.sh` (phone for meaningful numbers) |
 | Real-radio smoke on the phone | `ANDROID_SERIAL=<serial> scripts/e2e-real.sh` |
+| Host as test peripheral (advertise known payloads; `probe` scans them on the phone) | `scripts/peripheral.sh list\|start\|stop\|status`, `ANDROID_SERIAL=<serial> scripts/peripheral.sh probe <profile>` |
 
 Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; otherwise the single attached device. The physical phone (Pixel 9a) is for real-radio checks: `ANDROID_SERIAL=<serial> scripts/app.sh install`.
 
@@ -71,3 +72,4 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 - Google's `android` CLI exists in cmdline-tools. Its first run downloads components and it sends usage metrics unless `--no-metrics` is given; `android layout` installs an instrumentation server on the device. Prefer the `scripts/`; use it only on the emulator.
 - The Start/Stop button ignores taps within 1 s of the previous one; scripts must wait about 1.5 s between toggles.
 - `verify.sh --full` stops the exploration emulator (to free resources for the Managed Device) and restarts it for the smoke test.
+- The phone locks itself after a few minutes; real-radio scripts need it unlocked and awake. Row names are not in the `ui.sh dump` (only addresses and chips), and only rows on screen are listed. See `docs/phase2/x1-findings.md` for what the host peripheral showed, including that `neverForLocation` hides iBeacon, Eddystone and extended advertising.
