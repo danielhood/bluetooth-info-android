@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.testing.SampleUi
@@ -255,5 +256,43 @@ class DeviceListContentTest {
                 useUnmergedTree = true,
             ).assertTextEquals("Tracker? (unverified)")
         rule.onNodeWithTag(TestTags.kindChip("C0:FF:EE:00:00:05"), useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    private fun row(n: Int, rssi: Int) =
+        DeviceRowUi(
+            "C0:FF:EE:00:01:%02X".format(n),
+            "Device $n",
+            rssi,
+            signalLevel(rssi),
+            true,
+        )
+
+    private fun showUpdating(initial: List<DeviceRowUi>): androidx.compose.runtime.MutableState<DeviceListUiState> {
+        val state = androidx.compose.runtime.mutableStateOf(SampleUi.state(ListStatus.Scanning, initial))
+        rule.setContent { AppSurface(darkTheme = false) { DeviceListContent(state.value, actions, false, null) } }
+        return state
+    }
+
+    @Test
+    fun `a new strongest device is shown at the top when the list was at the top`() {
+        // Regression found by the real-radio spike: a keyed lazy list keeps the old first row in view when an item is
+        // inserted above it, so the strongest (often the nearest, most interesting) device was hidden off screen.
+        val initial = (1..8).map { row(it, -60 - it) }
+        val state = showUpdating(initial)
+        val strongest = row(99, -30)
+        rule.runOnIdle { state.value = SampleUi.state(ListStatus.Scanning, listOf(strongest) + initial) }
+        rule.onNodeWithTag(TestTags.deviceRow(strongest.address)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a new strongest device does not move a list the user scrolled down`() {
+        val initial = (1..30).map { row(it, -40 - it) }
+        val state = showUpdating(initial)
+        rule.onNodeWithTag(TestTags.DEVICE_LIST).performScrollToIndex(20)
+        rule.waitForIdle()
+        val watching = initial[20].address
+        rule.onNodeWithTag(TestTags.deviceRow(watching)).assertIsDisplayed()
+        rule.runOnIdle { state.value = SampleUi.state(ListStatus.Scanning, listOf(row(99, -30)) + initial) }
+        rule.onNodeWithTag(TestTags.deviceRow(watching)).assertIsDisplayed()
     }
 }

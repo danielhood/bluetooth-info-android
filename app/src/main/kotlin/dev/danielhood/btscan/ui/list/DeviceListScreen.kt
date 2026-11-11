@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +29,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -217,7 +223,8 @@ private fun DeviceListArea(state: DeviceListUiState, actions: DeviceListActions)
                 )
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize().testTag(TestTags.DEVICE_LIST)) {
+            val listState = rememberTopPinnedListState(state.devices.first().address)
+            LazyColumn(Modifier.fillMaxSize().testTag(TestTags.DEVICE_LIST), state = listState) {
                 items(state.devices, key = { it.address }) { device ->
                     DeviceRow(device, onClick = { actions.onDeviceClick(device.address) })
                     HorizontalDivider()
@@ -333,3 +340,21 @@ internal fun kindChipLabel(kind: DecoderId): Int =
             R.string.chip_tracker_hint
         }
     }
+
+/**
+ * The list is sorted by signal, so a new strongest device is inserted at the top. A keyed lazy list keeps the row that
+ * was first in view when something is inserted above it, which hid exactly that device off screen (found by the
+ * real-radio spike). Whether the list was at the top is read during composition, i.e. from the last layout and so
+ * before the new row is measured; if it was, show the top again. A list the user scrolled down is left alone.
+ */
+@Composable
+private fun rememberTopPinnedListState(topKey: String): LazyListState {
+    val listState = rememberLazyListState()
+    val atTop by remember(listState) {
+        derivedStateOf { listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0 }
+    }
+    // Captured now, during this composition: after the new row is laid out the list reports the shifted position.
+    val wasAtTop = atTop
+    LaunchedEffect(topKey) { if (wasAtTop) listState.scrollToItem(0) }
+    return listState
+}
