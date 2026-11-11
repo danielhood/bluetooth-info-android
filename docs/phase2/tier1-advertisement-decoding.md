@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** T1-M1 and T1-M2 done (2026-11-10); T1-M0 spike and T1-M3 to M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
+**Status:** T1-M1 to T1-M3 done (2026-11-10); T1-M0 spike, T1-M4 and T1-M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -139,7 +139,7 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 | T1-M0 | Spike T1-S1 (address type API and its permission); decide OUI scope; confirm vector sources | Decision recorded here |
 | T1-M1 | `RadioInfo`, decoder framework, iBeacon and Eddystone decoders, `beacons` scenario, detail "Decoded data" section | AC T1-1, T1-2 green; `verify.sh --full` passes. **Done.** Notes below. |
 | T1-M2 | Ruuvi, BTHome (and AltBeacon), `sensors` scenario | AC T1-3. **Done.** Notes below. |
-| T1-M3 | Fast Pair, Swift Pair, Apple type labels, tracker hint, `vendors` scenario, wording review | AC T1-4 |
+| T1-M3 | Fast Pair, Swift Pair, Apple type labels, tracker hint, `vendors` scenario, wording review | AC T1-4. **Done except Swift Pair (deferred).** Notes below. |
 | T1-M4 | Radio section, interval and distance estimates, list kind chips, `radio` scenario | AC T1-5, T1-6 |
 | T1-M5 | Real-device validation with X1 profiles and with real neighbours; roadmap and AGENTS.md updates | AC T1-7 |
 
@@ -156,6 +156,13 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 - **BTHome scope.** 13 object ids with verified layouts (packet id, battery, temperature x2 scales, humidity x2, pressure, illuminance, voltage, PM2.5, PM10, CO2, TVOC). Parsing stops at the first unknown or truncated object and keeps what was read, because an unknown object's length cannot be known. Encrypted frames are reported as encrypted with no values. Other documented objects (power, energy, dew point, rotation, binary sensors, events) are not decoded yet.
 - **Ruuvi** invalid markers are omitted from the output, never shown as raw sentinels. Pressure and acceleration are converted to hPa and G.
 - AltBeacon is in the `beacons` scenario; the 20-byte id is displayed as UUID plus two 16-bit values (convention; the spec only defines a 20-byte id).
+
+### T1-M3 implementation notes
+
+- **Verified before coding.** Google's Fast Pair provider spec (UUID 0xFE2C, discoverable = 3-byte model ID, otherwise account data) and, from the furiousMAC/continuity notes, Apple type bytes 0x05 AirDrop, 0x07 Proximity Pairing and 0x12 Find My were confirmed. Samsung SmartTag UUIDs 0xFD5A (registered) and 0xFD59 (non-registered) come from arXiv 2210.14702, Tile's 0xFEED from arXiv 2510.00350.
+- **Swift Pair is deferred.** Microsoft's pages do not state the Microsoft Beacon ID value (0x03 was my assumption) and the payload layouts are only in figures; the page confirms vendor id 0x0006, sub-scenarios 0x00/0x01/0x02 and the reserved RSSI byte 0x80. It can be added once the layout is confirmed against a primary source or a real capture; until then Microsoft data shows only in the existing manufacturer-data list.
+- **Not claimed.** Other Apple types (0x03, 0x06, 0x08 to 0x0F ...) were not verified, so they show as "Other message (not named by this app)" with the code. Tile 0xFD84 was not found in sources and is not used.
+- **Wording rules, enforced by tests.** Hints use a closed set of labels (`LabelKey`), never free text; `DecodersTest` asserts (in the fuzz loop) that no unofficial hint carries a `Text` value; Apple payload bytes are never read or shown; Fast Pair's model ID is shown as a number and never mapped to a product; the tracker card is titled "Looks like a location tracker (unverified)" and its family label says "resembles", with phrases such as "Tile-style identifier".
 
 ## 6. Acceptance criteria
 

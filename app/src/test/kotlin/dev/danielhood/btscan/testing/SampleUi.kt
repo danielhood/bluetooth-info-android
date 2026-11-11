@@ -4,6 +4,7 @@ import dev.danielhood.btscan.domain.decode.Confidence
 import dev.danielhood.btscan.domain.decode.Decoded
 import dev.danielhood.btscan.domain.decode.DecodedField
 import dev.danielhood.btscan.domain.decode.DecoderId
+import dev.danielhood.btscan.domain.decode.Decoders
 import dev.danielhood.btscan.domain.decode.FieldKey
 import dev.danielhood.btscan.domain.decode.FieldValue
 import dev.danielhood.btscan.domain.decode.Unit
@@ -125,6 +126,18 @@ object SampleDetail {
                                     ),
                                 ),
                             ),
+                    ),
+                ),
+        )
+
+    /** A Find My-style frame decoded by the real decoders: an Apple message label plus the tracker hint. */
+    val vendor =
+        thermo.copy(
+            name = null,
+            decoded =
+                Decoders.decode(
+                    Advertisement(
+                        manufacturerData = listOf(ManufacturerData(0x004C, Bytes(byteArrayOf(0x12, 0x01, 0x00)))),
                     ),
                 ),
         )

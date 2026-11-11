@@ -3,6 +3,7 @@ package dev.danielhood.btscan.ui.detail
 import dev.danielhood.btscan.domain.decode.Confidence
 import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.decode.FieldKey
+import dev.danielhood.btscan.domain.decode.LabelKey
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -11,6 +12,11 @@ class DecodedSectionsTest {
     @Test
     fun `every field key has a label`() {
         FieldKey.entries.forEach { assertTrue("$it", fieldLabel(it) != 0) }
+    }
+
+    @Test
+    fun `every label key has a phrase`() {
+        LabelKey.entries.forEach { assertTrue("$it", labelText(it) != 0) }
     }
 
     @Test

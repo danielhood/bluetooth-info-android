@@ -1,6 +1,7 @@
 package dev.danielhood.btscan.data.ble.fake
 
 import dev.danielhood.btscan.domain.model.AdapterState
+import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.ScanFailure
 
 private const val MANY_COUNT = 200
@@ -222,6 +223,27 @@ object Scenarios {
                 ),
         )
 
+    /** Vendor hints (see VendorFrames): Apple message types, Fast Pair both modes, tracker-style identifiers. */
+    private val vendors =
+        Scenario(
+            name = "vendors",
+            devices =
+                listOf(
+                    vendor(1, VendorFrames.appleFindMy(), -50),
+                    vendor(2, VendorFrames.appleAirDrop(), -56),
+                    vendor(3, VendorFrames.appleProximityPairing(), -62),
+                    vendor(4, VendorFrames.appleOtherMessage(), -68),
+                    vendor(5, VendorFrames.fastPairDiscoverable(), -72),
+                    vendor(6, VendorFrames.fastPairNotDiscoverable(), -76),
+                    vendor(7, VendorFrames.tileStyle(), -80),
+                    vendor(8, VendorFrames.smartTagStyle(), -84),
+                    vendor(9, advertisement { flags(0x06) }, -88),
+                ),
+        )
+
+    private fun vendor(n: Int, payload: Bytes, rssi: Int) =
+        FakeDevice(address = addr(n), advertisement = payload, baseRssi = rssi, phaseMs = (n % 5) * 100L)
+
     private val scanFails =
         Scenario(
             name = "scan-fails",
@@ -251,8 +273,19 @@ object Scenarios {
         )
 
     val all: Map<String, Scenario> =
-        listOf(default, empty, many, sparseFields, beacons, sensors, scanFails, tooFrequent, bluetoothOff, unsupported)
-            .associateBy { it.name }
+        listOf(
+            default,
+            empty,
+            many,
+            sparseFields,
+            beacons,
+            sensors,
+            vendors,
+            scanFails,
+            tooFrequent,
+            bluetoothOff,
+            unsupported,
+        ).associateBy { it.name }
 
     /** Looks a scenario up by name; fails loudly (listing valid names) so a typo cannot silently pass. */
     fun require(name: String): Scenario =

@@ -20,6 +20,7 @@ import dev.danielhood.btscan.domain.decode.DecodedField
 import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.decode.FieldKey
 import dev.danielhood.btscan.domain.decode.FieldValue
+import dev.danielhood.btscan.domain.decode.LabelKey
 import dev.danielhood.btscan.domain.decode.Unit
 import dev.danielhood.btscan.ui.common.TestTags
 import java.text.DecimalFormat
@@ -65,13 +66,28 @@ private fun DecodedFieldRow(decoderId: String, field: DecodedField) {
     Column(Modifier.padding(top = 4.dp)) {
         Text(stringResource(fieldLabel(field.key)), style = MaterialTheme.typography.labelMedium)
         Text(
-            text = formatValue(field.value),
+            text = valueText(field.value),
             style = MaterialTheme.typography.bodyMedium,
-            fontFamily = if (field.value is FieldValue.Number) FontFamily.Default else FontFamily.Monospace,
+            fontFamily =
+                if (field.value is FieldValue.Hex ||
+                    field.value is FieldValue.Text
+                ) {
+                    FontFamily.Monospace
+                } else {
+                    FontFamily.Default
+                },
             modifier = Modifier.testTag(TestTags.decodedField(decoderId, field.key.name.lowercase())),
         )
     }
 }
+
+@Composable
+private fun valueText(value: FieldValue): String =
+    when (value) {
+        is FieldValue.Label -> stringResource(labelText(value.value))
+        is FieldValue.Bool -> stringResource(if (value.value) R.string.yes else R.string.no)
+        else -> formatValue(value)
+    }
 
 internal fun formatValue(value: FieldValue): String =
     when (value) {
@@ -81,6 +97,14 @@ internal fun formatValue(value: FieldValue): String =
 
         is FieldValue.Hex -> {
             value.value.toHex(" ")
+        }
+
+        is FieldValue.Bool -> {
+            value.value.toString()
+        }
+
+        is FieldValue.Label -> {
+            value.value.name
         }
 
         is FieldValue.Number -> {
@@ -115,6 +139,9 @@ internal fun decoderTitle(id: DecoderId): Int =
         DecoderId.ALTBEACON -> R.string.decoder_altbeacon
         DecoderId.RUUVI_V5 -> R.string.decoder_ruuvi_v5
         DecoderId.BTHOME -> R.string.decoder_bthome
+        DecoderId.FAST_PAIR -> R.string.decoder_fast_pair
+        DecoderId.APPLE_CONTINUITY -> R.string.decoder_apple
+        DecoderId.TRACKER_HINT -> R.string.decoder_tracker_hint
     }
 
 internal fun confidenceLabel(confidence: Confidence): Int =
@@ -157,6 +184,25 @@ private val FIELD_LABELS: Map<FieldKey, Int> =
         FieldKey.CO2_PPM to R.string.field_co2,
         FieldKey.TVOC to R.string.field_tvoc,
         FieldKey.PACKET_ID to R.string.field_packet_id,
+        FieldKey.FAST_PAIR_MODEL_ID to R.string.field_fast_pair_model,
+        FieldKey.FAST_PAIR_DISCOVERABLE to R.string.field_fast_pair_discoverable,
+        FieldKey.APPLE_MESSAGE to R.string.field_apple_message,
+        FieldKey.APPLE_TYPE_CODE to R.string.field_apple_type_code,
+        FieldKey.TRACKER_FAMILY to R.string.field_tracker_family,
     )
 
 internal fun fieldLabel(key: FieldKey): Int = FIELD_LABELS.getValue(key)
+
+/** Fixed phrases for hint results; `DecodedSectionsTest` asserts every [LabelKey] has one. */
+private val LABEL_TEXTS: Map<LabelKey, Int> =
+    mapOf(
+        LabelKey.APPLE_AIRDROP to R.string.label_apple_airdrop,
+        LabelKey.APPLE_PROXIMITY_PAIRING to R.string.label_apple_proximity_pairing,
+        LabelKey.APPLE_FIND_MY to R.string.label_apple_find_my,
+        LabelKey.APPLE_OTHER_MESSAGE to R.string.label_apple_other,
+        LabelKey.TRACKER_FIND_MY to R.string.label_tracker_find_my,
+        LabelKey.TRACKER_TILE to R.string.label_tracker_tile,
+        LabelKey.TRACKER_SMARTTAG to R.string.label_tracker_smarttag,
+    )
+
+internal fun labelText(key: LabelKey): Int = LABEL_TEXTS.getValue(key)

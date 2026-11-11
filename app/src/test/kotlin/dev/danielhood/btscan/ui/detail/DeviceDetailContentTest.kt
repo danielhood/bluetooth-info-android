@@ -201,4 +201,25 @@ class DeviceDetailContentTest {
             ).performScrollTo()
             .assertTextEquals("CB B8 33 4C 88 4F")
     }
+
+    @Test
+    fun `hint cards say unofficial, name only a type and never claim a model or owner`() {
+        show(SampleDetail.loaded(SampleDetail.vendor))
+        rule
+            .onNodeWithTag(TestTags.detailDecoded("tracker_hint"))
+            .performScrollTo()
+            .assertTextContains("Looks like a location tracker (unverified)")
+        rule
+            .onNodeWithTag(TestTags.decodedField("tracker_hint", "confidence"))
+            .assertTextContains("Unofficial hint", substring = true)
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("tracker_hint", "tracker_family"),
+            ).assertTextEquals("Apple Find My network message")
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("apple_continuity", "apple_message"),
+            ).performScrollTo()
+            .assertTextEquals("Find My network")
+    }
 }

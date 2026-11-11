@@ -139,6 +139,35 @@ class FakeScenarioWithRepositoryTest {
         }
 
     @Test
+    fun `vendors scenario produces hints with the right wording class and nothing for the plain device`() =
+        runTest {
+            val repo = repoFor("vendors")
+            repo.startScan()
+            advance(3_000)
+            val byAddress = repo.devices.value.associateBy { it.address.takeLast(2) }
+            assertEquals(9, byAddress.size)
+
+            fun ids(n: String) = byAddress.getValue(n).decoded.map { it.decoder }
+            assertEquals(listOf(DecoderId.APPLE_CONTINUITY, DecoderId.TRACKER_HINT), ids("01"))
+            assertEquals(listOf(DecoderId.APPLE_CONTINUITY), ids("02"))
+            assertEquals(listOf(DecoderId.APPLE_CONTINUITY), ids("03"))
+            assertEquals(listOf(DecoderId.APPLE_CONTINUITY), ids("04"))
+            assertEquals(listOf(DecoderId.FAST_PAIR), ids("05"))
+            assertEquals(listOf(DecoderId.FAST_PAIR), ids("06"))
+            assertEquals(listOf(DecoderId.TRACKER_HINT), ids("07"))
+            assertEquals(listOf(DecoderId.TRACKER_HINT), ids("08"))
+            assertEquals(emptyList<DecoderId>(), ids("09"))
+            assertTrue(
+                byAddress.values
+                    .flatMap { it.decoded }
+                    .filter {
+                        it.decoder in
+                            setOf(DecoderId.APPLE_CONTINUITY, DecoderId.TRACKER_HINT)
+                    }.all { it.confidence == Confidence.UNOFFICIAL_HINT },
+            )
+        }
+
+    @Test
     fun `many scenario stays at two hundred devices while scanning`() =
         runTest {
             val repo = repoFor("many")

@@ -179,6 +179,22 @@ check "bthome temperature 25.06"    bash -c "'$S/ui.sh' wait decoded_bthome_temp
 check "encrypted bthome flagged"    bash -c "'$S/ui.sh' wait decoded_bthome_confidence 8 && '$S/ui.sh' find decoded_bthome_confidence | grep -q 'Encrypted'"
 check "encrypted shows no values"   absent decoded_bthome_temperature_c
 
+echo "-- vendor hints (Tier 1)"
+"$S/app.sh" launch --scenario vendors >/dev/null
+"$S/ui.sh" wait device_list_screen 10 >/dev/null
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "vendor devices appear"       wait_rows 6 8
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
+check "find my hint section"        "$S/ui.sh" wait detail_decoded_tracker_hint 8
+check "hint says unofficial"        bash -c "'$S/ui.sh' find decoded_tracker_hint_confidence | grep -q 'Unofficial hint'"
+check "title says unverified"       bash -c "'$S/ui.sh' find detail_decoded_tracker_hint | grep -q 'unverified'"
+"$S/shot.sh" smoke-vendor-hint >/dev/null
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:05 >/dev/null
+check "fast pair model id shown"    bash -c "'$S/ui.sh' wait decoded_fast_pair_fast_pair_model_id 8 && '$S/ui.sh' find decoded_fast_pair_fast_pair_model_id | grep -q '2A 3B 4C'"
+
 echo "-- launch without overrides"
 "$S/app.sh" launch >/dev/null
 check "screen visible"              "$S/ui.sh" wait device_list_screen 20

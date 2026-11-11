@@ -46,6 +46,9 @@ class DeviceDetailScreenshotTest {
     fun sensor() = shoot("sensor", SampleDetail.loaded(SampleDetail.sensor))
 
     @Test
+    fun vendor() = shoot("vendor", SampleDetail.loaded(SampleDetail.vendor))
+
+    @Test
     fun outOfRange() = shoot("out-of-range", SampleDetail.loaded(outOfRange = true))
 
     @Test

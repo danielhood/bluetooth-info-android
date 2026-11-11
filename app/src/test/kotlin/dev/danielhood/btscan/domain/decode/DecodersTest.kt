@@ -29,7 +29,25 @@ class DecodersTest {
     fun `fuzz inputs never throw and numbers are finite`() {
         val random = Random(SEED)
         val prefixes =
-            listOf("", "0215", "00", "10", "20", "20 00", "30", "02", "05", "BEAC", "40", "41", "4001", "4002")
+            listOf(
+                "",
+                "0215",
+                "00",
+                "10",
+                "20",
+                "20 00",
+                "30",
+                "02",
+                "05",
+                "BEAC",
+                "40",
+                "41",
+                "4001",
+                "4002",
+                "12",
+                "1219",
+                "0512",
+            )
         repeat(ITERATIONS) {
             val tail = ByteArray(random.nextInt(MAX_LEN)).also { random.nextBytes(it) }
             val prefix = hex(prefixes[random.nextInt(prefixes.size)]).toByteArray()
@@ -40,6 +58,8 @@ class DecodersTest {
                         listOf(
                             ServiceData(AdvertisementParser.uuidFromShort(0xFEAA), data),
                             ServiceData(AdvertisementParser.uuidFromShort(0xFCD2), data),
+                            ServiceData(AdvertisementParser.uuidFromShort(0xFE2C), data),
+                            ServiceData(AdvertisementParser.uuidFromShort(0xFEED), data),
                         ),
                     manufacturerData =
                         listOf(
@@ -48,13 +68,22 @@ class DecodersTest {
                             ManufacturerData(0x0118, data),
                         ),
                 )
-            Decoders
-                .decode(ad)
+            val results = Decoders.decode(ad)
+            results
                 .flatMap { it.fields }
                 .map { it.value }
                 .filterIsInstance<FieldValue.Number>()
                 .forEach { assertTrue(it.value.isFinite()) }
+            assertHintsCarryNoFreeText(results)
         }
+    }
+
+    /** Wording rule: an unofficial hint is a fixed label or a code, never free text a decoder composed. */
+    private fun assertHintsCarryNoFreeText(results: List<Decoded>) {
+        results
+            .filter { it.confidence == Confidence.UNOFFICIAL_HINT }
+            .flatMap { it.fields }
+            .forEach { assertTrue("hint with free text: $it", it.value !is FieldValue.Text) }
     }
 
     private companion object {

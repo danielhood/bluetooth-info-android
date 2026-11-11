@@ -106,4 +106,19 @@
   <string name="field_co2">CO2</string>
   <string name="field_tvoc">TVOC</string>
   <string name="field_packet_id">Packet id</string>
+  <string name="decoder_fast_pair">Google Fast Pair</string>
+  <string name="decoder_apple">Apple Continuity message</string>
+  <string name="decoder_tracker_hint">Looks like a location tracker (unverified)</string>
+  <string name="field_fast_pair_model">Model ID (number only)</string>
+  <string name="field_fast_pair_discoverable">Pairing mode (discoverable)</string>
+  <string name="field_apple_message">Message type</string>
+  <string name="field_apple_type_code">Type code</string>
+  <string name="field_tracker_family">Resembles</string>
+  <string name="label_apple_airdrop">AirDrop</string>
+  <string name="label_apple_proximity_pairing">Proximity Pairing</string>
+  <string name="label_apple_find_my">Find My network</string>
+  <string name="label_apple_other">Other message (not named by this app)</string>
+  <string name="label_tracker_find_my">Apple Find My network message</string>
+  <string name="label_tracker_tile">Tile-style identifier</string>
+  <string name="label_tracker_smarttag">Samsung SmartTag-style identifier</string>
 </resources>

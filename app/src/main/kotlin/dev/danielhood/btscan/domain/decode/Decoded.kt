@@ -12,6 +12,9 @@ enum class DecoderId {
     ALTBEACON,
     RUUVI_V5,
     BTHOME,
+    FAST_PAIR,
+    APPLE_CONTINUITY,
+    TRACKER_HINT,
 }
 
 /** How far a decoded result can be trusted. Shown to the user; see docs/phase2/policy-and-guardrails.md. */
@@ -58,6 +61,11 @@ enum class FieldKey {
     CO2_PPM,
     TVOC,
     PACKET_ID,
+    FAST_PAIR_MODEL_ID,
+    FAST_PAIR_DISCOVERABLE,
+    APPLE_MESSAGE,
+    APPLE_TYPE_CODE,
+    TRACKER_FAMILY,
 }
 
 /** Units for [FieldValue.Number]; the UI formats them. */
@@ -76,6 +84,17 @@ enum class Unit {
     MICROGRAM_PER_CUBIC_METRE,
 }
 
+/** Closed set of fixed phrases the UI can show for hint-style results. Hints never carry free text. */
+enum class LabelKey {
+    APPLE_AIRDROP,
+    APPLE_PROXIMITY_PAIRING,
+    APPLE_FIND_MY,
+    APPLE_OTHER_MESSAGE,
+    TRACKER_FIND_MY,
+    TRACKER_TILE,
+    TRACKER_SMARTTAG,
+}
+
 sealed interface FieldValue {
     data class Text(
         val value: String,
@@ -88,6 +107,14 @@ sealed interface FieldValue {
 
     data class Hex(
         val value: Bytes,
+    ) : FieldValue
+
+    data class Bool(
+        val value: Boolean,
+    ) : FieldValue
+
+    data class Label(
+        val value: LabelKey,
     ) : FieldValue
 }
 
