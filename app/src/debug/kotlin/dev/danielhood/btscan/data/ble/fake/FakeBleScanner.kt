@@ -1,5 +1,6 @@
 package dev.danielhood.btscan.data.ble.fake
 
+import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.BleScanner
@@ -33,7 +34,7 @@ class FakeBleScanner(
                             RawAdvertisement(
                                 address = device.address,
                                 rssi = rssiAt(device, index, elapsedMs),
-                                bytes = device.advertisement,
+                                bytes = payloadAt(device, elapsedMs),
                                 isConnectable = device.isConnectable,
                                 timestamp = clock.now(),
                             ),
@@ -49,6 +50,14 @@ class FakeBleScanner(
         val sinceFirstSlot = elapsedMs - device.appearAtMs - device.phaseMs
         val vanished = device.vanishAtMs?.let { elapsedMs >= it } ?: false
         return sinceFirstSlot >= 0 && sinceFirstSlot % device.intervalMs == 0L && !vanished
+    }
+
+    /** Rotates through the main payload and the alternates, one per advertising slot. */
+    private fun payloadAt(device: FakeDevice, elapsedMs: Long): Bytes {
+        if (device.alternatePayloads.isEmpty()) return device.advertisement
+        val slot = ((elapsedMs - device.appearAtMs - device.phaseMs) / device.intervalMs).toInt()
+        val all = listOf(device.advertisement) + device.alternatePayloads
+        return all[slot % all.size]
     }
 
     private fun rssiAt(device: FakeDevice, index: Int, elapsedMs: Long): Int {

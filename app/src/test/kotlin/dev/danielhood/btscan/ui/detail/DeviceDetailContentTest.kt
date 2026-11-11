@@ -143,4 +143,39 @@ class DeviceDetailContentTest {
         rule.assertTouchTargetAtLeast48dp(TestTags.BACK_BUTTON)
         rule.onNodeWithContentDescription("Back", useUnmergedTree = true).assertIsDisplayed()
     }
+
+    @Test
+    fun `shows decoded sections with values units and confidence`() {
+        show(SampleDetail.loaded(SampleDetail.beacon))
+        rule
+            .onNodeWithTag(
+                TestTags.detailDecoded("ibeacon"),
+            ).performScrollTo()
+            .assertTextContains("iBeacon", substring = true)
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("ibeacon", "beacon_uuid"),
+            ).assertTextEquals("E2C56DB5-DFFB-48D2-B060-D0F5A71096E0")
+        rule.onNodeWithTag(TestTags.decodedField("ibeacon", "beacon_major")).assertTextEquals("1")
+        rule.onNodeWithTag(TestTags.decodedField("ibeacon", "measured_power_1m_dbm")).assertTextEquals("-59 dBm")
+        rule
+            .onNodeWithTag(
+                TestTags.decodedField("eddystone_tlm", "temperature_c"),
+            ).performScrollTo()
+            .assertTextEquals("24.5 \u00B0C")
+        rule.onNodeWithTag(TestTags.decodedField("eddystone_tlm", "battery_mv")).assertTextEquals("3000 mV")
+        rule
+            .onNodeWithTag(TestTags.decodedField("eddystone_eid", "confidence"))
+            .performScrollTo()
+            .assertTextContains("Encrypted or rotating", substring = true)
+        rule
+            .onNodeWithTag(TestTags.decodedField("ibeacon", "confidence"))
+            .assertTextContains("open specification", substring = true)
+    }
+
+    @Test
+    fun `a device with nothing decoded has no decoded section`() {
+        show(SampleDetail.loaded())
+        rule.onNodeWithTag(TestTags.detailDecoded("ibeacon")).assertDoesNotExist()
+    }
 }

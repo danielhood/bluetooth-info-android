@@ -40,4 +40,10 @@ object TestTags {
     fun detailManufacturer(index: Int) = "detail_manufacturer_$index"
 
     fun detailServiceData(index: Int) = "detail_service_data_$index"
+
+    /** Decoded-data card for a decoder, for example `detail_decoded_ibeacon`. */
+    fun detailDecoded(decoder: String) = "detail_decoded_$decoder"
+
+    /** One decoded value, for example `decoded_ibeacon_beacon_major`. */
+    fun decodedField(decoder: String, key: String) = "decoded_${decoder}_$key"
 }

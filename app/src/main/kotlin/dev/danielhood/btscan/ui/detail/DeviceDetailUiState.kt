@@ -1,5 +1,6 @@
 package dev.danielhood.btscan.ui.detail
 
+import dev.danielhood.btscan.domain.decode.Decoded
 import dev.danielhood.btscan.domain.model.BleDevice
 import dev.danielhood.btscan.domain.parser.AdFlag
 import dev.danielhood.btscan.domain.parser.CompanyIds
@@ -40,6 +41,7 @@ data class DeviceDetailUi(
     val flagsHex: String?,
     val flags: List<AdFlag>,
     val rawHex: String,
+    val decoded: List<Decoded> = emptyList(),
 )
 
 sealed interface DeviceDetailUiState {
@@ -96,6 +98,7 @@ internal fun BleDevice.toDetailUi() =
         flagsHex = flags?.let { "0x" + it.toString(HEX_RADIX).uppercase().padStart(FLAGS_WIDTH, '0') },
         flags = flags?.let { AdFlag.decode(it) } ?: emptyList(),
         rawHex = rawBytes.toHex(" "),
+        decoded = decoded,
     )
 
 internal fun secondsBetween(from: Instant, to: Instant): Long = Duration.between(from, to).seconds.coerceAtLeast(0)

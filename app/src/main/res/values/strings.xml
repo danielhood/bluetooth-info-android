@@ -64,4 +64,26 @@
   <string name="out_of_range_banner">Out of range, last seen %1$s</string>
   <string name="not_found">Device not found</string>
   <string name="back_to_list">Back to list</string>
+  <string name="detail_decoded">Decoded data</string>
+  <string name="decoder_ibeacon">iBeacon</string>
+  <string name="decoder_eddystone_uid">Eddystone UID</string>
+  <string name="decoder_eddystone_url">Eddystone URL</string>
+  <string name="decoder_eddystone_tlm">Eddystone telemetry</string>
+  <string name="decoder_eddystone_eid">Eddystone ephemeral ID</string>
+  <string name="confidence_specification">Decoded from an open specification</string>
+  <string name="confidence_hint">Unofficial hint, not verified</string>
+  <string name="confidence_encrypted">Encrypted or rotating: not decodable</string>
+  <string name="field_beacon_uuid">Beacon UUID</string>
+  <string name="field_beacon_major">Major</string>
+  <string name="field_beacon_minor">Minor</string>
+  <string name="field_measured_power_1m">Measured power at 1 m</string>
+  <string name="field_tx_power_0m">Calibrated power at 0 m</string>
+  <string name="field_eddystone_namespace">Namespace</string>
+  <string name="field_eddystone_instance">Instance</string>
+  <string name="field_eddystone_url">URL</string>
+  <string name="field_eddystone_eid">Ephemeral ID</string>
+  <string name="field_battery">Battery voltage</string>
+  <string name="field_temperature">Temperature</string>
+  <string name="field_advertisement_count">Packets sent</string>
+  <string name="field_uptime">Time since power-on</string>
 </resources>

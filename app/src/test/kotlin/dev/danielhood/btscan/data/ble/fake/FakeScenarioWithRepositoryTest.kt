@@ -1,5 +1,6 @@
 package dev.danielhood.btscan.data.ble.fake
 
+import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
@@ -72,6 +73,25 @@ class FakeScenarioWithRepositoryTest {
             backgroundScope.launch { repo.device(address).collect { seen += it } }
             advance(100)
             assertEquals(listOf<Any?>(null), seen)
+        }
+
+    @Test
+    fun `beacons scenario decodes the ibeacon and accumulates alternating eddystone frames`() =
+        runTest {
+            val repo = repoFor("beacons")
+            repo.startScan()
+            advance(3_000)
+            val byAddress = repo.devices.value.associateBy { it.address.takeLast(2) }
+            assertEquals(listOf(DecoderId.IBEACON), byAddress.getValue("01").decoded.map { it.decoder })
+            assertEquals(
+                setOf(DecoderId.EDDYSTONE_UID, DecoderId.EDDYSTONE_URL, DecoderId.EDDYSTONE_TLM),
+                byAddress
+                    .getValue("02")
+                    .decoded
+                    .map { it.decoder }
+                    .toSet(),
+            )
+            assertEquals(listOf(DecoderId.EDDYSTONE_EID), byAddress.getValue("03").decoded.map { it.decoder })
         }
 
     @Test

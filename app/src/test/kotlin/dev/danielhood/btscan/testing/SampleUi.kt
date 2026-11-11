@@ -1,5 +1,13 @@
 package dev.danielhood.btscan.testing
 
+import dev.danielhood.btscan.domain.decode.Confidence
+import dev.danielhood.btscan.domain.decode.Decoded
+import dev.danielhood.btscan.domain.decode.DecodedField
+import dev.danielhood.btscan.domain.decode.DecoderId
+import dev.danielhood.btscan.domain.decode.FieldKey
+import dev.danielhood.btscan.domain.decode.FieldValue
+import dev.danielhood.btscan.domain.decode.Unit
+import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.ui.list.DeviceListUiState
 import dev.danielhood.btscan.ui.list.DeviceRowUi
@@ -60,6 +68,39 @@ object SampleDetail {
                     dev.danielhood.btscan.domain.parser.AdFlag.BR_EDR_NOT_SUPPORTED,
                 ),
             rawHex = "02 01 06 0E 09 54 68 65 72 6D 6F 20 53 65 6E 73 6F 72",
+        )
+
+    val beacon =
+        thermo.copy(
+            name = "Eddystone Beacon",
+            decoded =
+                listOf(
+                    Decoded(
+                        DecoderId.IBEACON,
+                        Confidence.SPECIFICATION,
+                        listOf(
+                            DecodedField(FieldKey.BEACON_UUID, FieldValue.Text("E2C56DB5-DFFB-48D2-B060-D0F5A71096E0")),
+                            DecodedField(FieldKey.BEACON_MAJOR, FieldValue.Number(1.0)),
+                            DecodedField(FieldKey.BEACON_MINOR, FieldValue.Number(2.0)),
+                            DecodedField(FieldKey.MEASURED_POWER_1M_DBM, FieldValue.Number(-59.0, Unit.DBM)),
+                        ),
+                    ),
+                    Decoded(
+                        DecoderId.EDDYSTONE_TLM,
+                        Confidence.SPECIFICATION,
+                        listOf(
+                            DecodedField(FieldKey.BATTERY_MV, FieldValue.Number(3000.0, Unit.MILLIVOLT)),
+                            DecodedField(FieldKey.TEMPERATURE_C, FieldValue.Number(24.5, Unit.CELSIUS)),
+                        ),
+                    ),
+                    Decoded(
+                        DecoderId.EDDYSTONE_EID,
+                        Confidence.ENCRYPTED,
+                        listOf(
+                            DecodedField(FieldKey.EDDYSTONE_EID, FieldValue.Hex(Bytes(ByteArray(8) { it.toByte() }))),
+                        ),
+                    ),
+                ),
         )
 
     val sparse =

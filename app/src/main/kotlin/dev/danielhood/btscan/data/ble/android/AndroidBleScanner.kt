@@ -81,5 +81,15 @@ class AndroidBleScanner(
             bytes = Bytes(scanRecord?.bytes ?: ByteArray(0)),
             isConnectable = isConnectable,
             timestamp = clock.now(),
+            radio =
+                radioInfoOf(
+                    primaryPhy = primaryPhy,
+                    secondaryPhy = secondaryPhy,
+                    isLegacy = isLegacy,
+                    advertisingSid = advertisingSid,
+                    txPower = txPower,
+                    periodicIntervalUnits = periodicAdvertisingInterval,
+                    dataStatus = dataStatus,
+                ),
         )
 }

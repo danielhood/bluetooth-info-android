@@ -43,6 +43,12 @@ class AdBuilder {
     fun manufacturer(companyId: Int, vararg data: Int) =
         structure(AD_MANUFACTURER, littleEndian(companyId.toLong(), 2) + data.map { it.toByte() }.toByteArray())
 
+    fun serviceData16(uuid16: Int, data: Bytes) =
+        structure(AD_SERVICE_DATA_16, littleEndian(uuid16.toLong(), 2) + data.toByteArray())
+
+    fun manufacturer(companyId: Int, data: Bytes) =
+        structure(AD_MANUFACTURER, littleEndian(companyId.toLong(), 2) + data.toByteArray())
+
     /** Appends bytes verbatim, for building malformed payloads. */
     fun raw(vararg bytes: Int) {
         bytes.forEach { out.write(it) }

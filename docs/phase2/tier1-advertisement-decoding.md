@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** Plan. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
+**Status:** T1-M1 done (2026-11-10); T1-M0 spike and T1-M2 to M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -137,11 +137,18 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 | ID | Work | Exit |
 |---|---|---|
 | T1-M0 | Spike T1-S1 (address type API and its permission); decide OUI scope; confirm vector sources | Decision recorded here |
-| T1-M1 | `RadioInfo`, decoder framework, iBeacon and Eddystone decoders, `beacons` scenario, detail "Decoded data" section | AC T1-1, T1-2 green; `verify.sh --full` passes |
+| T1-M1 | `RadioInfo`, decoder framework, iBeacon and Eddystone decoders, `beacons` scenario, detail "Decoded data" section | AC T1-1, T1-2 green; `verify.sh --full` passes. **Done.** Notes below. |
 | T1-M2 | Ruuvi, BTHome (and AltBeacon), `sensors` scenario | AC T1-3 |
 | T1-M3 | Fast Pair, Swift Pair, Apple type labels, tracker hint, `vendors` scenario, wording review | AC T1-4 |
 | T1-M4 | Radio section, interval and distance estimates, list kind chips, `radio` scenario | AC T1-5, T1-6 |
 | T1-M5 | Real-device validation with X1 profiles and with real neighbours; roadmap and AGENTS.md updates | AC T1-7 |
+
+### T1-M1 implementation notes
+
+- Eddystone frame kinds are separate `DecoderId`s (`EDDYSTONE_UID`, `_URL`, `_TLM`, `_EID`), so the merge rule is simply "latest per decoder id" and alternating frames accumulate. `FakeDevice.alternatePayloads` rotates payloads per advertising slot.
+- `RadioInfo` is captured and sentinel-mapped (`radioInfoOf`, unit-tested) and stored on `BleDevice.radio`, but not shown yet (the Radio section is T1-M4).
+- Test vectors are constructed from the published layouts, not copied from the specs' worked examples (the iBeacon layout is documented by third parties, Apple's text is licensed); the Eddystone URL `http://www.google.com` vector follows the specification's encoding table. A second reading by someone independent is still recommended (risk table below).
+- Test peripherals (X1) and spike T1-S1 (address type API permission) are untouched; beacon filtering by `neverForLocation` on real hardware is still unverified until T1-M5.
 
 ## 6. Acceptance criteria
 

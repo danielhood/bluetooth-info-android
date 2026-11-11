@@ -1,5 +1,6 @@
 package dev.danielhood.btscan.domain.repo
 
+import dev.danielhood.btscan.domain.decode.Decoders
 import dev.danielhood.btscan.domain.model.BleDevice
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.model.ScanFailure
@@ -110,8 +111,9 @@ class DefaultDeviceRepository(
 
     private fun ingest(raw: RawAdvertisement) {
         val adv = AdvertisementParser.parse(raw.bytes)
+        val decoded = Decoders.decode(adv)
         table.compute(raw.address) { _, existing ->
-            existing?.merge(raw, adv) ?: BleDevice(
+            existing?.merge(raw, adv, decoded) ?: BleDevice(
                 address = raw.address,
                 name = adv.localName,
                 rssi = raw.rssi,
@@ -125,6 +127,8 @@ class DefaultDeviceRepository(
                 firstSeen = raw.timestamp,
                 lastSeen = raw.timestamp,
                 advertisementCount = 1,
+                decoded = decoded,
+                radio = raw.radio,
             )
         }
     }

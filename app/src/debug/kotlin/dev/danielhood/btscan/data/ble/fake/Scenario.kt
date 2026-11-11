@@ -15,6 +15,8 @@ data class FakeDevice(
     val intervalMs: Long = 500,
     /** Offset of this device's advertising slot within its interval; spreads load. Multiple of the tick. */
     val phaseMs: Long = 0,
+    /** Further payloads sent in rotation after [advertisement] (for example alternating Eddystone frames). */
+    val alternatePayloads: List<Bytes> = emptyList(),
 )
 
 /** Makes the scan throw [kind] once [afterMs] has elapsed (0 = on start). */

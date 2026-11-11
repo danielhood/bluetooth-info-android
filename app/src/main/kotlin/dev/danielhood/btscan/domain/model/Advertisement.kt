@@ -13,6 +13,8 @@ data class RawAdvertisement(
     val bytes: Bytes,
     val isConnectable: Boolean,
     val timestamp: Instant,
+    /** Radio metadata; null when the scanner does not provide it (for example most fakes). */
+    val radio: RadioInfo? = null,
 )
 
 data class ManufacturerData(

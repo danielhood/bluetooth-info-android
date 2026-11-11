@@ -82,6 +82,7 @@ Selected with `--es scenario <name>`; each is deterministic (seeded) so screensh
 | `empty` | Scan succeeds, no devices | F-L10 |
 | `many` | 200 devices, continuous updates | N-1 |
 | `sparse-fields` | Devices with only a name, or only manufacturer data, or malformed AD structures | Parser robustness, F-D5 "Not advertised" |
+| `beacons` | An iBeacon, an Eddystone device rotating UID/URL/TLM frames, and an Eddystone-EID (exact bytes in `BeaconFrames.kt`) | Tier 1 decoders, frames accumulating on one device |
 | `bluetooth-off` | Adapter reports Off | Bluetooth-off state |
 | `unsupported` | Adapter reports Unsupported | Unsupported state |
 | `scan-fails` | Scanner throws `ScanFailure` after 2 s | Failed state and Retry |

@@ -132,6 +132,27 @@ check "failure banner after 2s"     "$S/ui.sh" wait failure_banner 8
 check "retry offered"               "$S/ui.sh" find retry_button
 "$S/shot.sh" smoke-failed >/dev/null
 
+echo "-- beacon decoding (Tier 1)"
+"$S/app.sh" launch --scenario beacons >/dev/null
+"$S/ui.sh" wait device_list_screen 10 >/dev/null
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "three beacon devices"        wait_rows 3 6
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:01 >/dev/null
+check "ibeacon detail opens"        "$S/ui.sh" wait detail_screen 10
+check "ibeacon section present"     "$S/ui.sh" wait detail_decoded_ibeacon 5
+check "ibeacon uuid decoded"        bash -c "'$S/ui.sh' find decoded_ibeacon_beacon_uuid | grep -q \"text='E2C56DB5-DFFB-48D2-B060-D0F5A71096E0'\""
+check "ibeacon major is 1"          bash -c "'$S/ui.sh' find decoded_ibeacon_beacon_major | grep -q \"text='1'\""
+check "ibeacon power -59 dBm"       bash -c "'$S/ui.sh' find decoded_ibeacon_measured_power_1m_dbm | grep -q \"text='-59 dBm'\""
+"$S/shot.sh" smoke-ibeacon >/dev/null
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+"$S/ui.sh" tap device_row_C0:FF:EE:00:00:02 >/dev/null
+check "eddystone detail opens"      "$S/ui.sh" wait detail_screen 10
+check "eddystone uid frame shown"   "$S/ui.sh" wait detail_decoded_eddystone_uid 8
+check "eddystone url decoded"       bash -c "'$S/ui.sh' wait decoded_eddystone_url_eddystone_url 8 && '$S/ui.sh' find decoded_eddystone_url_eddystone_url | grep -q 'https://example.com/'"
+"$S/shot.sh" smoke-eddystone >/dev/null
+
 echo "-- launch without overrides"
 "$S/app.sh" launch >/dev/null
 check "screen visible"              "$S/ui.sh" wait device_list_screen 20

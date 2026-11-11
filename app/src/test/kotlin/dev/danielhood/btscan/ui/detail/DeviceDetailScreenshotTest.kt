@@ -37,6 +37,12 @@ class DeviceDetailScreenshotTest {
     fun sparseFields() = shoot("sparse-fields", SampleDetail.loaded(SampleDetail.sparse))
 
     @Test
+    fun beacon() = shoot("beacon", SampleDetail.loaded(SampleDetail.beacon))
+
+    @Test
+    fun beaconDark() = shoot("beacon-dark", SampleDetail.loaded(SampleDetail.beacon), dark = true)
+
+    @Test
     fun outOfRange() = shoot("out-of-range", SampleDetail.loaded(outOfRange = true))
 
     @Test

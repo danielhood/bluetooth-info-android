@@ -1,5 +1,6 @@
 package dev.danielhood.btscan.domain.model
 
+import dev.danielhood.btscan.domain.decode.Decoded
 import java.time.Instant
 import java.util.UUID
 
@@ -18,4 +19,7 @@ data class BleDevice(
     val firstSeen: Instant,
     val lastSeen: Instant,
     val advertisementCount: Int,
+    /** Decoder results, one per decoder id, latest value wins (frames of one format accumulate). */
+    val decoded: List<Decoded> = emptyList(),
+    val radio: RadioInfo? = null,
 )

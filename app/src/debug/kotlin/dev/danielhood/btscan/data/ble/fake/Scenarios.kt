@@ -158,6 +158,39 @@ object Scenarios {
                 ),
         )
 
+    /**
+     * Beacon formats with exact bytes (see the decoder tests for the field values they must produce):
+     * an iBeacon, one Eddystone device rotating UID/URL/TLM frames, and a rotating Eddystone-EID.
+     */
+    private val beacons =
+        Scenario(
+            name = "beacons",
+            devices =
+                listOf(
+                    FakeDevice(
+                        address = addr(1),
+                        advertisement = BeaconFrames.ibeacon(),
+                        baseRssi = -55,
+                        isConnectable = false,
+                    ),
+                    FakeDevice(
+                        address = addr(2),
+                        advertisement = BeaconFrames.eddystoneUid(),
+                        alternatePayloads = listOf(BeaconFrames.eddystoneUrl(), BeaconFrames.eddystoneTlm()),
+                        baseRssi = -65,
+                        isConnectable = false,
+                        phaseMs = 100,
+                    ),
+                    FakeDevice(
+                        address = addr(3),
+                        advertisement = BeaconFrames.eddystoneEid(),
+                        baseRssi = -75,
+                        isConnectable = false,
+                        phaseMs = 200,
+                    ),
+                ),
+        )
+
     private val scanFails =
         Scenario(
             name = "scan-fails",
@@ -187,7 +220,7 @@ object Scenarios {
         )
 
     val all: Map<String, Scenario> =
-        listOf(default, empty, many, sparseFields, scanFails, tooFrequent, bluetoothOff, unsupported)
+        listOf(default, empty, many, sparseFields, beacons, scanFails, tooFrequent, bluetoothOff, unsupported)
             .associateBy { it.name }
 
     /** Looks a scenario up by name; fails loudly (listing valid names) so a typo cannot silently pass. */
