@@ -2,10 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- API 31+: scan only; never used to derive location. We never connect, so no BLUETOOTH_CONNECT. -->
+    <!--
+      API 31+: scan only. We never connect, so no BLUETOOTH_CONNECT.
+      Deliberately WITHOUT usesPermissionFlags="neverForLocation" (decision D-P2-8, docs/phase2/x1-findings.md): that
+      flag makes Android hide iBeacon, Eddystone and extended advertising from the app. Without it Android also needs
+      Location permission and Location services for scan results. The app never uses, stores or sends a location.
+    -->
     <uses-permission
         android:name="android.permission.BLUETOOTH_SCAN"
-        android:usesPermissionFlags="neverForLocation"
         tools:targetApi="s" />
 
     <!-- API 26-30 -->
@@ -15,9 +19,9 @@
     <uses-permission
         android:name="android.permission.BLUETOOTH_ADMIN"
         android:maxSdkVersion="30" />
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION"
-        android:maxSdkVersion="30" />
+    <!-- All versions: scan results need it (precise location; Android 12+ requires requesting coarse with it). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"

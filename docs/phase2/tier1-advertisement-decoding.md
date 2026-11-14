@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** T1-M1 to T1-M4 done (2026-11-10); T1-M0 spike and T1-M5 not started. **Permissions:** none new (`BLUETOOTH_SCAN` with `neverForLocation`, as today). **Contacts the device:** never.
+**Status:** T1-M1 to T1-M4 done (2026-11-10); T1-M0 spike and T1-M5 not started. **Permissions:** decision D-P2-8 (2026-11-14) replaced `neverForLocation` with Location permission and Location services (see [x1-findings.md](x1-findings.md)). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -192,7 +192,7 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 | Spec vectors mis-transcribed | Each vector cites its source; a second reading by an independent check (a human, or a separate agent session) before merging |
 | Decoder claims overreach | Confidence enum, wording file, review gate in T1-M3 |
 | Cost per advertisement | Perf check; short-circuit on company id/service UUID before decoding |
-| iBeacon/Eddystone are filtered by `neverForLocation` on Android 12+ (the OS may drop beacon-style advertisements for apps declaring it) | Verify on the Pixel with the X1 beacon; if beacons are filtered, this is the one case where removing `neverForLocation` (and requiring location) would be needed, which is an owner decision (see policy doc) |
+| iBeacon/Eddystone are filtered by `neverForLocation` on Android 12+ | **Confirmed on the Pixel (X1) and resolved: the flag was removed (D-P2-8).** |
 | Address type availability | Spike T1-S1 |
 
 Out of scope for Tier 1: any decoding that needs a key, any identification of individuals, scanning in the background, sending data anywhere.

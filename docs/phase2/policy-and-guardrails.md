@@ -17,6 +17,7 @@
 
 | Phase 1 rule (AGENTS.md / tests) | Tier 1 | Tier 2 | Tier 3 |
 |---|---|---|---|
+| `BLUETOOTH_SCAN` asserts `neverForLocation` (Phase 1) | **relaxed (D-P2-8):** not asserted; Location permission and Location services are required to scan | unchanged | unchanged |
 | Never request `BLUETOOTH_CONNECT` | unchanged | **relaxed:** allowed in the manifest and in `data/ble/android` | unchanged from Tier 2 |
 | Never call `connectGatt` | unchanged | unchanged | **relaxed:** allowed in exactly one file, `data/ble/android/AndroidGattInspector.kt` |
 | `android.bluetooth.*` only under `data/ble/android` | unchanged | unchanged | unchanged |
@@ -37,7 +38,7 @@ All checks extend the existing `ArchitectureTest` (import and text scanning, no 
 | Forbid pairing and bond changes | **Done (X2)** | No `createBond`, `removeBond`, `setPin`, `setPairingConfirmation`, `cancelBondProcess` |
 | Forbid reflection into Bluetooth internals | **Done (X2)** | No `getDeclaredMethod`/`getMethod`/`Class.forName` in files under `data/ble` or that import `android.bluetooth` |
 | Decoders and parsers are pure | Tier 1 | Files under `domain/decode` and `domain/gatt/parsers` import no `android.*` (already covered by the domain rule; add an explicit test so a future package move cannot escape it) |
-| Manifest permissions are an explicit allowlist | **Done (X2)**, updated per tier | The manifest test asserts the *exact set* of requested permissions instead of only forbidding some. Tier 1: unchanged set. Tier 2 adds `BLUETOOTH_CONNECT` (API 31+). A new permission fails the test until the policy doc and the test are updated together. |
+| Manifest permissions are an explicit allowlist | **Done (X2)**, updated per tier | The manifest test asserts the *exact set* of requested permissions instead of only forbidding some. Tier 1 (decision D-P2-8, 2026-11-14): adds `ACCESS_COARSE_LOCATION` and makes `ACCESS_FINE_LOCATION` unrestricted (the scan needs both on every version, `neverForLocation` is no longer asserted; the test fails if it comes back). Tier 2 adds `BLUETOOTH_CONNECT` (API 31+). A new permission fails the test until the policy doc and the test are updated together. |
 | `connectGatt` confined | Tier 3 | Allowed only in `AndroidGattInspector.kt`; the Tier 2 "forbidden everywhere" check is narrowed in the same commit |
 | `writeDescriptor` confined | Tier 3 v2 | Only in the file containing the notification helper, and only referencing the CCCD constant `0x2902` |
 | Logging hygiene | Tier 2 | In `src/main` and `src/release`, `AppLog`/`Log` calls must not interpolate `address`, `name`, `serial`, `value` or `rawBytes` identifiers. Implemented as a text rule on log call arguments (simple, conservative, with an allowlisted escape comment for justified cases). Debug-only code (`src/debug`) is exempt. |
@@ -50,6 +51,8 @@ A new test, `PolicyDocConsistencyTest`, is optional but recommended: it reads th
 ## 4. Consent and user-facing wording
 
 Wording is part of the safety design and lives in one string resources file so it can be reviewed in one place. Draft copy (owner to approve before Tier 2c/3 ship):
+
+**Scan permissions (Tier 1, in the app now)** "BT Scan needs the Nearby devices and Location permissions to look for Bluetooth devices around you. Choose precise location when asked: Android counts Bluetooth scan results as location data. BT Scan never uses your location and stores and sends nothing." The wording must stay true: the no-persistence and no-network checks are what back the last sentence.
 
 **Permission explanation (Tier 2a)** "To show what your phone already knows about this device (its name, whether it is paired, and its type), the app needs the Nearby devices permission for connecting. Scanning works without it. The app never pairs with, connects to or changes any device in this step."
 

@@ -55,7 +55,15 @@ open_device() { # address: tap its row and confirm that exact device opened (row
   done
   return 1
 }
-tap_allow() { "$S/ui.sh" tap permission_allow_button || "$S/ui.sh" tap Allow; }
+# The scan needs Nearby devices AND Location: the system shows two dialogs in turn (Location offers "While using the
+# app", Nearby devices offers "Allow"). Answer whichever is showing until neither is.
+tap_allow() {
+  local i
+  for i in 1 2 3 4; do
+    "$S/ui.sh" tap permission_allow_foreground_only_button 2>/dev/null || "$S/ui.sh" tap permission_allow_button 2>/dev/null || return 0
+    sleep 1.5
+  done
+}
 
 "$S/app.sh" install
 "$S/app.sh" clear >/dev/null
@@ -74,7 +82,7 @@ check "message names the permission" "$S/ui.sh" find "permission"
 check "start is disabled"           scan_disabled
 "$S/shot.sh" smoke-permission-needed >/dev/null
 "$S/ui.sh" tap status_action_button >/dev/null || true
-check "system dialog appears"       "$S/ui.sh" wait permission_allow_button 10
+check "system dialog appears"       bash -c "for i in 1 2 3 4 5 6 7 8 9 10; do '$S/ui.sh' find permission_allow_foreground_only_button >/dev/null 2>&1 && exit 0; '$S/ui.sh' find permission_allow_button >/dev/null 2>&1 && exit 0; sleep 1; done; exit 1"
 "$S/shot.sh" smoke-permission-dialog >/dev/null
 tap_allow >/dev/null || true
 check "ready after granting"        "$S/ui.sh" wait empty_message 10

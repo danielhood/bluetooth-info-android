@@ -35,6 +35,8 @@ case "${1:-status}" in
     for k in window_animation_scale transition_animation_scale animator_duration_scale; do
       adb -s "$SER" shell settings put global $k 0
     done
+    # Scan results need location services on (the app does not assert neverForLocation); this is our own throwaway AVD.
+    adb -s "$SER" shell settings put secure location_mode 3
     # The emulator has no PIN: wake it, dismiss the keyguard and keep the screen on so UI checks work.
     adb -s "$SER" shell input keyevent KEYCODE_WAKEUP
     adb -s "$SER" shell wm dismiss-keyguard

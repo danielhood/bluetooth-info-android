@@ -6,7 +6,7 @@ enum class AdapterState {
     OFF,
     ON,
 
-    /** Adapter on, but system location is off (only matters on Android 11 and below). */
+    /** Adapter on, but system location is off: Android hides scan results without it (see decision D-P2-8). */
     LOCATION_OFF,
 }
 

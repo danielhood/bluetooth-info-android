@@ -77,7 +77,7 @@ Each tier adds to `verify.sh` (new scenarios in the smoke test, new golden-vecto
 | D-P2-5 | Test peripheral: spend effort on option B (Bumble/netsim) or stop at option A? | Try B in a time-boxed spike; keep A regardless |
 | D-P2-6 | Should the app ever persist anything (device history, consent) across runs? | No (keeps decision D12); consent is per process |
 | D-P2-7 | Minimum Android version for Tier 2/3 features | Same as app (26); features degrade gracefully where an API is newer |
-| D-P2-8 | Keep `neverForLocation` (iBeacon, Eddystone and extended advertising are then invisible on real devices) or remove it and require Location? See [x1-findings.md](x1-findings.md) | Remove it (option B) |
+| D-P2-8 | Keep `neverForLocation` (iBeacon, Eddystone and extended advertising are then invisible on real devices) or remove it and require Location? See [x1-findings.md](x1-findings.md) | **Decided 2026-11-14: removed** (option B) |
 
 ## Risks across the phase
 

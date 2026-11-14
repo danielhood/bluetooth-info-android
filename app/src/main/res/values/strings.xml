@@ -19,14 +19,14 @@
   <string name="empty_searching">Searching…</string>
   <string name="empty_none">No devices found</string>
 
-  <string name="permission_needed_nearby">BT Scan needs the Nearby devices permission to look for Bluetooth devices around you.</string>
-  <string name="permission_needed_location">BT Scan needs the Location permission to look for Bluetooth devices on this Android version.</string>
+  <string name="permission_needed_nearby">BT Scan needs the Nearby devices and Location permissions to look for Bluetooth devices around you. Choose precise location when asked: Android counts Bluetooth scan results as location data. BT Scan never uses your location and stores and sends nothing.</string>
+  <string name="permission_needed_location">BT Scan needs the Location permission to look for Bluetooth devices on this Android version. BT Scan never uses your location and stores and sends nothing.</string>
   <string name="permission_denied_forever">The permission was denied. Turn it on in the app settings to scan.</string>
   <string name="grant_permission">Grant permission</string>
   <string name="open_app_settings">Open app settings</string>
   <string name="bluetooth_off">Bluetooth is turned off</string>
   <string name="turn_on_bluetooth">Turn on Bluetooth</string>
-  <string name="location_off">Location must be on for scanning on this Android version</string>
+  <string name="location_off">Location must be on for scanning. Android counts Bluetooth scan results as location data.</string>
   <string name="open_location_settings">Open location settings</string>
   <string name="unsupported">This device does not support Bluetooth LE</string>
   <string name="scan_failed">Scan failed (%1$s).</string>

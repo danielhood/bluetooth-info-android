@@ -15,9 +15,13 @@ sign_release() {
     --ks-pass pass:android --key-pass pass:android --out "$SIGNED_RELEASE_APK" "$RELEASE_APK"
 }
 
-perm() { # runtime permission the scan needs on this device
+perms() { # runtime permissions the scan needs on this device (the app does not assert neverForLocation, so location too)
   local sdk; sdk=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
-  if [ "$sdk" -ge 31 ]; then echo android.permission.BLUETOOTH_SCAN; else echo android.permission.ACCESS_FINE_LOCATION; fi
+  if [ "$sdk" -ge 31 ]; then
+    echo android.permission.BLUETOOTH_SCAN android.permission.ACCESS_FINE_LOCATION android.permission.ACCESS_COARSE_LOCATION
+  else
+    echo android.permission.ACCESS_FINE_LOCATION
+  fi
 }
 
 cmd="${1:-}"; shift || true
@@ -44,11 +48,11 @@ case "$cmd" in
     adb shell am start -W -n "$PKG/.MainActivity" "${extras[@]}" | grep -E 'Status|Error|Warning' || true ;;
   stop)  adb shell am force-stop "$PKG" ;;
   clear) adb shell pm clear "$PKG" ;;
-  grant) adb shell pm grant "$PKG" "$(perm)" && echo "granted $(perm)" ;;
-  revoke) adb shell pm revoke "$PKG" "$(perm)" && echo "revoked $(perm)" ;;
+  grant) for p in $(perms); do adb shell pm grant "$PKG" "$p" && echo "granted $p"; done ;;
+  revoke) for p in $(perms); do adb shell pm revoke "$PKG" "$p" && echo "revoked $p"; done ;;
   state)
     echo "pid: $(adb shell pidof "$PKG" | tr -d '\r' || true)"
     adb shell dumpsys activity activities | grep -m1 -E 'topResumedActivity|ResumedActivity' || true
-    echo "permission $(perm): $(adb shell dumpsys package "$PKG" | grep -m1 "$(perm):" | sed 's/^ *//')" ;;
+    for p in $(perms); do echo "permission $p: $(adb shell dumpsys package "$PKG" | grep -m1 "$p:" | sed 's/^ *//')"; done ;;
   *) echo "usage: $0 install|launch|stop|clear|grant|revoke|state" >&2; exit 2 ;;
 esac

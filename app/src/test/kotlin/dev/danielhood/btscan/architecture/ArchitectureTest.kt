@@ -188,6 +188,7 @@ class ArchitectureTest {
                 "BLUETOOTH",
                 "BLUETOOTH_ADMIN",
                 "ACCESS_FINE_LOCATION",
+                "ACCESS_COARSE_LOCATION",
             )
         val manifests = File("src").walkTopDown().filter { it.name == "AndroidManifest.xml" }.toList()
         assertTrue("expected the main manifest, found: $manifests", manifests.any { it.path.contains("src/main/") })
@@ -207,7 +208,7 @@ class ArchitectureTest {
     }
 
     @Test
-    fun `legacy and scan permissions keep their restrictions`() {
+    fun `permissions keep the restrictions the policy decided`() {
         val manifest = File("src/main/AndroidManifest.xml").readText()
         val entries =
             Regex("""<uses-permission\s[^>]*?/>""", RegexOption.DOT_MATCHES_ALL)
@@ -217,9 +218,14 @@ class ArchitectureTest {
                 }.toList()
 
         fun entry(name: String) = entries.single { "android.permission.$name\"" in it }
-        assertTrue("scan must stay neverForLocation", "neverForLocation" in entry("BLUETOOTH_SCAN"))
-        listOf("BLUETOOTH", "BLUETOOTH_ADMIN", "ACCESS_FINE_LOCATION").forEach {
+        // Decision D-P2-8 (docs/phase2/x1-findings.md): neverForLocation hides iBeacon, Eddystone and extended
+        // advertising, so it is not asserted. Re-adding it must be a deliberate, documented change.
+        assertTrue("scan must not assert neverForLocation (D-P2-8)", "neverForLocation" !in entry("BLUETOOTH_SCAN"))
+        listOf("BLUETOOTH", "BLUETOOTH_ADMIN").forEach {
             assertTrue("$it must be limited to API 30 and below", "android:maxSdkVersion=\"30\"" in entry(it))
+        }
+        listOf("ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION").forEach {
+            assertTrue("$it is needed on every version, so it must not be capped", "maxSdkVersion" !in entry(it))
         }
     }
 }

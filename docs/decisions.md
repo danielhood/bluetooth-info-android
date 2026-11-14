@@ -82,14 +82,16 @@ Why: most nearby devices advertise via BLE; advertisement data gives rich detail
 
 | API level | Manifest permissions | Notes |
 |---|---|---|
-| 31+ | `BLUETOOTH_SCAN` with `usesPermissionFlags="neverForLocation"` | Runtime prompt: "Nearby devices" |
+| 31+ | `BLUETOOTH_SCAN` (no `neverForLocation`, see the update below), `ACCESS_FINE_LOCATION` and `ACCESS_COARSE_LOCATION` | Two runtime prompts: "Nearby devices" and Location (Android 12+ ignores a fine-location request unless coarse is requested with it). Location *services* must be on. |
 | 26 to 30 | `BLUETOOTH`, `BLUETOOTH_ADMIN` (both `maxSdkVersion="30"`), `ACCESS_FINE_LOCATION` | Location *services* must also be switched on or scans silently return nothing |
 
 Plus `<uses-feature android:name="android.hardware.bluetooth_le" android:required="false"/>` so the app installs on emulators and degrades to an "unsupported" state rather than being filtered out.
 
 The device name is read from the advertisement bytes (AD types 0x08/0x09), **not** from `BluetoothDevice.getName()`, which needs `BLUETOOTH_CONNECT` on API 31+. This keeps the permission prompt to one item and matches the "never connect" requirement.
 
-Trade-off: `neverForLocation` makes the OS filter out some beacon-style advertisements. Acceptable for this POC; documented in the spec.
+Original trade-off: `neverForLocation` makes the OS filter out some beacon-style advertisements. Acceptable for this POC; documented in the spec.
+
+**Update 2026-11-14 (D-P2-8): `neverForLocation` was dropped.** The real-radio spike ([phase2/x1-findings.md](phase2/x1-findings.md)) showed that on Android 17 it hides iBeacon, Eddystone and extended advertising (and with them 2M/Coded PHY, set id and periodic interval) from the app, which are most of what Tier 1 decodes. The price: the scan now needs Location permission (precise) and Location services on, on every Android version, and the permission explanation says so. The app still never uses, stores or sends a location; scan data is not persisted or transmitted (policy doc). `ArchitectureTest` fails if the flag is added back without updating this record.
 
 ## D10. Parse raw advertisement bytes with our own pure-Kotlin parser
 

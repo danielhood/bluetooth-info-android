@@ -50,10 +50,10 @@ The list screen derives one status from permission, adapter and scan state. Each
 
 | State | Trigger | UI | Action |
 |---|---|---|---|
-| Permission needed | Required runtime permission not granted | Explanation of why Nearby devices (API 31+) or Location (API 26 to 30) is needed | **Grant permission** triggers the system dialog |
+| Permission needed | Required runtime permission not granted | Explanation of why Nearby devices and Location (API 31+) or Location (API 26 to 30) are needed | **Grant permission** triggers the system dialog |
 | Permission permanently denied | Denied and the OS will not prompt again | Explanation that it must be changed in Settings | **Open app settings** |
 | Bluetooth off | Adapter state off | "Bluetooth is turned off" | **Turn on** opens the system Bluetooth settings/enable intent |
-| Location off (API ≤ 30) | Location services disabled | "Location must be on for scanning on this Android version" | **Open location settings** |
+| Location off | Location services disabled (all API levels) | "Location must be on for scanning. Android counts Bluetooth scan results as location data." | **Open location settings** |
 | Unsupported | No BLE hardware / no adapter | "This device does not support Bluetooth LE" | None |
 | Failed | Scanner reports an error | Plain-language message with the platform code; scan-too-frequent says "Wait a few seconds and try again" | **Retry** |
 

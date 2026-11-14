@@ -20,7 +20,7 @@ sealed interface ListStatus {
 
     data object BluetoothOff : ListStatus
 
-    /** Android 11 and below only: scanning needs system location switched on. */
+    /** Scanning needs system location switched on (all Android versions; decision D-P2-8). */
     data object LocationOff : ListStatus
 
     /** No BLE hardware. */

@@ -28,7 +28,7 @@ Control: same build with `neverForLocation` removed and `ACCESS_FINE_LOCATION` g
 
 So on Android 17, `neverForLocation` hides **iBeacon, Eddystone and extended advertising** from the app. It does not hide AltBeacon, manufacturer data in general (Ruuvi), service data in general (BTHome), Fast Pair or Apple frames (real neighbours show Apple and Fast Pair chips). Consequences if the flag stays: the iBeacon, Eddystone and distance features can only be seen through the fake scanner, and the Radio section can never show 2M or Coded PHY, a set id or a periodic interval for real devices.
 
-## Decision needed: D-P2-8
+## Decision D-P2-8 (decided 2026-11-14: option B, remove `neverForLocation`)
 
 | Option | Effect |
 |---|---|
@@ -36,7 +36,7 @@ So on Android 17, `neverForLocation` hides **iBeacon, Eddystone and extended adv
 | **B. Remove it** | Android 12+ also needs the Location permission (and Location services on) to deliver scan results; the manifest allowlist test and the policy doc change together; the permission screen explains both. Everything Tier 1 decodes becomes visible. The app still stores and sends nothing. |
 | C. Build flavour with and without | Both worlds, more build and test surface than a POC needs. |
 
-Recommended: B, because beacons and radio metadata are most of Tier 1's value and the app never persists or transmits scan data. Not changed yet; waiting for the owner.
+Recommended and chosen: B, because beacons and radio metadata are most of Tier 1's value and the app never persists or transmits scan data. Implemented the same day: manifest, permission checker (Location requested with Nearby devices), Location-off state on every Android version, wording, guardrail test, smoke script and docs.
 
 ## Bug found by the spike (fixed)
 

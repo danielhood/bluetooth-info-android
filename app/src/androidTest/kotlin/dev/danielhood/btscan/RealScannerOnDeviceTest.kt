@@ -33,11 +33,17 @@ class RealScannerOnDeviceTest {
     @get:Rule
     val permission: GrantPermissionRule =
         GrantPermissionRule.grant(
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Manifest.permission.BLUETOOTH_SCAN
-            } else {
-                Manifest.permission.ACCESS_FINE_LOCATION
-            },
+            *(
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    arrayOf(
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                    )
+                } else {
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                }
+            ),
         )
 
     private val context: Context = ApplicationProvider.getApplicationContext()

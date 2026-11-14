@@ -186,7 +186,7 @@ Phase 2 (three tiers of learning more from neighbouring devices) is planned; **X
 | Pixel 9a (API 31+) cannot exercise the API 26 to 30 location-permission path | Certain | That path validated only with the fake scanner on an older emulator image | Spike S1; document as a known gap |
 | `uiautomator` idle-state hangs | Medium | Flaky inspection | Mitigations in dev-tooling.md section 3 |
 | Agent drifts from conventions | Medium | Inconsistent code | Architecture tests, detekt, `AGENTS.md`, small commits gated by `verify.sh` |
-| `neverForLocation` hides some beacons | Low | Missing devices in real scans | Documented trade-off; revisit if it matters |
+| `neverForLocation` hides some beacons | Low | Missing devices in real scans | Confirmed hiding iBeacon, Eddystone and extended advertising (X1); flag removed 2026-11-14 (D-P2-8), Location permission now required |
 | Scope creep (classic BT, connect, history) | Medium | Dilutes POC | Out of scope list below |
 
 ## Out of scope

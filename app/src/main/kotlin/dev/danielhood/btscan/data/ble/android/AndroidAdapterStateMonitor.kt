@@ -18,8 +18,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 
 /**
- * Reports whether BLE scanning can work: no hardware, adapter off, or (Android 11 and below only) system location
- * off. Re-evaluated on every Bluetooth state or location mode change broadcast.
+ * Reports whether BLE scanning can work: no hardware, adapter off, or system location off. Location must be on on every
+ * Android version because the manifest does not assert `neverForLocation` (decision D-P2-8). Re-evaluated on every
+ * Bluetooth state or location mode change broadcast.
  */
 class AndroidAdapterStateMonitor(
     private val context: Context,
@@ -49,7 +50,7 @@ class AndroidAdapterStateMonitor(
         return when {
             !hasBle || adapter == null -> AdapterState.UNSUPPORTED
             adapter.state != BluetoothAdapter.STATE_ON -> AdapterState.OFF
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.S && !isLocationEnabled() -> AdapterState.LOCATION_OFF
+            !isLocationEnabled() -> AdapterState.LOCATION_OFF
             else -> AdapterState.ON
         }
     }

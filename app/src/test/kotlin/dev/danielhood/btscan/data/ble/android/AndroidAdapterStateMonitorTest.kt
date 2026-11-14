@@ -59,10 +59,13 @@ class AndroidAdapterStateMonitorTest {
     }
 
     @Test
-    fun `location is not required on android 12 and above`() {
+    fun `location off blocks scanning on android 12 and above too`() {
+        // The manifest does not assert neverForLocation (decision D-P2-8), so location services must be on everywhere.
         setBle(true)
         setAdapterOn(true)
         setLocation(false)
+        assertEquals(AdapterState.LOCATION_OFF, state())
+        setLocation(true)
         assertEquals(AdapterState.ON, state())
     }
 
@@ -78,11 +81,23 @@ class AndroidAdapterStateMonitorTest {
     }
 
     @Test
-    fun `bluetooth scan permission decides the permission state on android 12 and above`() {
+    fun `scan and fine location decide the permission state on android 12 and above`() {
         val checker = AndroidPermissionChecker(app)
-        assertEquals(listOf(Manifest.permission.BLUETOOTH_SCAN), checker.requiredPermissions)
+        // Coarse is requested too (Android 12+ ignores a fine-only request) but is not required to scan.
+        assertEquals(
+            listOf(
+                Manifest.permission.BLUETOOTH_SCAN,
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            ),
+            checker.requiredPermissions,
+        )
         assertTrue(checker.current() is PermissionState.Denied)
         shadowOf(app).grantPermissions(Manifest.permission.BLUETOOTH_SCAN)
+        assertTrue("scan alone is not enough", checker.current() is PermissionState.Denied)
+        shadowOf(app).grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+        assertTrue("approximate location is not enough", checker.current() is PermissionState.Denied)
+        shadowOf(app).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
         assertEquals(PermissionState.Granted, checker.current())
     }
 
