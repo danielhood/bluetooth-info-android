@@ -60,7 +60,12 @@ probe() {
   fi
   "$S/ui.sh" tap "device_row_$addr" >/dev/null; "$S/ui.sh" wait detail_screen 8 >/dev/null
   echo "SEEN: profile '$profile' as $addr after $((SECONDS - start))s"
-  "$S/ui.sh" dump | grep -E 'detail_decoded_|decoded_|detail_radio_|detail_ad_count' | sed -E "s/ desc=.*//; s/ bounds=.*//"
+  # The detail screen scrolls: print what is visible, scroll down twice, print again (duplicates removed).
+  {
+    "$S/ui.sh" dump | grep -E 'detail_decoded_|decoded_|detail_radio_|detail_ad_count'
+    adb shell input swipe 540 1900 540 400 300; sleep 0.5; adb shell input swipe 540 1900 540 400 300; sleep 1
+    "$S/ui.sh" dump | grep -E 'detail_radio_'
+  } | sed -E "s/ desc=.*//; s/ bounds=.*//" | awk '!seen[$0]++'
 }
 
 case "${1:-}" in

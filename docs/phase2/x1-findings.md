@@ -9,7 +9,7 @@ This machine's Bluetooth controller (BlueZ 5.85, peripheral role, 20 advertising
 ## What was built
 
 - `scripts/peripheral/profiles.json`: advertisement profiles (hex, same bytes as the fake scenarios) and `scripts/peripheral/peripheral.py`: registers them with BlueZ over D-Bus. Needs only the system packages `python3-dbus` and `python3-gi`; no root, nothing installed or reconfigured; advertising only (no connections, no pairing).
-- `scripts/peripheral.sh` with `list`, `start`, `stop`, `status` and `probe <profile>` (launches the app on the phone, scans, advertises, prints what the app decoded). The end-to-end `probe` run was interrupted when the phone locked itself; each step had been run by hand and the whole script needs one confirming run on an unlocked phone.
+- `scripts/peripheral.sh` with `list`, `start`, `stop`, `status` and `probe <profile>` (launches the app on the phone, scans, advertises, prints what the app decoded). The script was confirmed end to end on 2026-11-14: it installs and launches the app, scans, advertises, finds the row by the host's address, prints the decoded and Radio lines (scrolling for the lower ones) and stops advertising on exit.
 - `PeripheralProfilesTest` fails if a profile that mirrors a fake scenario differs from it by a single byte (proved by a deliberate edit; `profiles.json` is declared as a Gradle test input so edits re-run it).
 
 ## Real-radio results (app with `neverForLocation`, as shipped)
@@ -37,6 +37,10 @@ So on Android 17, `neverForLocation` hides **iBeacon, Eddystone and extended adv
 | C. Build flavour with and without | Both worlds, more build and test surface than a POC needs. |
 
 Recommended and chosen: B, because beacons and radio metadata are most of Tier 1's value and the app never persists or transmits scan data. Implemented the same day: manifest, permission checker (Location requested with Nearby devices), Location-off state on every Android version, wording, guardrail test, smoke script and docs.
+
+## After the decision (2026-11-14)
+
+With `neverForLocation` removed, every profile above, including iBeacon, Eddystone and the extended 2M advertisement, is received and decoded exactly on the Pixel. The full results table is in [tier1-advertisement-decoding.md](tier1-advertisement-decoding.md#t1-m5-results-pixel-9a-android-17-2026-11-14-shipped-build-without-neverforlocation).
 
 ## Bug found by the spike (fixed)
 

@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** T1-M1 to T1-M4 done (2026-11-10); T1-M0 spike and T1-M5 not started. **Permissions:** decision D-P2-8 (2026-11-14) replaced `neverForLocation` with Location permission and Location services (see [x1-findings.md](x1-findings.md)). **Contacts the device:** never.
+**Status:** T1-M1 to T1-M5 done (2026-11-10 to 2026-11-14); only the T1-M0 address-type spike, Swift Pair and the optional list filter (T1-L2) remain. **Permissions:** decision D-P2-8 (2026-11-14) replaced `neverForLocation` with Location permission and Location services (see [x1-findings.md](x1-findings.md)). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -141,7 +141,7 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 | T1-M2 | Ruuvi, BTHome (and AltBeacon), `sensors` scenario | AC T1-3. **Done.** Notes below. |
 | T1-M3 | Fast Pair, Swift Pair, Apple type labels, tracker hint, `vendors` scenario, wording review | AC T1-4. **Done except Swift Pair (deferred).** Notes below. |
 | T1-M4 | Radio section, interval and distance estimates, list kind chips, `radio` scenario | AC T1-5, T1-6. **Done.** Notes below. |
-| T1-M5 | Real-device validation with X1 profiles and with real neighbours; roadmap and AGENTS.md updates | AC T1-7 |
+| T1-M5 | Real-device validation with X1 profiles and with real neighbours; roadmap and AGENTS.md updates | AC T1-7. **Done.** Results below. |
 
 ### T1-M1 implementation notes
 
@@ -173,6 +173,27 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 - **Performance (T1-8, emulator):** `perf.sh` with 200 fake devices after T1-M4: 638 frames, 6.74% janky, median 21 ms (Phase 1 baseline 6.1% and 24 ms; software rendering, within noise). The `many` scenario carries no decodable data, so this mostly measures the decoders' short-circuit cost; a Pixel run with real neighbours belongs to T1-M5.
 - **Smoke lesson:** rows re-sort as RSSI drifts, so tapping a row by id can open a neighbour. The smoke script now opens devices through `open_device`, which confirms the address and retries; the `radio` scenario also spaces signal levels 12 dB apart.
 - The T1-M0 spike (address type API) is still open.
+
+### T1-M5 results (Pixel 9a, Android 17, 2026-11-14, shipped build without `neverForLocation`)
+
+Host controller as test peripheral (`scripts/peripheral.sh probe <profile>`), every profile found by the host's address within 7 to 8 s of starting, decoded exactly as specified:
+
+| Profile | What the phone showed |
+|---|---|
+| `ibeacon` | UUID E2C56DB5-DFFB-48D2-B060-D0F5A71096E0, major 1, minor 2, -59 dBm |
+| `eddystone-uid` / `-url` / `-tlm` | namespace and instance; `https://example.com/`; 3000 mV, 24.5 C, 1000 packets, 3600 s |
+| `altbeacon` | UUID 2F234454-..., major 1, minor 2, -59 dBm |
+| `ruuvi`, `ruuvi-100ms` | the documentation example: 24.3 C, 53.49 %, 1000.44 hPa, 0.004/-0.004/1.036 G, 2977 mV, 4 dBm |
+| `bthome` | packet 9, 97 %, 25.06 C, 50.55 %, 1008.83 hPa |
+| `bthome-encrypted` | "Encrypted or rotating: not decodable", no values |
+| `ruuvi-2m` (extended) | Radio section: primary LE 1M, secondary LE 2M, Extended, set id 0, no TX power or periodic interval (unavailable values omitted) |
+
+- **Interval estimate (T1-R7):** the 100 ms profile reads "about 122 ms" and the extended 100 ms profile "about 120 ms"; default BlueZ advertising (about 1.28 s) reads 1.2 to 1.9 s. As labelled, missed packets make the estimate high.
+- **Distance (T1-E1):** calibrated beacons (iBeacon, Eddystone, AltBeacon) next to the phone at -35 dBm read "Very close, under about half a metre"; devices without calibration (Ruuvi, BTHome) show none.
+- **Real neighbours** (5 devices in range, 45 s scan): one Apple frame labelled "Other message (not named by this app)" with its code (an unverified type), one Fast Pair frame in not-discoverable mode, the rest plain. No crash, no model or owner claim.
+- **Performance on the phone** (`perf.sh`, 200 fake devices, three runs): 3.75 to 6.24 % janky, median 8 ms, 95th percentile 26 to 32 ms; the Phase 1 baseline (3.9 %, 7 ms, 27 ms) is inside the run-to-run spread.
+- **Acceptance:** T1-1 to T1-7 met on real hardware. T1-8 changed on purpose: the permission set is no longer "no new permission" because of decision D-P2-8 (Location added); the guardrail test records the new exact set.
+- **Not verified on real radio:** the Eddystone frame accumulation (UID, URL and TLM alternating on one device) and the Swift Pair format; the host sends one frame kind per profile.
 
 ## 6. Acceptance criteria
 
