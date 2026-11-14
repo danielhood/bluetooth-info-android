@@ -29,6 +29,18 @@ object TestTags {
     const val DETAIL_FLAGS = "detail_flags"
     const val DETAIL_RAW = "detail_raw"
     const val COPY_RAW_BUTTON = "copy_raw_button"
+    const val SYSTEM_INFO_SECTION = "system_info_section"
+    const val SYSTEM_INFO_MESSAGE = "system_info_message"
+    const val SYSTEM_INFO_ALLOW_BUTTON = "system_info_allow_button"
+    const val SYSTEM_INFO_SETTINGS_BUTTON = "system_info_settings_button"
+    const val SYSTEM_INFO_LOADING = "system_info_loading"
+    const val SYSTEM_INFO_UNAVAILABLE = "system_info_unavailable"
+    const val SYSTEM_NAME = "system_name"
+    const val SYSTEM_ALIAS = "system_alias"
+    const val SYSTEM_BOND_STATE = "system_bond_state"
+    const val SYSTEM_TYPE = "system_type"
+    const val SYSTEM_CLASS = "system_class"
+    const val SYSTEM_ADDRESS_TYPE = "system_address_type"
     const val OUT_OF_RANGE_BANNER = "out_of_range_banner"
     const val NOT_FOUND_MESSAGE = "not_found_message"
     const val NOT_FOUND_BACK = "not_found_back_button"
@@ -40,6 +52,9 @@ object TestTags {
 
     /** One line of the detail Radio section, for example `detail_radio_primary_phy`. */
     fun detailRadio(field: String) = "detail_radio_$field"
+
+    /** One cached service UUID in the System information section. */
+    fun systemUuid(index: Int) = "system_uuid_$index"
 
     fun detailService(index: Int) = "detail_service_$index"
 

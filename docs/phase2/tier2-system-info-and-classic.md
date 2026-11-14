@@ -1,6 +1,6 @@
 # Tier 2: System Device Info and Classic Discovery
 
-**Status:** Plan. **New permission:** `BLUETOOTH_CONNECT` (Android 12+; nothing new on 11 and below). **Pairing:** never. **Connecting:** none in 2a; a brief classic inquiry in 2b; an SDP query in 2c.
+**Status:** 2a implemented (T2-M1 and T2-M2, 2026-11-14); T2-M0 spikes S1 and S2 observed on the emulator only, phone and T2-M5 pending; 2b, 2c not started. **New permission:** `BLUETOOTH_CONNECT` (Android 12+; nothing new on 11 and below). **Pairing:** never. **Connecting:** none in 2a; a brief classic inquiry in 2b; an SDP query in 2c.
 
 ## 1. Goal
 
@@ -121,6 +121,14 @@ domain/model/
 | T2-M3 (gate D-P2-2) | Classic discovery: port, repository merge, UI source filter, Android scanner | AC T2-4, T2-5 |
 | T2-M4 (optional) | SDP profile lookup with confirmation dialog | AC T2-6 |
 | T2-M5 | Real-device validation, docs, AGENTS.md rule updates | AC T2-7 |
+
+### 2a implementation notes (2026-11-14)
+
+- **Built:** `domain/system` (`SystemDeviceInfo`, table-driven `DeviceClassInfo.of`, `ProfileUuids`), the `SystemDeviceInfoSource` port and `PermissionChecker.connectState()/connectPermissions`, `AndroidSystemDeviceInfoSource` (every read inside one `SecurityException` guard; address type gated on API 35, alias on API 30), `FakeSystemDeviceInfoSource` (honours the real permission so the ask and grant flow is identical) and the `system-info` scenario, the progressive-permission ViewModel and a "System information" section on the detail screen, `BLUETOOTH_CONNECT` in the manifest.
+- **Guardrails (policy doc):** `BLUETOOTH_CONNECT` may be named only under `data/ble/android`; `fetchUuidsWithSdp`, `startDiscovery`, `cancelDiscovery` and `connectGatt` are forbidden everywhere; a new rule forbids logging identifiers or values in `src/main` and `src/release`. Each rule was shown to fail on a deliberate violation.
+- **Spike T2-S2 (emulator, API 36):** with Nearby devices and Location granted for scanning, tapping "Allow system information" shows **no dialog**; Android grants `BLUETOOTH_CONNECT` immediately because it shares the Nearby devices group. The copy was changed to "needs your permission to read it" instead of "one more permission". To confirm on the Pixel (Android 17).
+- **Spike T2-S1 (no radio traffic):** the lookups are plain getters over the system's cache (`getName`, `getAlias`, `getBondState`, `getType`, `getBluetoothClass`, `getAddressType`, `getUuids`) and never call anything that connects or queries services; the architecture test enforces the absence of the over-the-air calls. Empirical confirmation with the host peripheral (no connection or pairing appears on its side) is pending a phone.
+- **Open for the phone:** what the Pixel reports for an LE-only advertiser and for a bonded device; whether `getAddressType()` needs the connect permission (answers T1-S1); T2-M5 wording review.
 
 ## 6. Acceptance criteria
 

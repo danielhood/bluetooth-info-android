@@ -224,7 +224,7 @@ check "plain row has no chip"       absent kind_chip_C0:FF:EE:00:00:01
 open_device C0:FF:EE:00:00:01 || true
 check "radio section phy shown"     "$S/ui.sh" wait detail_radio_primary_phy 8
 check "secondary phy is LE 2M"      bash -c "'$S/ui.sh' find detail_radio_secondary_phy | grep -q 'LE 2M'"
-adb shell input swipe 540 1900 540 700 300
+adb shell input swipe 540 1900 540 1100 300
 sleep 1
 check "advertising set id is 3"     bash -c "'$S/ui.sh' find detail_radio_sid | grep -q \"text='3'\""
 check "periodic interval 100 ms"    bash -c "'$S/ui.sh' find detail_radio_periodic_interval | grep -q '100 ms'"
@@ -243,6 +243,34 @@ sleep 0.5
 adb shell input swipe 540 1900 540 400 300
 sleep 1
 check "calibrated beacon has a distance" bash -c "'$S/ui.sh' wait detail_radio_distance 10"
+
+echo "-- system information (Tier 2a): the connect permission is asked for on demand"
+adb shell pm revoke "$PKG" android.permission.BLUETOOTH_CONNECT >/dev/null 2>&1 || true
+"$S/app.sh" launch --scenario system-info >/dev/null
+"$S/ui.sh" wait device_list_screen 10 >/dev/null
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "four system-info devices"    wait_rows 4 6
+open_device C0:FF:EE:00:00:01 || true
+check "section asks for permission" "$S/ui.sh" wait system_info_allow_button 8
+check "no values before allowing"   absent system_name
+"$S/shot.sh" smoke-system-info-ask >/dev/null
+"$S/ui.sh" tap system_info_allow_button >/dev/null
+tap_allow >/dev/null || true
+check "headset system name shown"   bash -c "'$S/ui.sh' wait system_name 10 && '$S/ui.sh' find system_name | grep -q \"text='Buds Pro'\""
+check "alias shown"                 bash -c "'$S/ui.sh' find system_alias | grep -q \"text='My buds'\""
+check "paired shown"                bash -c "'$S/ui.sh' find system_bond_state | grep -q \"text='Paired'\""
+"$S/shot.sh" smoke-system-info >/dev/null
+adb shell input swipe 540 1900 540 700 300; sleep 1
+check "device class shown"          bash -c "'$S/ui.sh' find system_class | grep -q 'Audio or video: Headphones'"
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+open_device C0:FF:EE:00:00:03 || true
+check "pairing state shown"         bash -c "'$S/ui.sh' wait system_bond_state 10 && '$S/ui.sh' find system_bond_state | grep -q 'Pairing in progress'"
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+open_device C0:FF:EE:00:00:04 || true
+check "unknown device says so"      "$S/ui.sh" wait system_info_unavailable 10
 
 echo "-- launch without overrides"
 "$S/app.sh" launch >/dev/null

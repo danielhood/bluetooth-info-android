@@ -3,6 +3,7 @@ package dev.danielhood.btscan.domain.port
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
+import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 
@@ -20,6 +21,19 @@ interface PermissionChecker {
     val requiredPermissions: List<String>
 
     fun current(): PermissionState
+
+    /**
+     * Runtime permissions needed to read what the system knows about a device (Tier 2a); empty where none is needed
+     * (Android 11 and below). Independent of scanning: the list screen never requires them.
+     */
+    val connectPermissions: List<String>
+
+    fun connectState(): PermissionState
+}
+
+/** Reads what the Android system already knows about a device. Never contacts the device and never pairs. */
+interface SystemDeviceInfoSource {
+    suspend fun lookup(address: String): SystemInfoResult
 }
 
 /** Injected time source; never call the system clock directly from domain or ViewModel code. */

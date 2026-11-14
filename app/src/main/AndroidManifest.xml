@@ -3,13 +3,21 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-      API 31+: scan only. We never connect, so no BLUETOOTH_CONNECT.
+      API 31+: scan.
       Deliberately WITHOUT usesPermissionFlags="neverForLocation" (decision D-P2-8, docs/phase2/x1-findings.md): that
       flag makes Android hide iBeacon, Eddystone and extended advertising from the app. Without it Android also needs
       Location permission and Location services for scan results. The app never uses, stores or sends a location.
     -->
     <uses-permission
         android:name="android.permission.BLUETOOTH_SCAN"
+        tools:targetApi="s" />
+
+    <!--
+      API 31+: read what Android already knows about a device (name, alias, pairing state, class), requested only when
+      the user opens that section (Tier 2a). Never used to connect: connectGatt stays forbidden (ArchitectureTest).
+    -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
         tools:targetApi="s" />
 
     <!-- API 26-30 -->

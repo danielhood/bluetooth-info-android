@@ -8,6 +8,8 @@ import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
+import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
@@ -29,8 +31,25 @@ fun TestScope.advance(ms: Long) {
 class FakePermissionChecker(
     var state: PermissionState = PermissionState.Granted,
     override val requiredPermissions: List<String> = listOf("android.permission.BLUETOOTH_SCAN"),
+    /** State of the separate permission for reading system device info (Tier 2a). */
+    var connect: PermissionState = PermissionState.Granted,
+    override val connectPermissions: List<String> = listOf("android.permission.BLUETOOTH_CONNECT"),
 ) : PermissionChecker {
     override fun current(): PermissionState = state
+
+    override fun connectState(): PermissionState = connect
+}
+
+/** System-info source whose answer the test sets; records each lookup. */
+class FakeSystemInfoSource(
+    var result: SystemInfoResult = SystemInfoResult.Unavailable,
+) : SystemDeviceInfoSource {
+    val lookups = mutableListOf<String>()
+
+    override suspend fun lookup(address: String): SystemInfoResult {
+        lookups += address
+        return result
+    }
 }
 
 /** Scanner whose advertisements are pushed by the test. */
@@ -74,6 +93,7 @@ class TestApp :
                 permissionChecker = FakePermissionChecker(),
                 realScanner = ManualScanner(),
                 realAdapterMonitor = AlwaysOnAdapterMonitor,
+                realSystemInfo = FakeSystemInfoSource(),
             ).also { it.debugConfig = dev.danielhood.btscan.DebugConfig(scanner = "fake", scenario = "default") }
     }
 }

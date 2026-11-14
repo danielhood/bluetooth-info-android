@@ -58,7 +58,13 @@ fun AppRoot(container: AppContainer, debugLabel: String?, darkTheme: Boolean = i
                         factory =
                             viewModelFactory {
                                 initializer {
-                                    DeviceDetailViewModel(address, container.deviceRepository, container.clock)
+                                    DeviceDetailViewModel(
+                                        address,
+                                        container.deviceRepository,
+                                        container.clock,
+                                        container.systemDeviceInfoSource,
+                                        container.permissionChecker,
+                                    )
                                 }
                             },
                     )

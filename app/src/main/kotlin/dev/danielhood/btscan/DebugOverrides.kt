@@ -4,6 +4,8 @@ import android.content.Intent
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
+import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 
 /**
  * Debug-only launch configuration, normally empty. In debug builds it is read from intent extras, e.g.
@@ -38,4 +40,7 @@ interface DebugOverrides {
 
     /** A replacement adapter monitor for [config], or null to use the real one. Always null in release builds. */
     fun adapterMonitorFor(config: DebugConfig): AdapterStateMonitor?
+
+    /** A replacement system-info source for [config], or null to use the real one. Always null in release builds. */
+    fun systemInfoSourceFor(config: DebugConfig, permissions: PermissionChecker): SystemDeviceInfoSource?
 }

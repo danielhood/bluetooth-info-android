@@ -4,6 +4,7 @@ import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
+import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 
 /** A simulated device. All times are milliseconds since the scan started. Output is fully deterministic. */
 data class FakeDevice(
@@ -33,4 +34,6 @@ data class Scenario(
     val devices: List<FakeDevice>,
     val failure: FakeFailure? = null,
     val adapterState: AdapterState = AdapterState.ON,
+    /** What the fake system knows about each address (Tier 2a); addresses not listed are unknown to it. */
+    val systemInfo: Map<String, SystemDeviceInfo> = emptyMap(),
 )

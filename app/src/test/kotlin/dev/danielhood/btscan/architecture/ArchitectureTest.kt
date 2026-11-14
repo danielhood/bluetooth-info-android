@@ -112,12 +112,20 @@ class ArchitectureTest {
 
     @Test
     fun `nothing connects to a device`() {
+        // Tier 3 will allow connectGatt in exactly one file; until then it is forbidden everywhere.
+        val offenders = allMainDebugRelease.filter { "connectGatt" in it.readText() }
+        assertNone("the app must never connect (policy: Tier 3 not started)", offenders.map { it.path })
+    }
+
+    @Test
+    fun `the connect permission is named only in the android data layer`() {
+        // Tier 2a (docs/phase2/policy-and-guardrails.md): allowed in the manifest and data/ble/android; the UI gets
+        // the permission names from the PermissionChecker port, so no other layer needs the literal.
         val offenders =
-            allMainDebugRelease.filter { f ->
-                val text = f.readText()
-                "connectGatt" in text || "BLUETOOTH_CONNECT" in text
-            }
-        assertNone("the app must never connect or request BLUETOOTH_CONNECT", offenders.map { it.path })
+            allMainDebugRelease
+                .filter { !it.relative().startsWith("data/ble/android/") }
+                .filter { "BLUETOOTH_CONNECT" in it.readText() }
+        assertNone("BLUETOOTH_CONNECT only under data/ble/android", offenders.map { it.path })
     }
 
     // ---- Phase 2 guardrails (docs/phase2/policy-and-guardrails.md section 3) ----
@@ -189,6 +197,7 @@ class ArchitectureTest {
                 "BLUETOOTH_ADMIN",
                 "ACCESS_FINE_LOCATION",
                 "ACCESS_COARSE_LOCATION",
+                "BLUETOOTH_CONNECT",
             )
         val manifests = File("src").walkTopDown().filter { it.name == "AndroidManifest.xml" }.toList()
         assertTrue("expected the main manifest, found: $manifests", manifests.any { it.path.contains("src/main/") })
@@ -227,5 +236,38 @@ class ArchitectureTest {
         listOf("ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION").forEach {
             assertTrue("$it is needed on every version, so it must not be capped", "maxSdkVersion" !in entry(it))
         }
+    }
+
+    @Test
+    fun `no call that contacts a device over the air exists yet`() {
+        // Tier 2a reads only what the system cached. Classic discovery (2b), SDP lookup (2c) and GATT (Tier 3) each
+        // relax one token in their own documented commit.
+        assertNone(
+            "policy: Tier 2a does not contact devices",
+            offendersContaining(
+                allSourcesIncludingTests,
+                listOf("fetchUuidsWithSdp", "startDiscovery", "cancelDiscovery"),
+            ),
+        )
+    }
+
+    /**
+     * Release code logs lifecycle and counts, never device identifiers or values (policy: data handling). Debug-only
+     * code is exempt. Calls must be on one line; a justified exception carries a `log-ok:` comment on that line.
+     */
+    @Test
+    fun `main code never logs device identifiers or values`() {
+        val logCall = Regex("""\b(AppLog\.[a-z]|Log\.[a-z])\(""")
+        val sensitive = Regex("""\$\{?[A-Za-z_.]*\b(address|name|alias|serial|rawBytes|rawHex|value)\b""")
+        val offenders =
+            sources("main", "release").flatMap { f ->
+                f
+                    .readLines()
+                    .withIndex()
+                    .filter { (_, line) ->
+                        logCall.containsMatchIn(line) && sensitive.containsMatchIn(line) && "log-ok:" !in line
+                    }.map { (i, line) -> "${f.path}:${i + 1}: ${line.trim()}" }
+            }
+        assertNone("policy: no identifiers or values in log lines", offenders)
     }
 }

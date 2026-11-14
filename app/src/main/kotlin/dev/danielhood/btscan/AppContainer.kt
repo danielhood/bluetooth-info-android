@@ -7,8 +7,10 @@ import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
 import dev.danielhood.btscan.domain.repo.DeviceRepository
+import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -21,6 +23,7 @@ class AppContainer(
     val permissionChecker: PermissionChecker,
     private val realScanner: BleScanner,
     private val realAdapterMonitor: AdapterStateMonitor,
+    private val realSystemInfo: SystemDeviceInfoSource,
     scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
     val clock: Clock = SystemClock,
 ) {
@@ -48,6 +51,13 @@ class AppContainer(
                     val chosen = debugOverrides.adapterMonitorFor(debugConfig) ?: realAdapterMonitor
                     emitAll(chosen.state)
                 }
+        }
+
+    /** Resolved at lookup time for the same reason as [scanner]. */
+    val systemDeviceInfoSource: SystemDeviceInfoSource =
+        object : SystemDeviceInfoSource {
+            override suspend fun lookup(address: String): SystemInfoResult =
+                (debugOverrides.systemInfoSourceFor(debugConfig, permissionChecker) ?: realSystemInfo).lookup(address)
         }
 
     val deviceRepository: DeviceRepository = DefaultDeviceRepository(scanner, clock, scope)

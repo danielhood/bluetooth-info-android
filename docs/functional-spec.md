@@ -40,6 +40,7 @@ Reached by tapping a row; system back or top-bar up arrow returns to the list wi
 | F-D9 | S | Service data entries (UUID + hex) | Parser |
 | F-D10 | S | Advertising flags decoded (LE General Discoverable, BR/EDR not supported, …) | Parser |
 | F-D11 | S | Raw advertisement bytes as hex, with a copy action | Repository |
+| F-D13 | S | **System information (Tier 2a):** what Android already knows about the device (system name, alias, pairing state shown read-only, device type, class, address type on Android 15+, cached service UUIDs), read without contacting the device. Needs `BLUETOOTH_CONNECT`, asked for only when the user taps "Allow system information"; scanning and the rest of the screen do not depend on it. Missing values read "Not available", never guessed. | `SystemDeviceInfoSource` |
 | F-D12 | M | **Out of range state:** if the device is no longer in the repository, keep showing the last known data (if the screen was already open) under a banner "Out of range, last seen N s ago"; if it was never known (for example after process restore) show "Device not found" with a back action. | Repository |
 
 Not shown (would require connecting or `BLUETOOTH_CONNECT`): bond state, GATT services, device class, alias.
@@ -86,6 +87,7 @@ Selected with `--es scenario <name>`; each is deterministic (seeded) so screensh
 | `sensors` | Ruuvi format 5 (the documentation example), BTHome plain, BTHome encrypted (exact bytes in `SensorFrames.kt`) | Tier 1 sensor decoders, encrypted handling |
 | `vendors` | Apple Find My / AirDrop / Proximity Pairing / unnamed message, Fast Pair (both modes), Tile- and SmartTag-style identifiers, a plain device (exact bytes in `VendorFrames.kt`; payloads are filler) | Tier 1 vendor hints and wording rules |
 | `radio` | Extended advertising with 2M PHY, set id and periodic interval; coded PHY without TX power; truncated report; slow legacy device; fast calibrated iBeacon (intervals 500/500/500/1000/100 ms) | Radio section, omitted unavailable values, interval and distance estimates |
+| `system-info` | A paired dual-mode headset with an alias and cached profiles, an LE sensor, a device being paired, and one the system knows nothing about | Tier 2a System information states and the permission flow |
 | `bluetooth-off` | Adapter reports Off | Bluetooth-off state |
 | `unsupported` | Adapter reports Unsupported | Unsupported state |
 | `scan-fails` | Scanner throws `ScanFailure` after 2 s | Failed state and Retry |

@@ -47,7 +47,8 @@ Target device: `$ANDROID_SERIAL` if set; otherwise the emulator if attached; oth
 
 ## Do not
 
-- Call `connectGatt`, request `BLUETOOTH_CONNECT`, or make network calls.
+- Call `connectGatt`, start discovery, query services over the air, or make network calls. `BLUETOOTH_CONNECT` is only for reading what Android has cached (Tier 2a) and may be named only under `data/ble/android`.
+- Log a device address, name, alias, serial, raw bytes or value in `src/main` or `src/release` (`ArchitectureTest` fails on it).
 - Write a characteristic, create/remove a bond, or use reflection on Bluetooth classes, in any phase (`ArchitectureTest` fails on the tokens, even in comments). Read `docs/phase2/policy-and-guardrails.md` before touching permissions or device contact.
 - Add a manifest permission without updating the exact-set allowlist in `ArchitectureTest` and the policy doc in the same commit.
 - Add a dependency without adding it to `gradle/libs.versions.toml` and stating why in the commit. No hardcoded versions elsewhere.

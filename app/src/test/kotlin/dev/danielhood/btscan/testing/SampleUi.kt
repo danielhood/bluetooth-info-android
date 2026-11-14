@@ -17,6 +17,13 @@ import dev.danielhood.btscan.domain.model.ManufacturerData
 import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
+import dev.danielhood.btscan.domain.parser.AdvertisementParser
+import dev.danielhood.btscan.domain.system.AddressType
+import dev.danielhood.btscan.domain.system.BondState
+import dev.danielhood.btscan.domain.system.DeviceClassInfo
+import dev.danielhood.btscan.domain.system.DeviceType
+import dev.danielhood.btscan.domain.system.SystemDeviceInfo
+import dev.danielhood.btscan.ui.detail.SystemInfoState
 import dev.danielhood.btscan.ui.list.DeviceListUiState
 import dev.danielhood.btscan.ui.list.DeviceRowUi
 import dev.danielhood.btscan.ui.list.ListStatus
@@ -182,11 +189,42 @@ object SampleDetail {
             rawHex = "",
         )
 
-    fun loaded(device: dev.danielhood.btscan.ui.detail.DeviceDetailUi = thermo, outOfRange: Boolean = false) =
-        dev.danielhood.btscan.ui.detail.DeviceDetailUiState.Loaded(
-            device = device,
-            outOfRange = outOfRange,
-            firstSeenAgoSeconds = 75,
-            lastSeenAgoSeconds = if (outOfRange) 41 else 1,
+    /** A paired dual-mode headset as the system describes it (all fields present). */
+    val systemInfoHeadset =
+        SystemInfoState.Loaded(
+            SystemDeviceInfo(
+                name = "Buds Pro",
+                alias = "My buds",
+                bondState = BondState.BONDED,
+                deviceType = DeviceType.DUAL,
+                deviceClass = DeviceClassInfo.of(0x0418),
+                addressType = AddressType.PUBLIC,
+                cachedUuids = listOf(0x110B, 0x111E, 0x180F).map { AdvertisementParser.uuidFromShort(it.toLong()) },
+            ),
         )
+
+    /** The system knows almost nothing: every missing value must read "Not available", never a guess. */
+    val systemInfoSparse =
+        SystemInfoState.Loaded(
+            SystemDeviceInfo(
+                name = null,
+                alias = null,
+                bondState = BondState.NONE,
+                deviceType = null,
+                deviceClass = null,
+                addressType = null,
+            ),
+        )
+
+    fun loaded(
+        device: dev.danielhood.btscan.ui.detail.DeviceDetailUi = thermo,
+        outOfRange: Boolean = false,
+        systemInfo: SystemInfoState = SystemInfoState.NeedsPermission(permanentlyDenied = false),
+    ) = dev.danielhood.btscan.ui.detail.DeviceDetailUiState.Loaded(
+        device = device,
+        outOfRange = outOfRange,
+        firstSeenAgoSeconds = 75,
+        lastSeenAgoSeconds = if (outOfRange) 41 else 1,
+        systemInfo = systemInfo,
+    )
 }

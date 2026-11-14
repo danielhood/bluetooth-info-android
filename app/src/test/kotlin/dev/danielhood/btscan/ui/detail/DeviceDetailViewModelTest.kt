@@ -2,8 +2,16 @@ package dev.danielhood.btscan.ui.detail
 
 import dev.danielhood.btscan.data.ble.fake.FakeBleScanner
 import dev.danielhood.btscan.data.ble.fake.Scenarios
+import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
 import dev.danielhood.btscan.domain.repo.DeviceRepository
+import dev.danielhood.btscan.domain.system.BondState
+import dev.danielhood.btscan.domain.system.DeviceClassInfo
+import dev.danielhood.btscan.domain.system.DeviceType
+import dev.danielhood.btscan.domain.system.SystemDeviceInfo
+import dev.danielhood.btscan.domain.system.SystemInfoResult
+import dev.danielhood.btscan.testing.FakePermissionChecker
+import dev.danielhood.btscan.testing.FakeSystemInfoSource
 import dev.danielhood.btscan.testing.ManualScanner
 import dev.danielhood.btscan.testing.advance
 import dev.danielhood.btscan.testing.rawAd
@@ -30,11 +38,15 @@ class DeviceDetailViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     /** Creates the ViewModel and observes its state (the age ticker only runs while observed). */
-    private fun TestScope.vm(address: String, repo: DeviceRepository) =
-        DeviceDetailViewModel(address, repo, testClock()).also {
-            backgroundScope.launch { it.uiState.collect {} }
-            advance(0)
-        }
+    private fun TestScope.vm(
+        address: String,
+        repo: DeviceRepository,
+        source: FakeSystemInfoSource = FakeSystemInfoSource(),
+        permissions: FakePermissionChecker = FakePermissionChecker(),
+    ) = DeviceDetailViewModel(address, repo, testClock(), source, permissions).also {
+        backgroundScope.launch { it.uiState.collect {} }
+        advance(0)
+    }
 
     private fun TestScope.defaultScenarioRepo() =
         DefaultDeviceRepository(
@@ -158,5 +170,145 @@ class DeviceDetailViewModelTest {
             advance(600)
             assertFalse(vm.loaded().outOfRange)
             assertEquals(-42, vm.loaded().device.rssi)
+        }
+
+    // ---- System information (Tier 2a): the permission is asked for on demand ----
+
+    private fun TestScope.known(): DeviceRepository {
+        val repo = defaultScenarioRepo()
+        repo.startScan()
+        advance(1_000)
+        return repo
+    }
+
+    private fun sampleInfo() =
+        SystemDeviceInfo(
+            name = "Buds",
+            alias = "My buds",
+            bondState = BondState.BONDED,
+            deviceType = DeviceType.DUAL,
+            deviceClass = DeviceClassInfo.of(0x0418),
+            addressType = null,
+        )
+
+    @Test
+    fun `without the connect permission the section asks and nothing is looked up`() =
+        runTest {
+            val repo = known()
+            val source = FakeSystemInfoSource(SystemInfoResult.Available(sampleInfo()))
+            val permissions = FakePermissionChecker(connect = PermissionState.Denied(canAskAgain = true))
+            val vm =
+                vm(
+                    repo.devices.value
+                        .first()
+                        .address,
+                    repo,
+                    source,
+                    permissions,
+                )
+            assertEquals(SystemInfoState.NeedsPermission(permanentlyDenied = false), vm.loaded().systemInfo)
+            assertTrue("no lookup before the user agrees", source.lookups.isEmpty())
+            assertEquals(listOf("android.permission.BLUETOOTH_CONNECT"), vm.systemInfoPermissions)
+        }
+
+    @Test
+    fun `granting the permission looks the device up and shows the values`() =
+        runTest {
+            val repo = known()
+            val source = FakeSystemInfoSource(SystemInfoResult.Available(sampleInfo()))
+            val permissions = FakePermissionChecker(connect = PermissionState.Denied(canAskAgain = true))
+            val address =
+                repo.devices.value
+                    .first()
+                    .address
+            val vm = vm(address, repo, source, permissions)
+            permissions.connect = PermissionState.Granted
+            vm.onSystemInfoPermissionResult(granted = true, canAskAgain = true)
+            advance(0)
+            assertEquals(SystemInfoState.Loaded(sampleInfo()), vm.loaded().systemInfo)
+            assertEquals(listOf(address), source.lookups)
+        }
+
+    @Test
+    fun `denying keeps asking, and a permanent denial offers settings instead`() =
+        runTest {
+            val repo = known()
+            val permissions = FakePermissionChecker(connect = PermissionState.Denied(canAskAgain = true))
+            val vm =
+                vm(
+                    repo.devices.value
+                        .first()
+                        .address,
+                    repo,
+                    FakeSystemInfoSource(),
+                    permissions,
+                )
+            vm.onSystemInfoPermissionResult(granted = false, canAskAgain = true)
+            advance(0)
+            assertEquals(SystemInfoState.NeedsPermission(permanentlyDenied = false), vm.loaded().systemInfo)
+            vm.onSystemInfoPermissionResult(granted = false, canAskAgain = false)
+            advance(0)
+            assertEquals(SystemInfoState.NeedsPermission(permanentlyDenied = true), vm.loaded().systemInfo)
+        }
+
+    @Test
+    fun `an already granted permission loads straight away without a button`() =
+        runTest {
+            val repo = known()
+            val source = FakeSystemInfoSource(SystemInfoResult.Unavailable)
+            val vm =
+                vm(
+                    repo.devices.value
+                        .first()
+                        .address,
+                    repo,
+                    source,
+                )
+            advance(0)
+            assertEquals(SystemInfoState.Unavailable, vm.loaded().systemInfo)
+            assertEquals(1, source.lookups.size)
+        }
+
+    @Test
+    fun `granting in settings is noticed on resume`() =
+        runTest {
+            val repo = known()
+            val source = FakeSystemInfoSource(SystemInfoResult.Available(sampleInfo()))
+            val permissions = FakePermissionChecker(connect = PermissionState.Denied(canAskAgain = false))
+            val vm =
+                vm(
+                    repo.devices.value
+                        .first()
+                        .address,
+                    repo,
+                    source,
+                    permissions,
+                )
+            vm.onSystemInfoPermissionResult(granted = false, canAskAgain = false)
+            advance(0)
+            vm.refreshSystemInfoPermission()
+            advance(0)
+            assertTrue("still denied, nothing happens", source.lookups.isEmpty())
+            permissions.connect = PermissionState.Granted
+            vm.refreshSystemInfoPermission()
+            advance(0)
+            assertEquals(SystemInfoState.Loaded(sampleInfo()), vm.loaded().systemInfo)
+        }
+
+    @Test
+    fun `the source reporting a missing permission goes back to asking`() =
+        runTest {
+            val repo = known()
+            val source = FakeSystemInfoSource(SystemInfoResult.PermissionMissing)
+            val vm =
+                vm(
+                    repo.devices.value
+                        .first()
+                        .address,
+                    repo,
+                    source,
+                )
+            advance(0)
+            assertEquals(SystemInfoState.NeedsPermission(permanentlyDenied = false), vm.loaded().systemInfo)
         }
 }

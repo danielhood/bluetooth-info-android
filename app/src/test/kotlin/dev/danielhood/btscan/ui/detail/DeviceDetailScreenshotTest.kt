@@ -52,6 +52,27 @@ class DeviceDetailScreenshotTest {
     fun radio() = shoot("radio", SampleDetail.loaded(SampleDetail.radio))
 
     @Test
+    fun systemInfoLoaded() = shoot("system-info", SampleDetail.loaded(systemInfo = SampleDetail.systemInfoHeadset))
+
+    @Test
+    fun systemInfoLoadedDark() =
+        shoot("system-info-dark", SampleDetail.loaded(systemInfo = SampleDetail.systemInfoHeadset), dark = true)
+
+    @Test
+    fun systemInfoSparse() =
+        shoot(
+            "system-info-sparse",
+            SampleDetail.loaded(systemInfo = SampleDetail.systemInfoSparse),
+        )
+
+    @Test
+    fun systemInfoDenied() =
+        shoot(
+            "system-info-denied",
+            SampleDetail.loaded(systemInfo = SystemInfoState.NeedsPermission(permanentlyDenied = true)),
+        )
+
+    @Test
     fun outOfRange() = shoot("out-of-range", SampleDetail.loaded(outOfRange = true))
 
     @Test

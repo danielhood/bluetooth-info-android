@@ -37,7 +37,13 @@ class DeviceDetailContentTest {
     private fun show(state: DeviceDetailUiState) {
         rule.setContent {
             AppSurface(darkTheme = false) {
-                DeviceDetailContent(state, onBack = { calls += "back" }, onCopyRaw = { calls += "copy=$it" })
+                DeviceDetailContent(
+                    state,
+                    onBack = { calls += "back" },
+                    onCopyRaw = { calls += "copy=$it" },
+                    onAllowSystemInfo = { calls += "allow" },
+                    onOpenAppSettings = { calls += "settings" },
+                )
             }
         }
     }
@@ -269,5 +275,79 @@ class DeviceDetailContentTest {
         show(SampleDetail.loaded())
         rule.onNodeWithTag(TestTags.detailRadio("primary_phy")).assertDoesNotExist()
         rule.onNodeWithText("Radio").assertDoesNotExist()
+    }
+
+    // ---- System information section (Tier 2a) ----
+
+    @Test
+    fun `without the permission the section explains and offers to allow it`() {
+        show(SampleDetail.loaded())
+        rule.onNodeWithTag(TestTags.SYSTEM_INFO_SECTION).assertTextEquals("System information")
+        rule
+            .onNodeWithTag(
+                TestTags.SYSTEM_INFO_MESSAGE,
+            ).assertTextContains("Scanning works without it", substring = true)
+        rule
+            .onNodeWithTag(
+                TestTags.SYSTEM_INFO_MESSAGE,
+            ).assertTextContains("never pairs with, connects to or changes", substring = true)
+        rule.onNodeWithTag(TestTags.SYSTEM_INFO_ALLOW_BUTTON).performClick()
+        assertEquals(listOf("allow"), calls)
+        rule.onNodeWithTag(TestTags.SYSTEM_INFO_SETTINGS_BUTTON).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a permanent denial offers the app settings instead of the prompt`() {
+        show(SampleDetail.loaded(systemInfo = SystemInfoState.NeedsPermission(permanentlyDenied = true)))
+        rule.onNodeWithTag(TestTags.SYSTEM_INFO_ALLOW_BUTTON).assertDoesNotExist()
+        rule.onNodeWithTag(TestTags.SYSTEM_INFO_SETTINGS_BUTTON).performClick()
+        assertEquals(listOf("settings"), calls)
+    }
+
+    @Test
+    fun `loading and unavailable states have their own text`() {
+        show(SampleDetail.loaded(systemInfo = SystemInfoState.Loading))
+        rule.onNodeWithTag(TestTags.SYSTEM_INFO_LOADING).assertExists()
+    }
+
+    @Test
+    fun `the system has nothing to say`() {
+        show(SampleDetail.loaded(systemInfo = SystemInfoState.Unavailable))
+        rule
+            .onNodeWithTag(
+                TestTags.SYSTEM_INFO_UNAVAILABLE,
+            ).assertTextEquals("Android has no information about this device.")
+    }
+
+    @Test
+    fun `loaded values are shown with friendly names and a read-only footer`() {
+        show(SampleDetail.loaded(systemInfo = SampleDetail.systemInfoHeadset))
+        rule.onNodeWithTag(TestTags.SYSTEM_NAME).assertTextEquals("Buds Pro")
+        rule.onNodeWithTag(TestTags.SYSTEM_ALIAS).assertTextEquals("My buds")
+        rule.onNodeWithTag(TestTags.SYSTEM_BOND_STATE).assertTextEquals("Paired")
+        rule.onNodeWithTag(TestTags.SYSTEM_TYPE).assertTextEquals("Dual-mode (Classic and Low Energy)")
+        rule.onNodeWithTag(TestTags.SYSTEM_CLASS).assertTextEquals("Audio or video: Headphones")
+        rule.onNodeWithTag(TestTags.SYSTEM_ADDRESS_TYPE).assertTextEquals("Public")
+        rule
+            .onNodeWithTag(
+                TestTags.systemUuid(0),
+            ).performScrollTo()
+            .assertTextContains("A2DP Audio Sink", substring = true)
+        rule.onNodeWithTag(TestTags.systemUuid(1)).assertTextContains("Hands-Free", substring = true)
+        rule.onNodeWithTag(TestTags.systemUuid(2)).assertTextContains("Battery", substring = true)
+        rule.onNodeWithText("Read-only.", substring = true).assertExists()
+        rule.onNodeWithText("Display only: BT Scan never pairs or unpairs devices.").assertExists()
+    }
+
+    @Test
+    fun `missing values read not available and nothing is invented`() {
+        show(SampleDetail.loaded(systemInfo = SampleDetail.systemInfoSparse))
+        rule.onNodeWithTag(TestTags.SYSTEM_NAME).assertTextEquals("Not available")
+        rule.onNodeWithTag(TestTags.SYSTEM_ALIAS).assertTextEquals("Not available")
+        rule.onNodeWithTag(TestTags.SYSTEM_TYPE).assertTextEquals("Not available")
+        rule.onNodeWithTag(TestTags.SYSTEM_CLASS).assertTextEquals("Not available")
+        rule.onNodeWithTag(TestTags.SYSTEM_BOND_STATE).assertTextEquals("Not paired")
+        rule.onNodeWithTag(TestTags.SYSTEM_ADDRESS_TYPE).assertDoesNotExist()
+        rule.onNodeWithText("None cached").assertExists()
     }
 }

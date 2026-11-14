@@ -8,6 +8,7 @@ import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.parser.AdFlag
 import dev.danielhood.btscan.domain.parser.CompanyIds
 import dev.danielhood.btscan.domain.parser.ServiceUuids
+import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 import dev.danielhood.btscan.ui.list.signalLevel
 import java.time.Duration
 import java.time.Instant
@@ -52,6 +53,23 @@ data class DeviceDetailUi(
     val distanceBand: DistanceBand? = null,
 )
 
+/** The System information section (Tier 2a): reading what Android knows needs a permission asked for on demand. */
+sealed interface SystemInfoState {
+    /** [permanentlyDenied]: the OS will no longer show the prompt, so the only way is the app's settings. */
+    data class NeedsPermission(
+        val permanentlyDenied: Boolean,
+    ) : SystemInfoState
+
+    data object Loading : SystemInfoState
+
+    data class Loaded(
+        val info: SystemDeviceInfo,
+    ) : SystemInfoState
+
+    /** The system has nothing to say about this device. */
+    data object Unavailable : SystemInfoState
+}
+
 sealed interface DeviceDetailUiState {
     /** The device was never known to the repository (for example after process restore). */
     data object NotFound : DeviceDetailUiState
@@ -65,6 +83,7 @@ sealed interface DeviceDetailUiState {
         val outOfRange: Boolean,
         val firstSeenAgoSeconds: Long,
         val lastSeenAgoSeconds: Long,
+        val systemInfo: SystemInfoState = SystemInfoState.NeedsPermission(permanentlyDenied = false),
     ) : DeviceDetailUiState
 }
 

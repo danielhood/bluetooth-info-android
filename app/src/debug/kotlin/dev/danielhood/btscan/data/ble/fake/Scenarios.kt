@@ -6,6 +6,12 @@ import dev.danielhood.btscan.domain.model.DataStatus
 import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
+import dev.danielhood.btscan.domain.parser.AdvertisementParser
+import dev.danielhood.btscan.domain.system.AddressType
+import dev.danielhood.btscan.domain.system.BondState
+import dev.danielhood.btscan.domain.system.DeviceClassInfo
+import dev.danielhood.btscan.domain.system.DeviceType
+import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 
 private const val MANY_COUNT = 200
 private const val MANY_PHASES = 10
@@ -297,6 +303,82 @@ object Scenarios {
                 ),
         )
 
+    /**
+     * Tier 2a: devices for which the fake system knows different amounts, to show every state of the System
+     * information section: a paired dual-mode headset with an alias, an LE sensor, a device being paired, and one the
+     * system knows nothing about.
+     */
+    private val systemInfo =
+        Scenario(
+            name = "system-info",
+            devices =
+                listOf(
+                    FakeDevice(
+                        address = addr(1),
+                        advertisement =
+                            advertisement {
+                                flags(0x06)
+                                completeName("Buds Pro")
+                            },
+                        baseRssi = -48,
+                    ),
+                    FakeDevice(
+                        address = addr(2),
+                        advertisement =
+                            advertisement {
+                                flags(0x06)
+                                completeName("Thermo Sensor")
+                            },
+                        baseRssi = -60,
+                        phaseMs = 100,
+                    ),
+                    FakeDevice(
+                        address = addr(3),
+                        advertisement = advertisement { flags(0x06) },
+                        baseRssi = -72,
+                        phaseMs = 200,
+                    ),
+                    FakeDevice(
+                        address = addr(4),
+                        advertisement = advertisement { flags(0x06) },
+                        baseRssi = -84,
+                        phaseMs = 300,
+                    ),
+                ),
+            systemInfo =
+                mapOf(
+                    addr(1) to
+                        SystemDeviceInfo(
+                            name = "Buds Pro",
+                            alias = "My buds",
+                            bondState = BondState.BONDED,
+                            deviceType = DeviceType.DUAL,
+                            deviceClass = DeviceClassInfo.of(0x0418),
+                            addressType = AddressType.PUBLIC,
+                            cachedUuids =
+                                listOf(0x110B, 0x111E, 0x110E).map { AdvertisementParser.uuidFromShort(it.toLong()) },
+                        ),
+                    addr(2) to
+                        SystemDeviceInfo(
+                            name = "Thermo (system)",
+                            alias = null,
+                            bondState = BondState.NONE,
+                            deviceType = DeviceType.LE,
+                            deviceClass = null,
+                            addressType = AddressType.RANDOM,
+                        ),
+                    addr(3) to
+                        SystemDeviceInfo(
+                            name = null,
+                            alias = null,
+                            bondState = BondState.BONDING,
+                            deviceType = DeviceType.CLASSIC,
+                            deviceClass = DeviceClassInfo.of(0x05C0),
+                            addressType = null,
+                        ),
+                ),
+        )
+
     private val scanFails =
         Scenario(
             name = "scan-fails",
@@ -335,6 +417,7 @@ object Scenarios {
             sensors,
             vendors,
             radio,
+            systemInfo,
             scanFails,
             tooFrequent,
             bluetoothOff,

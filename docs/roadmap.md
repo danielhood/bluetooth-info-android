@@ -168,7 +168,7 @@ Exit: met. All acceptance criteria are met; known gaps: the Android 8 to 11 loca
 
 ## What comes next
 
-Phase 2 (three tiers of learning more from neighbouring devices) is planned; **X2 (policy guardrail tests) is done**; Tier 1 milestones T1-M1 (decoder framework, iBeacon, Eddystone, `beacons`) T1-M2 (Ruuvi, BTHome, AltBeacon, `sensors`) T1-M3 (Fast Pair, Apple type labels, tracker hint, `vendors`; Swift Pair deferred) T1-M4 (Radio section, interval and distance estimates, list kind chips, `radio`) and T1-M5 (real-radio validation on the Pixel with the host peripheral) are done, as is decision D-P2-8 (Location instead of `neverForLocation`); Tier 2, Tier 3 and the small Tier 1 leftovers are not started: see [phase2/README.md](phase2/README.md).
+Phase 2 (three tiers of learning more from neighbouring devices) is planned; **X2 (policy guardrail tests) is done**; Tier 1 milestones T1-M1 (decoder framework, iBeacon, Eddystone, `beacons`) T1-M2 (Ruuvi, BTHome, AltBeacon, `sensors`) T1-M3 (Fast Pair, Apple type labels, tracker hint, `vendors`; Swift Pair deferred) T1-M4 (Radio section, interval and distance estimates, list kind chips, `radio`) and T1-M5 (real-radio validation on the Pixel with the host peripheral) are done, as is decision D-P2-8 (Location instead of `neverForLocation`); Tier 2a (system device info, T2-M1 and T2-M2) is implemented and passes the full gate on the emulator, its phone checks pending; Tier 2b/2c, Tier 3 and the small Tier 1 leftovers are not started: see [phase2/README.md](phase2/README.md).
 
 ## Spikes
 

@@ -46,6 +46,8 @@ fun DeviceDetailContent(
     onBack: () -> Unit,
     onCopyRaw: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onAllowSystemInfo: () -> Unit = {},
+    onOpenAppSettings: () -> Unit = {},
 ) {
     val title =
         (state as? DeviceDetailUiState.Loaded)?.device?.name
@@ -73,7 +75,7 @@ fun DeviceDetailContent(
         ) {
             when (state) {
                 DeviceDetailUiState.NotFound -> NotFound(onBack)
-                is DeviceDetailUiState.Loaded -> Loaded(state, onCopyRaw)
+                is DeviceDetailUiState.Loaded -> Loaded(state, onCopyRaw, onAllowSystemInfo, onOpenAppSettings)
             }
         }
     }
@@ -98,7 +100,12 @@ private fun NotFound(onBack: () -> Unit) {
 }
 
 @Composable
-private fun Loaded(state: DeviceDetailUiState.Loaded, onCopyRaw: (String) -> Unit) {
+private fun Loaded(
+    state: DeviceDetailUiState.Loaded,
+    onCopyRaw: (String) -> Unit,
+    onAllowSystemInfo: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+) {
     val device = state.device
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         if (state.outOfRange) OutOfRangeBanner(state.lastSeenAgoSeconds)
@@ -135,6 +142,8 @@ private fun Loaded(state: DeviceDetailUiState.Loaded, onCopyRaw: (String) -> Uni
         }
         DecodedSections(device.decoded)
         RadioSection(device)
+        HorizontalDivider()
+        SystemInfoSection(state.systemInfo, onAllowSystemInfo, onOpenAppSettings)
         HorizontalDivider()
         ServicesSection(device)
         HorizontalDivider()

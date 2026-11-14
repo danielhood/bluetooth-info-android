@@ -52,6 +52,7 @@ class FakeBleScannerTest {
                 "sensors",
                 "vendors",
                 "radio",
+                "system-info",
                 "scan-fails",
                 "too-frequent",
                 "bluetooth-off",

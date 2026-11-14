@@ -36,6 +36,24 @@ class AndroidPermissionChecker(
             needed
         }
 
+    /**
+     * Reading system device info needs BLUETOOTH_CONNECT on Android 12+; the legacy BLUETOOTH permission covers it
+     * before.
+     */
+    override val connectPermissions: List<String> =
+        if (Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.S
+        ) {
+            listOf(Manifest.permission.BLUETOOTH_CONNECT)
+        } else {
+            emptyList()
+        }
+
+    override fun connectState(): PermissionState {
+        val allGranted = connectPermissions.all { context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
+        return if (allGranted) PermissionState.Granted else PermissionState.Denied(canAskAgain = true)
+    }
+
     override fun current(): PermissionState {
         val allGranted = needed.all { context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
         return if (allGranted) PermissionState.Granted else PermissionState.Denied(canAskAgain = true)

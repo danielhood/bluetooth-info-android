@@ -4,6 +4,7 @@ import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.testing.AlwaysOnAdapterMonitor
 import dev.danielhood.btscan.testing.FakePermissionChecker
+import dev.danielhood.btscan.testing.FakeSystemInfoSource
 import dev.danielhood.btscan.testing.ManualScanner
 import dev.danielhood.btscan.testing.rawAd
 import dev.danielhood.btscan.testing.testClock
@@ -28,6 +29,7 @@ class AppContainerTest {
             permissionChecker = FakePermissionChecker(),
             realScanner = realScanner,
             realAdapterMonitor = AlwaysOnAdapterMonitor,
+            realSystemInfo = FakeSystemInfoSource(),
             scope = backgroundScope,
             clock = clock,
         )
@@ -89,6 +91,7 @@ class AppContainerTest {
                     permissionChecker = FakePermissionChecker(),
                     realScanner = failing,
                     realAdapterMonitor = AlwaysOnAdapterMonitor,
+                    realSystemInfo = FakeSystemInfoSource(),
                     scope = backgroundScope,
                     clock = testClock(),
                 )
