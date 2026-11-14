@@ -1,6 +1,7 @@
 package dev.danielhood.btscan.data.ble.fake
 
 import dev.danielhood.btscan.domain.model.AdapterState
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
@@ -21,6 +22,8 @@ data class FakeDevice(
     val alternatePayloads: List<Bytes> = emptyList(),
     /** Radio metadata reported with each advertisement; null like most fakes (and legacy-only scanners). */
     val radio: RadioInfo? = null,
+    /** Address type the fake scan result reports; null like a phone older than Android 15. */
+    val addressType: AddressType? = null,
 )
 
 /** Makes the scan throw [kind] once [afterMs] has elapsed (0 = on start). */

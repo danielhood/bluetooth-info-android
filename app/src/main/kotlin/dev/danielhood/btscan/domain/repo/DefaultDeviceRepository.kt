@@ -129,6 +129,7 @@ class DefaultDeviceRepository(
                 advertisementCount = 1,
                 decoded = decoded,
                 radio = raw.radio,
+                addressType = raw.addressType,
             )
         }
     }

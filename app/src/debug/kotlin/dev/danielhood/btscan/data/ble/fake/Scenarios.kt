@@ -1,13 +1,13 @@
 package dev.danielhood.btscan.data.ble.fake
 
 import dev.danielhood.btscan.domain.model.AdapterState
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.DataStatus
 import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.parser.AdvertisementParser
-import dev.danielhood.btscan.domain.system.AddressType
 import dev.danielhood.btscan.domain.system.BondState
 import dev.danielhood.btscan.domain.system.DeviceClassInfo
 import dev.danielhood.btscan.domain.system.DeviceType
@@ -268,6 +268,7 @@ object Scenarios {
                         address = addr(1),
                         advertisement = advertisement { flags(0x06) },
                         baseRssi = -45,
+                        addressType = AddressType.RANDOM,
                         radio = RadioInfo(Phy.LE_1M, Phy.LE_2M, false, 3, 8, 80, DataStatus.COMPLETE),
                     ),
                     FakeDevice(
@@ -275,6 +276,7 @@ object Scenarios {
                         advertisement = advertisement { flags(0x06) },
                         baseRssi = -57,
                         phaseMs = 100,
+                        addressType = AddressType.PUBLIC,
                         radio = RadioInfo(Phy.LE_CODED, Phy.LE_CODED, false, 1, null, null, DataStatus.COMPLETE),
                     ),
                     FakeDevice(
@@ -282,6 +284,7 @@ object Scenarios {
                         advertisement = advertisement { flags(0x06) },
                         baseRssi = -81,
                         phaseMs = 200,
+                        addressType = AddressType.ANONYMOUS,
                         radio = RadioInfo(Phy.LE_1M, Phy.LE_1M, false, null, 0, null, DataStatus.TRUNCATED),
                     ),
                     FakeDevice(
@@ -290,6 +293,7 @@ object Scenarios {
                         baseRssi = -93,
                         intervalMs = 1000,
                         phaseMs = 300,
+                        addressType = AddressType.RANDOM,
                         radio = RadioInfo(Phy.LE_1M, null, true, null, null, null, null),
                     ),
                     FakeDevice(
@@ -298,6 +302,7 @@ object Scenarios {
                         baseRssi = -69,
                         intervalMs = 100,
                         isConnectable = false,
+                        addressType = AddressType.PUBLIC,
                         radio = RadioInfo(Phy.LE_1M, null, true, null, null, null, null),
                     ),
                 ),
@@ -354,7 +359,6 @@ object Scenarios {
                             bondState = BondState.BONDED,
                             deviceType = DeviceType.DUAL,
                             deviceClass = DeviceClassInfo.of(0x0418),
-                            addressType = AddressType.PUBLIC,
                             cachedUuids =
                                 listOf(0x110B, 0x111E, 0x110E).map { AdvertisementParser.uuidFromShort(it.toLong()) },
                         ),
@@ -365,7 +369,6 @@ object Scenarios {
                             bondState = BondState.NONE,
                             deviceType = DeviceType.LE,
                             deviceClass = null,
-                            addressType = AddressType.RANDOM,
                         ),
                     addr(3) to
                         SystemDeviceInfo(
@@ -374,7 +377,6 @@ object Scenarios {
                             bondState = BondState.BONDING,
                             deviceType = DeviceType.CLASSIC,
                             deviceClass = DeviceClassInfo.of(0x05C0),
-                            addressType = null,
                         ),
                 ),
         )

@@ -1,6 +1,6 @@
 # Tier 2: System Device Info and Classic Discovery
 
-**Status:** 2a implemented (T2-M1 and T2-M2, 2026-11-14); T2-M0 spikes S1 and S2 observed on the emulator only, phone and T2-M5 pending; 2b, 2c not started. **New permission:** `BLUETOOTH_CONNECT` (Android 12+; nothing new on 11 and below). **Pairing:** never. **Connecting:** none in 2a; a brief classic inquiry in 2b; an SDP query in 2c.
+**Status:** 2a implemented and checked on the Pixel (T2-M1, T2-M2, spikes S1 and S2, 2026-11-14); T2-M5 wording review and a check against a device the phone is paired with are still open; 2b, 2c not started. **New permission:** `BLUETOOTH_CONNECT` (Android 12+; nothing new on 11 and below). **Pairing:** never. **Connecting:** none in 2a; a brief classic inquiry in 2b; an SDP query in 2c.
 
 ## 1. Goal
 
@@ -27,7 +27,7 @@ Data per device, all obtained from the OS without connecting (via `BluetoothAdap
 | T2-S3 | M | **Bond state** | `getBondState()` | "Not paired / paired / pairing". **Read-only display.** The app never initiates or influences bonding. |
 | T2-S4 | S | **Device type** | `getType()` | Classic, LE, dual-mode, or unknown |
 | T2-S5 | S | **Bluetooth class** | `getBluetoothClass()` | Major class (phone, computer, audio/video, peripheral, wearable, health, toy, and so on) and the device sub-class, from a curated lookup table. Often absent for LE-only devices, shown as "not available". |
-| T2-S6 | S | **Address type** | `getAddressType()` (API 35+) | Public/random/anonymous/unknown. Also answers Tier 1's T1-A1 if its spike finds the call needs CONNECT. Hidden on older Android versions. |
+| T2-S6 | S | ~~Address type~~ | moved to Tier 1 (T1-A1) | Needs no `BLUETOOTH_CONNECT`, and asked of a device made from just an address it answers "public" whatever the truth, so it is read from the scan result in the detail header instead. |
 | T2-S7 | C | **Cached service UUIDs** | `getUuids()` | What the OS last learned about services; may be stale or empty. Clearly labelled "cached". |
 
 Behaviours:
@@ -128,7 +128,13 @@ domain/model/
 - **Guardrails (policy doc):** `BLUETOOTH_CONNECT` may be named only under `data/ble/android`; `fetchUuidsWithSdp`, `startDiscovery`, `cancelDiscovery` and `connectGatt` are forbidden everywhere; a new rule forbids logging identifiers or values in `src/main` and `src/release`. Each rule was shown to fail on a deliberate violation.
 - **Spike T2-S2 (emulator, API 36):** with Nearby devices and Location granted for scanning, tapping "Allow system information" shows **no dialog**; Android grants `BLUETOOTH_CONNECT` immediately because it shares the Nearby devices group. The copy was changed to "needs your permission to read it" instead of "one more permission". To confirm on the Pixel (Android 17).
 - **Spike T2-S1 (no radio traffic):** the lookups are plain getters over the system's cache (`getName`, `getAlias`, `getBondState`, `getType`, `getBluetoothClass`, `getAddressType`, `getUuids`) and never call anything that connects or queries services; the architecture test enforces the absence of the over-the-air calls. Empirical confirmation with the host peripheral (no connection or pairing appears on its side) is pending a phone.
-- **Open for the phone:** what the Pixel reports for an LE-only advertiser and for a bonded device; whether `getAddressType()` needs the connect permission (answers T1-S1); T2-M5 wording review.
+### 2a results on the Pixel (Android 17, 2026-11-14)
+
+- **T2-S2 confirmed:** with Nearby devices and Location granted for scanning, tapping "Allow system information" shows no dialog and `BLUETOOTH_CONNECT` becomes granted at once (same permission group).
+- **T2-S1 confirmed from the other side:** the host controller, advertising a connectable payload, saw no new remote device, no connection and no new pairing while the phone looked it up (its BlueZ device set was identical before and after).
+- **Without the permission** every getter except `getAddressType` throws `SecurityException`; the source treats that as "permission missing", never a crash (guarded and tested).
+- **What a real LE advertiser reports:** not paired, device type Unknown, no name, no alias, **class value 0**. Zero means "no class", not the Miscellaneous class, so the source now reports it as absent ("Not available"); a real class (for example headphones) is decoded as before. Real neighbours behaved the same (not paired, unknown type, no class); none of them was a device this phone is paired with.
+- **Still open:** a device this phone *is* paired with (to see alias, pairing state and class populated on real hardware) and the owner's review of the wording.
 
 ## 6. Acceptance criteria
 

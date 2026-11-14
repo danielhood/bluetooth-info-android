@@ -116,6 +116,9 @@ private fun Loaded(
                 tag = TestTags.DETAIL_ADDRESS,
                 note = R.string.detail_address_note,
             )
+            device.addressType?.let {
+                Field(R.string.detail_address_type, stringResource(addressLabel(it)), TestTags.DETAIL_ADDRESS_TYPE)
+            }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Field(
                     label = R.string.detail_signal,

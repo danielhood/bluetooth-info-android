@@ -1,6 +1,6 @@
 package dev.danielhood.btscan.ui.detail
 
-import dev.danielhood.btscan.domain.system.AddressType
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.system.BondState
 import dev.danielhood.btscan.domain.system.DeviceType
 import dev.danielhood.btscan.domain.system.MajorClass

@@ -222,6 +222,7 @@ check "five radio devices"          wait_rows 5 8
 check "ibeacon row has a chip"      bash -c "'$S/ui.sh' find kind_chip_C0:FF:EE:00:00:05 | grep -q \"text='iBeacon'\""
 check "plain row has no chip"       absent kind_chip_C0:FF:EE:00:00:01
 open_device C0:FF:EE:00:00:01 || true
+check "address type from the scan"  bash -c "'$S/ui.sh' wait detail_address_type 8 && '$S/ui.sh' find detail_address_type | grep -q \"text='Random'\""
 check "radio section phy shown"     "$S/ui.sh" wait detail_radio_primary_phy 8
 check "secondary phy is LE 2M"      bash -c "'$S/ui.sh' find detail_radio_secondary_phy | grep -q 'LE 2M'"
 adb shell input swipe 540 1900 540 1100 300

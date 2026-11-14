@@ -14,8 +14,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import dev.danielhood.btscan.R
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.parser.ServiceUuids
-import dev.danielhood.btscan.domain.system.AddressType
 import dev.danielhood.btscan.domain.system.BondState
 import dev.danielhood.btscan.domain.system.DeviceClassInfo
 import dev.danielhood.btscan.domain.system.DeviceType
@@ -106,9 +106,6 @@ private fun Loaded(info: SystemDeviceInfo) {
     val typeText = info.deviceType?.let { stringResource(typeLabel(it)) } ?: notAvailable
     InfoField(R.string.system_type, typeText, TestTags.SYSTEM_TYPE)
     InfoField(R.string.system_class, classText(info.deviceClass) ?: notAvailable, TestTags.SYSTEM_CLASS)
-    info.addressType?.let {
-        InfoField(R.string.system_address_type, stringResource(addressLabel(it)), TestTags.SYSTEM_ADDRESS_TYPE)
-    }
     Text(stringResource(R.string.system_cached_services), style = MaterialTheme.typography.labelMedium)
     if (info.cachedUuids.isEmpty()) {
         Text(stringResource(R.string.system_none_cached), style = MaterialTheme.typography.bodyMedium)

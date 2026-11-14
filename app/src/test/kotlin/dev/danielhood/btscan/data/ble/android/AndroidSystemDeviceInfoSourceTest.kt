@@ -5,6 +5,8 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import dev.danielhood.btscan.domain.system.BondState
+import dev.danielhood.btscan.domain.system.MajorClass
+import dev.danielhood.btscan.domain.system.MinorClass
 import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -49,11 +51,10 @@ class AndroidSystemDeviceInfoSourceTest {
 
     @Test
     @Config(sdk = [30])
-    fun `on android 11 no new permission is needed and address type is not reported`() {
+    fun `on android 11 no new permission is needed and the lookup still works`() {
         val permissions = AndroidPermissionChecker(app)
         assertTrue(permissions.connectPermissions.isEmpty())
-        val info = (lookup() as SystemInfoResult.Available).info
-        assertNull("address type needs Android 15", info.addressType)
+        assertTrue(lookup() is SystemInfoResult.Available)
     }
 
     @Test
@@ -61,5 +62,12 @@ class AndroidSystemDeviceInfoSourceTest {
         val permissions = AndroidPermissionChecker(app)
         assertEquals(listOf(Manifest.permission.BLUETOOTH_CONNECT), permissions.connectPermissions)
         assertTrue(Manifest.permission.BLUETOOTH_CONNECT !in permissions.requiredPermissions)
+    }
+
+    @Test
+    fun `class value zero means no class and a real class is decoded`() {
+        assertNull("0 is how Android says it has no class", deviceClassOf(0))
+        assertEquals(MinorClass.HEADPHONES, deviceClassOf(0x0418)?.minor)
+        assertEquals(MajorClass.UNCATEGORIZED, deviceClassOf(0x1F00)?.major)
     }
 }

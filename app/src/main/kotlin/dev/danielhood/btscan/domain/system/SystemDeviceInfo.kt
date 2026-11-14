@@ -7,11 +7,10 @@ enum class BondState { NONE, BONDING, BONDED }
 
 enum class DeviceType { CLASSIC, LE, DUAL, UNKNOWN }
 
-enum class AddressType { PUBLIC, RANDOM, ANONYMOUS, UNKNOWN }
-
 /**
  * What Android itself knows about a device, read without contacting it. Every field is null when the system has no
- * value: nothing is guessed or filled in.
+ * value: nothing is guessed or filled in. (The address type is deliberately not here: asked of a device made from just
+ * an address, Android answers "public" whatever the truth, so it is read from the scan result instead.)
  */
 data class SystemDeviceInfo(
     /** The name the system holds; may differ from the advertised name. */
@@ -21,8 +20,6 @@ data class SystemDeviceInfo(
     val bondState: BondState,
     val deviceType: DeviceType?,
     val deviceClass: DeviceClassInfo?,
-    /** Null on Android versions that cannot report it. */
-    val addressType: AddressType?,
     /** Service UUIDs Android last learned; may be stale or empty. */
     val cachedUuids: List<UUID> = emptyList(),
 )

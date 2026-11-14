@@ -167,7 +167,7 @@
   <string name="system_bond_state">Pairing</string>
   <string name="system_type">Device type</string>
   <string name="system_class">Device class</string>
-  <string name="system_address_type">Address type</string>
+  <string name="detail_address_type">Address type</string>
   <string name="system_cached_services">Cached services</string>
   <string name="system_not_available">Not available</string>
   <string name="system_none_cached">None cached</string>

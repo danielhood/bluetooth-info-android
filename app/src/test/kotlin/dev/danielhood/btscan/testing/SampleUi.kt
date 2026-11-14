@@ -10,6 +10,7 @@ import dev.danielhood.btscan.domain.decode.FieldValue
 import dev.danielhood.btscan.domain.decode.Unit
 import dev.danielhood.btscan.domain.decode.decoders.RuuviV5Decoder
 import dev.danielhood.btscan.domain.estimate.DistanceBand
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.Advertisement
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.DataStatus
@@ -18,7 +19,6 @@ import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.parser.AdvertisementParser
-import dev.danielhood.btscan.domain.system.AddressType
 import dev.danielhood.btscan.domain.system.BondState
 import dev.danielhood.btscan.domain.system.DeviceClassInfo
 import dev.danielhood.btscan.domain.system.DeviceType
@@ -167,6 +167,7 @@ object SampleDetail {
     val radio =
         thermo.copy(
             name = "Radio Demo",
+            addressType = AddressType.RANDOM,
             radio = RadioInfo(Phy.LE_1M, Phy.LE_2M, false, 3, 8, 80, DataStatus.COMPLETE),
             intervalEstimateMs = 500,
             distanceBand = DistanceBand.ABOUT_ONE_METRE,
@@ -198,7 +199,6 @@ object SampleDetail {
                 bondState = BondState.BONDED,
                 deviceType = DeviceType.DUAL,
                 deviceClass = DeviceClassInfo.of(0x0418),
-                addressType = AddressType.PUBLIC,
                 cachedUuids = listOf(0x110B, 0x111E, 0x180F).map { AdvertisementParser.uuidFromShort(it.toLong()) },
             ),
         )
@@ -212,7 +212,6 @@ object SampleDetail {
                 bondState = BondState.NONE,
                 deviceType = null,
                 deviceClass = null,
-                addressType = null,
             ),
         )
 

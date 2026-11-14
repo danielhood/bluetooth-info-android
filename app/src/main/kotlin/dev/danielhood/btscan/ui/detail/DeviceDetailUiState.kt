@@ -3,6 +3,7 @@ package dev.danielhood.btscan.ui.detail
 import dev.danielhood.btscan.domain.decode.Decoded
 import dev.danielhood.btscan.domain.estimate.DistanceBand
 import dev.danielhood.btscan.domain.estimate.Estimates
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.BleDevice
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.parser.AdFlag
@@ -47,6 +48,8 @@ data class DeviceDetailUi(
     val rawHex: String,
     val decoded: List<Decoded> = emptyList(),
     val radio: RadioInfo? = null,
+    /** How the address was formed (from the scan result; Android 15 and later); null when unknown. */
+    val addressType: AddressType? = null,
     /** Estimated average milliseconds between received packets; null until enough packets were seen. */
     val intervalEstimateMs: Long? = null,
     /** Rough distance band; null unless the device advertises a calibrated reference power. */
@@ -127,6 +130,7 @@ internal fun BleDevice.toDetailUi() =
         rawHex = rawBytes.toHex(" "),
         decoded = decoded,
         radio = radio,
+        addressType = addressType,
         intervalEstimateMs = Estimates.advertisingIntervalMs(this),
         distanceBand = Estimates.distanceBand(this),
     )

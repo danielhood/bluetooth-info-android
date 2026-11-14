@@ -5,6 +5,7 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
+import android.os.Build
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.model.ScanFailure
@@ -81,6 +82,14 @@ class AndroidBleScanner(
             bytes = Bytes(scanRecord?.bytes ?: ByteArray(0)),
             isConnectable = isConnectable,
             timestamp = clock.now(),
+            addressType =
+                if (Build.VERSION.SDK_INT >=
+                    Build.VERSION_CODES.VANILLA_ICE_CREAM
+                ) {
+                    addressTypeOf(device.addressType)
+                } else {
+                    null
+                },
             radio =
                 radioInfoOf(
                     primaryPhy = primaryPhy,

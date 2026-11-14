@@ -5,6 +5,7 @@ import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.decode.FieldKey
 import dev.danielhood.btscan.domain.decode.FieldValue
 import dev.danielhood.btscan.domain.estimate.Estimates
+import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.DataStatus
 import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.ScanFailure
@@ -187,6 +188,9 @@ class FakeScenarioWithRepositoryTest {
             assertNull(coded.txPowerDbm)
             assertEquals(DataStatus.TRUNCATED, byAddress.getValue("03").radio!!.dataStatus)
             assertEquals(true, byAddress.getValue("04").radio!!.isLegacy)
+            assertEquals(AddressType.RANDOM, byAddress.getValue("01").addressType)
+            assertEquals(AddressType.PUBLIC, byAddress.getValue("02").addressType)
+            assertEquals(AddressType.ANONYMOUS, byAddress.getValue("03").addressType)
             assertEquals(500L, Estimates.advertisingIntervalMs(byAddress.getValue("01")))
             assertEquals(1000L, Estimates.advertisingIntervalMs(byAddress.getValue("04")))
             assertEquals(100L, Estimates.advertisingIntervalMs(byAddress.getValue("05")))

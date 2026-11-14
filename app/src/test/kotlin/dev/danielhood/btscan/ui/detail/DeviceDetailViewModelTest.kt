@@ -188,7 +188,6 @@ class DeviceDetailViewModelTest {
             bondState = BondState.BONDED,
             deviceType = DeviceType.DUAL,
             deviceClass = DeviceClassInfo.of(0x0418),
-            addressType = null,
         )
 
     @Test

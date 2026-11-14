@@ -8,7 +8,6 @@ import android.os.Build
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.port.PermissionChecker
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
-import dev.danielhood.btscan.domain.system.AddressType
 import dev.danielhood.btscan.domain.system.BondState
 import dev.danielhood.btscan.domain.system.DeviceClassInfo
 import dev.danielhood.btscan.domain.system.DeviceType
@@ -55,15 +54,7 @@ class AndroidSystemDeviceInfoSource(
                     alias = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) alias else null,
                     bondState = bondStateOf(bondState),
                     deviceType = deviceTypeOf(type),
-                    deviceClass = bluetoothClass?.let { DeviceClassInfo.of(it.deviceClass) },
-                    addressType =
-                        if (Build.VERSION.SDK_INT >=
-                            Build.VERSION_CODES.VANILLA_ICE_CREAM
-                        ) {
-                            addressTypeOf(addressType)
-                        } else {
-                            null
-                        },
+                    deviceClass = bluetoothClass?.let { deviceClassOf(it.deviceClass) },
                     cachedUuids = uuids.orEmpty().map { it.uuid },
                 ),
             )
@@ -85,12 +76,10 @@ class AndroidSystemDeviceInfoSource(
             BluetoothDevice.DEVICE_TYPE_DUAL -> DeviceType.DUAL
             else -> DeviceType.UNKNOWN
         }
-
-    private fun addressTypeOf(value: Int): AddressType =
-        when (value) {
-            BluetoothDevice.ADDRESS_TYPE_PUBLIC -> AddressType.PUBLIC
-            BluetoothDevice.ADDRESS_TYPE_RANDOM -> AddressType.RANDOM
-            BluetoothDevice.ADDRESS_TYPE_ANONYMOUS -> AddressType.ANONYMOUS
-            else -> AddressType.UNKNOWN
-        }
 }
+
+/**
+ * Android reports class value 0 for a device whose class it does not know (an LE-only advertiser, observed on the
+ * Pixel); that is "no class", not "Miscellaneous", so it is reported as absent rather than shown as a real class.
+ */
+internal fun deviceClassOf(raw: Int): DeviceClassInfo? = if (raw == 0) null else DeviceClassInfo.of(raw)

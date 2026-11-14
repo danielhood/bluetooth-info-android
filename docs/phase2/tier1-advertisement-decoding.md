@@ -1,6 +1,6 @@
 # Tier 1: Advertisement Decoding
 
-**Status:** T1-M1 to T1-M5 done (2026-11-10 to 2026-11-14); only the T1-M0 address-type spike, Swift Pair and the optional list filter (T1-L2) remain. **Permissions:** decision D-P2-8 (2026-11-14) replaced `neverForLocation` with Location permission and Location services (see [x1-findings.md](x1-findings.md)). **Contacts the device:** never.
+**Status:** T1-M1 to T1-M5 done (2026-11-10 to 2026-11-14); T1-A1 (address type) was added on 2026-11-14 after the T1-M0 spike was answered; only Swift Pair, the OUI vendor lookup (T1-A2) and the optional list filter (T1-L2) remain. **Permissions:** decision D-P2-8 (2026-11-14) replaced `neverForLocation` with Location permission and Location services (see [x1-findings.md](x1-findings.md)). **Contacts the device:** never.
 
 ## 1. Goal
 
@@ -172,7 +172,7 @@ Tooling additions: `scripts/gen-oui.py` (only if T1-A2 proceeds); a vectors dire
 - **Radio section** shows only what the platform reported; unavailable values are null in the model and not rendered. Android fills radio data from the `ScanResult` getters (unit-tested sentinel mapping); real-hardware values are only seen at T1-M5.
 - **Performance (T1-8, emulator):** `perf.sh` with 200 fake devices after T1-M4: 638 frames, 6.74% janky, median 21 ms (Phase 1 baseline 6.1% and 24 ms; software rendering, within noise). The `many` scenario carries no decodable data, so this mostly measures the decoders' short-circuit cost; a Pixel run with real neighbours belongs to T1-M5.
 - **Smoke lesson:** rows re-sort as RSSI drifts, so tapping a row by id can open a neighbour. The smoke script now opens devices through `open_device`, which confirms the address and retries; the `radio` scenario also spaces signal levels 12 dB apart.
-- The T1-M0 spike (address type API) is still open.
+- The T1-M0 spike (address type API) was answered on 2026-11-14, see the T1-A1 notes below.
 
 ### T1-M5 results (Pixel 9a, Android 17, 2026-11-14, shipped build without `neverForLocation`)
 
@@ -194,6 +194,13 @@ Host controller as test peripheral (`scripts/peripheral.sh probe <profile>`), ev
 - **Performance on the phone** (`perf.sh`, 200 fake devices, three runs): 3.75 to 6.24 % janky, median 8 ms, 95th percentile 26 to 32 ms; the Phase 1 baseline (3.9 %, 7 ms, 27 ms) is inside the run-to-run spread.
 - **Acceptance:** T1-1 to T1-7 met on real hardware. T1-8 changed on purpose: the permission set is no longer "no new permission" because of decision D-P2-8 (Location added); the guardrail test records the new exact set.
 - **Not verified on real radio:** the Eddystone frame accumulation (UID, URL and TLM alternating on one device) and the Swift Pair format; the host sends one frame kind per profile.
+
+### T1-A1 and spike T1-S1: address type (2026-11-14, Pixel 9a, Android 17)
+
+- **Result:** `BluetoothDevice.getAddressType()` (Android 15+) needs no `BLUETOOTH_CONNECT`: with the permission revoked it returned a value while `getName`, `getAlias`, `getBondState`, `getType`, `getBluetoothClass` and `getUuids` all threw `SecurityException`. Only Android 17 was tested; the code reads it on Android 15+ and the scan path would need the same check on 15 and 16.
+- **Trap:** the value is only meaningful on the device object that came **with a scan result**. For one built from an address alone (`getRemoteDevice`) Android answers "public" whatever the truth: every neighbour showed "Public" that way, while the scan result's own device reported `RANDOM` for the neighbours and `PUBLIC` for the host, matching the address bits. The first Tier 2a version showed the wrong value; it was removed from System information and read from the scan result instead (`RawAdvertisement.addressType`, `BleDevice.addressType`, `data/ble/android/AddressTypeMapping.kt`).
+- **UI:** the detail header shows "Address type" (Public, Random, Anonymous, Unknown) when the platform reports one; older Androids show nothing, and the existing "may be a randomised private address" note stays. Verified on the phone: host Public, real neighbours Random.
+- Guessing from the address bits was rejected in the plan and remains rejected.
 
 ## 6. Acceptance criteria
 

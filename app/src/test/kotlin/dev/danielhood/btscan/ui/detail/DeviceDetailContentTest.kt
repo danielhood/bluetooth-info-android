@@ -327,7 +327,6 @@ class DeviceDetailContentTest {
         rule.onNodeWithTag(TestTags.SYSTEM_BOND_STATE).assertTextEquals("Paired")
         rule.onNodeWithTag(TestTags.SYSTEM_TYPE).assertTextEquals("Dual-mode (Classic and Low Energy)")
         rule.onNodeWithTag(TestTags.SYSTEM_CLASS).assertTextEquals("Audio or video: Headphones")
-        rule.onNodeWithTag(TestTags.SYSTEM_ADDRESS_TYPE).assertTextEquals("Public")
         rule
             .onNodeWithTag(
                 TestTags.systemUuid(0),
@@ -347,7 +346,18 @@ class DeviceDetailContentTest {
         rule.onNodeWithTag(TestTags.SYSTEM_TYPE).assertTextEquals("Not available")
         rule.onNodeWithTag(TestTags.SYSTEM_CLASS).assertTextEquals("Not available")
         rule.onNodeWithTag(TestTags.SYSTEM_BOND_STATE).assertTextEquals("Not paired")
-        rule.onNodeWithTag(TestTags.SYSTEM_ADDRESS_TYPE).assertDoesNotExist()
         rule.onNodeWithText("None cached").assertExists()
+    }
+
+    @Test
+    fun `the address type from the scan result is shown with the address`() {
+        show(SampleDetail.loaded(SampleDetail.radio))
+        rule.onNodeWithTag(TestTags.DETAIL_ADDRESS_TYPE).assertTextEquals("Random")
+    }
+
+    @Test
+    fun `no address type is shown when the platform could not report one`() {
+        show(SampleDetail.loaded())
+        rule.onNodeWithTag(TestTags.DETAIL_ADDRESS_TYPE).assertDoesNotExist()
     }
 }

@@ -26,6 +26,7 @@ internal fun BleDevice.merge(raw: RawAdvertisement, adv: Advertisement, decoded:
         advertisementCount = advertisementCount + 1,
         decoded = mergeByKey(this.decoded, decoded) { it.decoder },
         radio = raw.radio ?: radio,
+        addressType = raw.addressType ?: addressType,
     )
 
 private fun <T, K> mergeByKey(old: List<T>, new: List<T>, key: (T) -> K): List<T> {

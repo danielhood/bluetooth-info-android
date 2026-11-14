@@ -15,6 +15,8 @@ data class RawAdvertisement(
     val timestamp: Instant,
     /** Radio metadata; null when the scanner does not provide it (for example most fakes). */
     val radio: RadioInfo? = null,
+    /** Address type from the scan result; null when the platform cannot report it (before Android 15). */
+    val addressType: AddressType? = null,
 )
 
 data class ManufacturerData(

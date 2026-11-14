@@ -22,4 +22,5 @@ data class BleDevice(
     /** Decoder results, one per decoder id, latest value wins (frames of one format accumulate). */
     val decoded: List<Decoded> = emptyList(),
     val radio: RadioInfo? = null,
+    val addressType: AddressType? = null,
 )
