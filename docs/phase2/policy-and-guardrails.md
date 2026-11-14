@@ -51,6 +51,8 @@ A new test, `PolicyDocConsistencyTest`, is optional but recommended: it reads th
 
 ## 4. Consent and user-facing wording
 
+**Approved 2026-11-14 (owner), as it stands in `app/src/main/res/values/strings.xml` at the Tier 2a commit:** the scan permission and Location-off screens, the System information section (permission, denied, loading, nothing-known, read-only footer, pairing and cached-services notes), the three confidence labels, the hint and tracker wording (kept as written, including the "Tracker? (unverified)" list chip), and the interval and distance notes. **Revisit when Tier 3 arrives:** "BT Scan never pairs with, connects to or changes any device" and "BT Scan did not contact the device" stop being true once the app connects, and Android may start pairing by itself when a read needs encryption; both must be rewritten in the same change, not softened beforehand.
+
 Wording is part of the safety design and lives in one string resources file so it can be reviewed in one place. Draft copy (owner to approve before Tier 2c/3 ship):
 
 **Scan permissions (Tier 1, in the app now)** "BT Scan needs the Nearby devices and Location permissions to look for Bluetooth devices around you. Choose precise location when asked: Android counts Bluetooth scan results as location data. BT Scan never uses your location and stores and sends nothing." The wording must stay true: the no-persistence and no-network checks are what back the last sentence.
@@ -86,7 +88,7 @@ Wording is part of the safety design and lives in one string resources file so i
 
 | ID | Question | Recommended |
 |---|---|---|
-| P-1 | Approve the draft consent wording, or adjust? | Approve after seeing it in screenshots |
+| P-1 | Approve the draft consent wording, or adjust? | **Partly decided (2026-11-14):** the wording shipped through Tier 2a (scan and Location permission screens, System information section, confidence labels, hint and tracker wording, estimate notes) was approved as written, including the "Tracker? (unverified)" list chip. The connection consent wording for Tier 3 is still a draft. |
 | P-2 | Is an "own devices" notice sufficient, or should connecting require an additional deliberate step (for example typing a confirmation word) for devices not previously bonded? | Dialog plus notice is sufficient for a personal POC; revisit before any wider distribution |
 | P-3 | Should real third-party neighbourhood scans be allowed in committed documentation (only fake data in git)? | No: fake data only in git |
 | P-4 | Distribution intent: personal use only, or could this be shared? | If shared, add a privacy review, store-policy review (permissions declarations), and remove or further restrict Tier 3 |
