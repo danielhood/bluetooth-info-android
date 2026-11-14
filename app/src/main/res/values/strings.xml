@@ -239,4 +239,23 @@
   <string name="minor_keyboard">Keyboard</string>
   <string name="minor_pointing_device">Pointing device</string>
   <string name="minor_keyboard_and_pointing_device">Keyboard and pointing device</string>
+  <string name="classic_scan">Scan classic devices (about 12 s)</string>
+  <string name="classic_scan_stop">Stop classic scan</string>
+  <string name="classic_scanning">Classic scan…</string>
+  <string name="classic_notice_title">Scan classic devices?</string>
+  <string name="classic_notice_text">Classic scanning looks for older Bluetooth devices for about 12 seconds. It can briefly disturb audio playing on your headphones.</string>
+  <string name="classic_notice_scan">Scan</string>
+  <string name="classic_notice_cancel">Cancel</string>
+  <string name="filter_all">All</string>
+  <string name="filter_ble">BLE</string>
+  <string name="filter_classic">Classic</string>
+  <string name="badge_ble">BLE</string>
+  <string name="badge_classic">Classic</string>
+  <string name="badge_both">BLE + Classic</string>
+  <string name="notice_ble_stopped">The BLE scan was stopped for the classic scan: the two cannot run together.</string>
+  <string name="notice_classic_stopped">The classic scan was stopped for the BLE scan: the two cannot run together.</string>
+  <string name="detail_found_by">Found by</string>
+  <string name="found_ble">BLE advertisements</string>
+  <string name="found_classic">Classic inquiry</string>
+  <string name="found_both">Both</string>
 </resources>

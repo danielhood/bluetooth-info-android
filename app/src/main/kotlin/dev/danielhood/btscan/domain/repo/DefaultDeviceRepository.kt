@@ -2,10 +2,12 @@ package dev.danielhood.btscan.domain.repo
 
 import dev.danielhood.btscan.domain.decode.Decoders
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.ClassicSighting
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.parser.AdvertisementParser
 import dev.danielhood.btscan.domain.port.BleScanner
+import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -19,18 +21,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 private const val DEFAULT_STALE_SECONDS = 30L
 private const val DEFAULT_SNAPSHOT_MILLIS = 500L
+private const val DEFAULT_CLASSIC_TIMEOUT_SECONDS = 15L
 
 data class DeviceRepositoryConfig(
     /** A device not heard from for this long is dropped while scanning. */
     val staleAfter: Duration = Duration.ofSeconds(DEFAULT_STALE_SECONDS),
     /** Minimum time between rebuilds of the [DeviceRepository.devices] snapshot. */
     val snapshotInterval: Duration = Duration.ofMillis(DEFAULT_SNAPSHOT_MILLIS),
+    /** A classic inquiry ends by itself after about 12 s; this is the safety limit if the platform never reports it. */
+    val classicTimeout: Duration = Duration.ofSeconds(DEFAULT_CLASSIC_TIMEOUT_SECONDS),
 )
 
 /**
@@ -39,6 +45,7 @@ data class DeviceRepositoryConfig(
  */
 class DefaultDeviceRepository(
     private val scanner: BleScanner,
+    private val classicScanner: ClassicScanner,
     private val clock: Clock,
     private val scope: CoroutineScope,
     private val config: DeviceRepositoryConfig = DeviceRepositoryConfig(),
@@ -46,14 +53,18 @@ class DefaultDeviceRepository(
     private val table = ConcurrentHashMap<String, BleDevice>()
     private val _devices = MutableStateFlow<List<BleDevice>>(emptyList())
     private val _scanning = MutableStateFlow(false)
+    private val _scanningClassic = MutableStateFlow(false)
+    private var classicJob: Job? = null
     private val _failure = MutableStateFlow<ScanFailure?>(null)
     private var scanJob: Job? = null
 
     /** Identifies the current scan so a cancelled scan's cleanup cannot clobber the state of a newer one. */
     private val generation = AtomicInteger()
+    private val classicGeneration = AtomicInteger()
 
     override val devices: StateFlow<List<BleDevice>> = _devices.asStateFlow()
     override val scanning: StateFlow<Boolean> = _scanning.asStateFlow()
+    override val scanningClassic: StateFlow<Boolean> = _scanningClassic.asStateFlow()
     override val failure: StateFlow<ScanFailure?> = _failure.asStateFlow()
 
     override fun device(address: String): Flow<BleDevice?> =
@@ -62,6 +73,7 @@ class DefaultDeviceRepository(
     @Synchronized
     override fun startScan() {
         if (scanJob?.isActive == true) return
+        stopClassicDiscovery() // the two radios compete: never both at once
         val gen = generation.incrementAndGet()
         _failure.value = null
         _scanning.value = true
@@ -74,6 +86,24 @@ class DefaultDeviceRepository(
         _scanning.value = false
         scanJob?.cancel()
         scanJob = null
+    }
+
+    @Synchronized
+    override fun startClassicDiscovery() {
+        if (classicJob?.isActive == true) return
+        stopScan() // the two radios compete: never both at once
+        val gen = classicGeneration.incrementAndGet()
+        _failure.value = null
+        _scanningClassic.value = true
+        classicJob = scope.launch { runClassic(gen) }
+    }
+
+    @Synchronized
+    override fun stopClassicDiscovery() {
+        classicGeneration.incrementAndGet()
+        _scanningClassic.value = false
+        classicJob?.cancel()
+        classicJob = null
     }
 
     override fun clear() {
@@ -99,6 +129,32 @@ class DefaultDeviceRepository(
             if (gen == generation.get()) _scanning.value = false
             publish()
         }
+    }
+
+    private suspend fun runClassic(gen: Int) {
+        try {
+            coroutineScope {
+                val ticker = launch { tick() }
+                try {
+                    withTimeoutOrNull(config.classicTimeout.toMillis()) {
+                        classicScanner.discover().collect { ingestClassic(it) }
+                    }
+                } finally {
+                    ticker.cancel()
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: ScanFailure) {
+            if (gen == classicGeneration.get()) _failure.value = e
+        } finally {
+            if (gen == classicGeneration.get()) _scanningClassic.value = false
+            publish()
+        }
+    }
+
+    private fun ingestClassic(sighting: ClassicSighting) {
+        table.compute(sighting.address) { _, existing -> existing?.mergeClassic(sighting) ?: sighting.toNewDevice() }
     }
 
     private suspend fun tick() {

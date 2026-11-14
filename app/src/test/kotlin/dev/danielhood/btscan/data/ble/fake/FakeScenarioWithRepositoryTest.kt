@@ -11,6 +11,7 @@ import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
+import dev.danielhood.btscan.testing.NoClassicScanner
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -30,7 +31,12 @@ class FakeScenarioWithRepositoryTest {
             object : Clock {
                 override fun now(): Instant = Instant.EPOCH.plusMillis(testScheduler.currentTime)
             }
-        return DefaultDeviceRepository(FakeBleScanner(Scenarios.require(scenario), clock), clock, backgroundScope)
+        return DefaultDeviceRepository(
+            FakeBleScanner(Scenarios.require(scenario), clock),
+            NoClassicScanner,
+            clock,
+            backgroundScope,
+        )
     }
 
     private fun TestScope.advance(ms: Long) {

@@ -4,6 +4,7 @@ import android.app.Application
 import dev.danielhood.btscan.data.SystemClock
 import dev.danielhood.btscan.data.ble.android.AndroidAdapterStateMonitor
 import dev.danielhood.btscan.data.ble.android.AndroidBleScanner
+import dev.danielhood.btscan.data.ble.android.AndroidClassicScanner
 import dev.danielhood.btscan.data.ble.android.AndroidPermissionChecker
 import dev.danielhood.btscan.data.ble.android.AndroidSystemDeviceInfoSource
 import kotlinx.coroutines.Dispatchers
@@ -20,9 +21,13 @@ class BtScanApp :
         val permissions = AndroidPermissionChecker(this)
         AppContainer(
             permissionChecker = permissions,
-            realScanner = AndroidBleScanner(this, SystemClock),
-            realAdapterMonitor = AndroidAdapterStateMonitor(this),
-            realSystemInfo = AndroidSystemDeviceInfoSource(this, permissions, Dispatchers.IO),
+            real =
+                RealPorts(
+                    scanner = AndroidBleScanner(this, SystemClock),
+                    adapterMonitor = AndroidAdapterStateMonitor(this),
+                    systemInfo = AndroidSystemDeviceInfoSource(this, permissions, Dispatchers.IO),
+                    classicScanner = AndroidClassicScanner(this, SystemClock),
+                ),
             clock = SystemClock,
         )
     }

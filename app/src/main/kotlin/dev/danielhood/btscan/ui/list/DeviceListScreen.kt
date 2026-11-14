@@ -18,11 +18,14 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -42,12 +45,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import dev.danielhood.btscan.R
 import dev.danielhood.btscan.domain.decode.DecoderId
+import dev.danielhood.btscan.domain.model.ClassicInfo
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.ScanFailure
+import dev.danielhood.btscan.ui.common.ClassicTags
 import dev.danielhood.btscan.ui.common.TestTags
+import dev.danielhood.btscan.ui.detail.bondLabel
+import dev.danielhood.btscan.ui.detail.classText
 
 /** Stateless list screen: renders [state], reports user intent through [actions]. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -84,6 +93,35 @@ fun DeviceListContent(
             }
         }
     }
+    // The gate: nothing classic starts until the user confirms this notice (once per process).
+    if (state.classicNoticePending) ClassicNoticeDialog(actions)
+}
+
+@Composable
+private fun ClassicNoticeDialog(actions: DeviceListActions) {
+    AlertDialog(
+        onDismissRequest = actions.onDismissClassicNotice,
+        title = { Text(stringResource(R.string.classic_notice_title)) },
+        text = { Text(stringResource(R.string.classic_notice_text)) },
+        confirmButton = {
+            TextButton(
+                onClick = actions.onConfirmClassicNotice,
+                modifier = Modifier.testTag(TestTags.CLASSIC_NOTICE_CONFIRM),
+            ) {
+                Text(stringResource(R.string.classic_notice_scan))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = actions.onDismissClassicNotice,
+                modifier = Modifier.testTag(TestTags.CLASSIC_NOTICE_CANCEL),
+            ) {
+                Text(stringResource(R.string.classic_notice_cancel))
+            }
+        },
+        // A dialog is its own window, so it needs its own opt-in for test tags to reach `ui.sh dump` as resource ids.
+        modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag(TestTags.CLASSIC_NOTICE_DIALOG),
+    )
 }
 
 @Composable
@@ -103,6 +141,16 @@ private fun Controls(state: DeviceListUiState, actions: DeviceListActions) {
                 modifier = Modifier.testTag(TestTags.CLEAR_BUTTON),
             ) { Text(stringResource(R.string.clear)) }
         }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = actions.onClassicScan,
+                enabled = state.canStartClassic,
+                modifier = Modifier.testTag(TestTags.CLASSIC_SCAN_BUTTON),
+            ) {
+                Text(stringResource(if (state.classicScanning) R.string.classic_scan_stop else R.string.classic_scan))
+            }
+        }
+        SourceFilterRow(state, actions)
         // The whole row toggles (label included), which also gives screen readers one labelled switch.
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -125,9 +173,57 @@ private fun Controls(state: DeviceListUiState, actions: DeviceListActions) {
                 modifier = Modifier.testTag(TestTags.DEVICE_COUNT),
             )
             if (state.isScanning) ScanIndicator()
+            if (state.classicScanning) ClassicIndicator()
+        }
+        state.notice?.let {
+            Text(
+                text =
+                    stringResource(
+                        if (it ==
+                            ListNotice.BLE_STOPPED_FOR_CLASSIC
+                        ) {
+                            R.string.notice_ble_stopped
+                        } else {
+                            R.string.notice_classic_stopped
+                        },
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag(TestTags.LIST_NOTICE),
+            )
         }
     }
     HorizontalDivider()
+}
+
+@Composable
+private fun SourceFilterRow(state: DeviceListUiState, actions: DeviceListActions) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        listOf(
+            Triple(SourceFilter.ALL, "all", R.string.filter_all),
+            Triple(SourceFilter.BLE, "ble", R.string.filter_ble),
+            Triple(SourceFilter.CLASSIC, "classic", R.string.filter_classic),
+        ).forEach { (filter, tag, label) ->
+            FilterChip(
+                selected = state.sourceFilter == filter,
+                onClick = { actions.onSourceFilterChange(filter) },
+                label = { Text(stringResource(label)) },
+                modifier = Modifier.testTag(ClassicTags.filter(tag)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ClassicIndicator() {
+    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag(TestTags.CLASSIC_SCAN_INDICATOR)) {
+        Box(Modifier.size(10.dp).clip(CircleShape).background(MaterialTheme.colorScheme.tertiary))
+        Text(
+            text = stringResource(R.string.classic_scanning),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(start = 6.dp),
+        )
+    }
 }
 
 /** Static (non-animated) "scanning" marker so uiautomator can always reach an idle state. */
@@ -226,7 +322,7 @@ private fun DeviceListArea(state: DeviceListUiState, actions: DeviceListActions)
             val listState = rememberTopPinnedListState(state.devices.first().address)
             LazyColumn(Modifier.fillMaxSize().testTag(TestTags.DEVICE_LIST), state = listState) {
                 items(state.devices, key = { it.address }) { device ->
-                    DeviceRow(device, onClick = { actions.onDeviceClick(device.address) })
+                    DeviceRow(device, state.showSourceBadges, onClick = { actions.onDeviceClick(device.address) })
                     HorizontalDivider()
                 }
             }
@@ -253,7 +349,7 @@ private fun FailureBanner(kind: ScanFailure.Kind, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun DeviceRow(device: DeviceRowUi, onClick: () -> Unit) {
+private fun DeviceRow(device: DeviceRowUi, showBadge: Boolean, onClick: () -> Unit) {
     Row(
         modifier =
             Modifier
@@ -281,6 +377,8 @@ private fun DeviceRow(device: DeviceRowUi, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
+            classicLine(device.classic)?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            if (showBadge) SourceBadge(device.address, device.source)
             if (device.kind != null) KindChip(device.address, device.kind)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -357,4 +455,31 @@ private fun rememberTopPinnedListState(topKey: String): LazyListState {
     val wasAtTop = atTop
     LaunchedEffect(topKey) { if (wasAtTop) listState.scrollToItem(0) }
     return listState
+}
+
+@Composable
+private fun classicLine(info: ClassicInfo?): String? {
+    val parts =
+        buildList {
+            info?.bondState?.let { add(stringResource(bondLabel(it))) }
+            info?.deviceClass?.let { add(classText(it).orEmpty()) }
+        }
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(" \u00B7 ")
+}
+
+@Composable
+private fun SourceBadge(address: String, source: DeviceSource) {
+    Text(
+        text =
+            stringResource(
+                when (source) {
+                    DeviceSource.BLE -> R.string.badge_ble
+                    DeviceSource.CLASSIC -> R.string.badge_classic
+                    DeviceSource.BOTH -> R.string.badge_both
+                },
+            ),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.tertiary,
+        modifier = Modifier.padding(top = 2.dp).testTag(ClassicTags.badge(address)),
+    )
 }

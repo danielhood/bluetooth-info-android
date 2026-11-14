@@ -3,6 +3,10 @@ package dev.danielhood.btscan.domain.repo
 import dev.danielhood.btscan.domain.decode.Decoded
 import dev.danielhood.btscan.domain.model.Advertisement
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.Bytes
+import dev.danielhood.btscan.domain.model.ClassicInfo
+import dev.danielhood.btscan.domain.model.ClassicSighting
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 
 /**
@@ -27,6 +31,7 @@ internal fun BleDevice.merge(raw: RawAdvertisement, adv: Advertisement, decoded:
         decoded = mergeByKey(this.decoded, decoded) { it.decoder },
         radio = raw.radio ?: radio,
         addressType = raw.addressType ?: addressType,
+        source = if (source == DeviceSource.CLASSIC) DeviceSource.BOTH else source,
     )
 
 private fun <T, K> mergeByKey(old: List<T>, new: List<T>, key: (T) -> K): List<T> {
@@ -35,3 +40,35 @@ private fun <T, K> mergeByKey(old: List<T>, new: List<T>, key: (T) -> K): List<T
     new.forEach { merged[key(it)] = it }
     return merged.values.toList()
 }
+
+private const val UNKNOWN_RSSI_DBM = -127
+
+/** Folds a classic sighting into an existing device; a BLE-only device becomes BOTH and keeps its advertisement. */
+internal fun BleDevice.mergeClassic(sighting: ClassicSighting): BleDevice =
+    copy(
+        name = name ?: sighting.name,
+        rssi = sighting.rssi ?: rssi,
+        lastSeen = sighting.timestamp,
+        source = if (source == DeviceSource.BLE) DeviceSource.BOTH else source,
+        classic = ClassicInfo(sighting.deviceClass ?: classic?.deviceClass, sighting.bondState ?: classic?.bondState),
+    )
+
+/** A device only a classic inquiry has found: no advertisement bytes, not known to be connectable. */
+internal fun ClassicSighting.toNewDevice(): BleDevice =
+    BleDevice(
+        address = address,
+        name = name,
+        rssi = rssi ?: UNKNOWN_RSSI_DBM,
+        txPowerDbm = null,
+        isConnectable = false,
+        flags = null,
+        serviceUuids = emptyList(),
+        serviceData = emptyList(),
+        manufacturerData = emptyList(),
+        rawBytes = Bytes.EMPTY,
+        firstSeen = timestamp,
+        lastSeen = timestamp,
+        advertisementCount = 0,
+        source = DeviceSource.CLASSIC,
+        classic = ClassicInfo(deviceClass, bondState),
+    )

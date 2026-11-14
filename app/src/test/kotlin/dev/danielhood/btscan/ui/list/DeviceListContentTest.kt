@@ -19,6 +19,7 @@ import dev.danielhood.btscan.testing.SampleUi
 import dev.danielhood.btscan.testing.assertAllInteractiveNodesLabelled
 import dev.danielhood.btscan.testing.assertTouchTargetAtLeast48dp
 import dev.danielhood.btscan.ui.AppSurface
+import dev.danielhood.btscan.ui.common.ClassicTags
 import dev.danielhood.btscan.ui.common.TestTags
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -41,6 +42,10 @@ class DeviceListContentTest {
         DeviceListActions(
             onToggleScan = { calls += "toggle" },
             onClear = { calls += "clear" },
+            onClassicScan = { calls += "classic" },
+            onConfirmClassicNotice = { calls += "classic-confirm" },
+            onDismissClassicNotice = { calls += "classic-dismiss" },
+            onSourceFilterChange = { calls += "filter=$it" },
             onHideUnnamedChange = { calls += "hide=$it" },
             onDeviceClick = { calls += "open=$it" },
             onGrantPermission = { calls += "grant" },
@@ -294,5 +299,98 @@ class DeviceListContentTest {
         rule.onNodeWithTag(TestTags.deviceRow(watching)).assertIsDisplayed()
         rule.runOnIdle { state.value = SampleUi.state(ListStatus.Scanning, listOf(row(99, -30)) + initial) }
         rule.onNodeWithTag(TestTags.deviceRow(watching)).assertIsDisplayed()
+    }
+
+    // ---- Classic scan (Tier 2b): the controls, the gate dialog, badges and the filter ----
+
+    @Test
+    fun `the classic button is there and reports the tap`() {
+        show(SampleUi.state())
+        rule
+            .onNodeWithTag(
+                TestTags.CLASSIC_SCAN_BUTTON,
+            ).assertTextEquals("Scan classic devices (about 12 s)")
+            .performClick()
+        assertEquals(listOf("classic"), calls)
+    }
+
+    @Test
+    fun `while an inquiry runs the button stops it and the indicator shows`() {
+        show(SampleUi.state().copy(classicScanning = true))
+        rule.onNodeWithTag(TestTags.CLASSIC_SCAN_BUTTON).assertTextEquals("Stop classic scan")
+        rule.onNodeWithTag(TestTags.CLASSIC_SCAN_INDICATOR, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `the classic button is disabled while scanning is blocked`() {
+        show(SampleUi.state(ListStatus.PermissionNeeded(permanentlyDenied = false)))
+        rule.onNodeWithTag(TestTags.CLASSIC_SCAN_BUTTON).assertIsNotEnabled()
+    }
+
+    @Test
+    fun `the gate dialog explains the audio effect and only the Scan button confirms`() {
+        show(SampleUi.state().copy(classicNoticePending = true))
+        rule.onNodeWithTag(TestTags.CLASSIC_NOTICE_DIALOG).assertExists()
+        rule
+            .onNodeWithText(
+                "Classic scanning looks for older Bluetooth devices for about 12 seconds. " +
+                    "It can briefly disturb audio playing on your headphones.",
+            ).assertExists()
+        rule.onNodeWithTag(TestTags.CLASSIC_NOTICE_CANCEL).performClick()
+        assertEquals(listOf("classic-dismiss"), calls)
+        rule.onNodeWithTag(TestTags.CLASSIC_NOTICE_CONFIRM).performClick()
+        assertEquals(listOf("classic-dismiss", "classic-confirm"), calls)
+    }
+
+    @Test
+    fun `no dialog is shown unless the notice is pending`() {
+        show(SampleUi.state())
+        rule.onNodeWithTag(TestTags.CLASSIC_NOTICE_DIALOG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `rows show their transport and what a classic inquiry reported`() {
+        show(SampleUi.state(devices = SampleUi.devicesMixed))
+        rule
+            .onNodeWithTag(
+                ClassicTags.badge("C0:FF:EE:00:00:01"),
+                useUnmergedTree = true,
+            ).assertTextEquals("BLE + Classic")
+        rule
+            .onNodeWithTag(
+                ClassicTags.badge("C0:FF:EE:00:00:0A"),
+                useUnmergedTree = true,
+            ).assertTextEquals("Classic")
+        rule.onNodeWithTag(ClassicTags.badge("C0:FF:EE:00:00:02"), useUnmergedTree = true).assertTextEquals("BLE")
+        rule.onNodeWithTag(TestTags.deviceRow("C0:FF:EE:00:00:0A")).assertTextContains("Paired", substring = true)
+        rule
+            .onNodeWithTag(
+                TestTags.deviceRow("C0:FF:EE:00:00:0A"),
+            ).assertTextContains("Audio or video: Car audio", substring = true)
+        rule.onNodeWithTag(TestTags.deviceRow("C0:FF:EE:00:00:0B")).assertTextContains("Not paired", substring = true)
+    }
+
+    @Test
+    fun `a plain ble list has no transport badges`() {
+        show(SampleUi.state(ListStatus.Scanning, SampleUi.devices))
+        rule.onNodeWithTag(ClassicTags.badge("C0:FF:EE:00:00:01"), useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the source filter chips report the choice`() {
+        show(SampleUi.state(devices = SampleUi.devicesMixed))
+        rule.onNodeWithTag(ClassicTags.filter("classic")).performClick()
+        rule.onNodeWithTag(ClassicTags.filter("ble")).performClick()
+        rule.onNodeWithTag(ClassicTags.filter("all")).performClick()
+        assertEquals(listOf("filter=CLASSIC", "filter=BLE", "filter=ALL"), calls)
+    }
+
+    @Test
+    fun `the note explains when one scan was stopped for the other`() {
+        show(SampleUi.state().copy(classicScanning = true, notice = ListNotice.BLE_STOPPED_FOR_CLASSIC))
+        rule
+            .onNodeWithTag(
+                TestTags.LIST_NOTICE,
+            ).assertTextEquals("The BLE scan was stopped for the classic scan: the two cannot run together.")
     }
 }

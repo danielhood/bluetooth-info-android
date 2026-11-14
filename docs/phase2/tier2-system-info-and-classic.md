@@ -1,6 +1,6 @@
 # Tier 2: System Device Info and Classic Discovery
 
-**Status:** 2a implemented and checked on the Pixel (T2-M1, T2-M2, spikes S1 and S2, 2026-11-14); T2-M5 wording review and a check against a device the phone is paired with are still open; 2b, 2c not started. **New permission:** `BLUETOOTH_CONNECT` (Android 12+; nothing new on 11 and below). **Pairing:** never. **Connecting:** none in 2a; a brief classic inquiry in 2b; an SDP query in 2c.
+**Status:** 2a implemented and checked on the Pixel (2026-11-14); 2b implemented and checked on the Pixel (2026-11-14, owner decision D-P2-2 with the UI-gate condition); 2c not started; T2-M5 wording review of the classic notice is open. **New permission:** `BLUETOOTH_CONNECT` (Android 12+; nothing new on 11 and below). **Pairing:** never. **Connecting:** none in 2a; a brief classic inquiry in 2b; an SDP query in 2c.
 
 ## 1. Goal
 
@@ -135,6 +135,13 @@ domain/model/
 - **Without the permission** every getter except `getAddressType` throws `SecurityException`; the source treats that as "permission missing", never a crash (guarded and tested).
 - **What a real LE advertiser reports:** not paired, device type Unknown, no name, no alias, **class value 0**. Zero means "no class", not the Miscellaneous class, so the source now reports it as absent ("Not available"); a real class (for example headphones) is decoded as before. Real neighbours behaved the same (not paired, unknown type, no class); none of them was a device this phone is paired with.
 - **Still open:** a device this phone *is* paired with (to see alias, pairing state and class populated on real hardware) and the owner's review of the wording.
+
+### 2b implementation notes (2026-11-14)
+
+- **The UI gate (owner condition).** Classic inquiry starts only from the "Scan classic devices" button, after a notice confirmed once per process. `DeviceListViewModel.onClassicScanClicked / confirmClassicNotice` are the only path; 11 ViewModel tests show that a permission grant, resume, BLE start/stop, filter choice, Bluetooth returning, backgrounding and Clear start nothing; a smoke check shows the same on the emulator (nothing runs behind the notice; cancel starts nothing). `ArchitectureTest` pins `startClassicDiscovery(` to that ViewModel and `startDiscovery`/`cancelDiscovery` to `AndroidClassicScanner.kt`. The same pattern (explicit per-device action plus confirmation) is the plan for 2c.
+- **Built:** `DeviceSource` (BLE, CLASSIC, BOTH), `ClassicSighting`/`ClassicInfo`, the `ClassicScanner` port, repository merge and mutual exclusion (starting one scan stops the other; the list says so), a 15 s safety limit if the platform never reports the end, `AndroidClassicScanner`, `FakeClassicScanner` and the `classic-mixed` scenario, the button, notice dialog, filter chips, transport badges and a "Found by" line on the detail screen (raw advertisement hidden for classic-only devices).
+- **Behaviour notes:** classic devices go stale after 30 s like BLE ones; the advertised name wins when a device has both; a missing signal reading is never invented; pairing state is "unknown" (no line shown) when it cannot be read.
+- **Pixel results (Android 17):** the inquiry ended by itself after about 12.9 s (log timestamps); name, class and signal arrive in the broadcast without the connect permission, pairing state does not (the app shows nothing rather than guessing, and shows "Paired" / "Not paired" once the permission is granted); with BLE scanning on top, devices seen by both radios appeared once each as "BLE + Classic" (two of the five neighbours), the discoverable host stayed "Classic" with class "Computer: Laptop". Real classic neighbours report class "Uncategorized" more often than a specific class. The host was made discoverable for the test with `busctl set-property ... Discoverable b true` and restored to `false`.
 
 ## 6. Acceptance criteria
 

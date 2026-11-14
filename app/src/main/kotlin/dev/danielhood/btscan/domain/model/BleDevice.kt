@@ -23,4 +23,7 @@ data class BleDevice(
     val decoded: List<Decoded> = emptyList(),
     val radio: RadioInfo? = null,
     val addressType: AddressType? = null,
+    /** BLE by default; CLASSIC when only a classic inquiry found it, BOTH when each did. */
+    val source: DeviceSource = DeviceSource.BLE,
+    val classic: ClassicInfo? = null,
 )

@@ -22,7 +22,7 @@
 | Never call `connectGatt` | unchanged | unchanged | **relaxed:** allowed in exactly one file, `data/ble/android/AndroidGattInspector.kt` |
 | `android.bluetooth.*` only under `data/ble/android` | unchanged | unchanged | unchanged |
 | No network calls (manifest has no INTERNET) | unchanged | unchanged | unchanged |
-| BLE only (decision D7) | unchanged | **reopened only for 2b** (classic discovery), owner decision D-P2-2 | unchanged |
+| BLE only (decision D7) | unchanged | **reopened for 2b (done, 2026-11-14)**: classic discovery approved by the owner (D-P2-2) on the condition that it is gated by the UI (one explicit button plus a first-use notice); see decisions.md D7 | unchanged |
 | No persistence (decision D12) | unchanged | unchanged | unchanged |
 | Fakes live in `src/debug`, never in release | unchanged | unchanged | unchanged (fake GATT included) |
 
@@ -39,7 +39,7 @@ All checks extend the existing `ArchitectureTest` (import and text scanning, no 
 | Forbid reflection into Bluetooth internals | **Done (X2)** | No `getDeclaredMethod`/`getMethod`/`Class.forName` in files under `data/ble` or that import `android.bluetooth` |
 | Decoders and parsers are pure | Tier 1 | Files under `domain/decode` and `domain/gatt/parsers` import no `android.*` (already covered by the domain rule; add an explicit test so a future package move cannot escape it) |
 | Manifest permissions are an explicit allowlist | **Done (X2)**, updated per tier | The manifest test asserts the *exact set* of requested permissions instead of only forbidding some. Tier 1 (decision D-P2-8, 2026-11-14): adds `ACCESS_COARSE_LOCATION` and makes `ACCESS_FINE_LOCATION` unrestricted (the scan needs both on every version, `neverForLocation` is no longer asserted; the test fails if it comes back). Tier 2a (done) adds `BLUETOOTH_CONNECT` (API 31+). A new permission fails the test until the policy doc and the test are updated together. |
-| No over-the-air contact calls yet | **Done (Tier 2a)** | `ArchitectureTest` forbids `fetchUuidsWithSdp`, `startDiscovery` and `cancelDiscovery` (and `connectGatt`) everywhere; each is relaxed in its own tier's commit (2b, 2c, 3) |
+| Over-the-air contact calls are confined | **Done (Tier 2a, relaxed for 2b)** | `connectGatt` and `fetchUuidsWithSdp` are forbidden everywhere (relaxed in 2c and Tier 3). `startDiscovery` and `cancelDiscovery` are allowed only in `data/ble/android/AndroidClassicScanner.kt` (2b), and `startClassicDiscovery(` may be called only from `DeviceListViewModel` (the UI gate), both enforced by `ArchitectureTest` |
 | `connectGatt` confined | Tier 3 | Allowed only in `AndroidGattInspector.kt`; the Tier 2 "forbidden everywhere" check is narrowed in the same commit |
 | `writeDescriptor` confined | Tier 3 v2 | Only in the file containing the notification helper, and only referencing the CCCD constant `0x2902` |
 | Logging hygiene | **Done (Tier 2a)** | In `src/main` and `src/release`, `AppLog`/`Log` calls must not interpolate `address`, `name`, `serial`, `value` or `rawBytes` identifiers. Implemented as a text rule on log call arguments (simple, conservative, with an allowlisted escape comment for justified cases). Debug-only code (`src/debug`) is exempt. |
@@ -61,7 +61,7 @@ Wording is part of the safety design and lives in one string resources file so i
 
 *(Adjust the last sentence when 2c/Tier 3 are enabled; it must never over-promise.)*
 
-**Classic scan notice (Tier 2b, first use per run)** "Classic scanning looks for older Bluetooth devices for about 12 seconds. It can briefly disturb audio playing on your headphones."
+**Classic scan notice (Tier 2b, in the app now; first use per process, awaiting owner review)** "Classic scanning looks for older Bluetooth devices for about 12 seconds. It can briefly disturb audio playing on your headphones." Buttons: Scan, Cancel. Also in the app: "The BLE scan was stopped for the classic scan: the two cannot run together." and the reverse.
 
 **Connection confirmation (Tier 2c and Tier 3)** "Connect to *<name or address>* and read its standard information? Only do this for devices you own or have permission to inspect. The device may be briefly unavailable to its owner while connected. Some devices may ask to pair; you can decline. The app will not change anything on the device."
 

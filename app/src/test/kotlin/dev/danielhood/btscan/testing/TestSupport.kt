@@ -2,17 +2,25 @@ package dev.danielhood.btscan.testing
 
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.Bytes
+import dev.danielhood.btscan.domain.model.ClassicSighting
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
+import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.test.TestScope
 import java.time.Instant
 
@@ -91,9 +99,52 @@ class TestApp :
         dev.danielhood.btscan
             .AppContainer(
                 permissionChecker = FakePermissionChecker(),
-                realScanner = ManualScanner(),
-                realAdapterMonitor = AlwaysOnAdapterMonitor,
-                realSystemInfo = FakeSystemInfoSource(),
+                real =
+                    dev.danielhood.btscan.RealPorts(
+                        ManualScanner(),
+                        AlwaysOnAdapterMonitor,
+                        FakeSystemInfoSource(),
+                        NoClassicScanner,
+                    ),
             ).also { it.debugConfig = dev.danielhood.btscan.DebugConfig(scanner = "fake", scenario = "default") }
     }
+}
+
+/** A classic scanner that finds nothing: for tests that are not about classic discovery. */
+object NoClassicScanner : ClassicScanner {
+    override fun discover(): Flow<ClassicSighting> = emptyFlow()
+}
+
+/**
+ * Classic scanner driven by the test: [found] reports a device, [finish] ends the inquiry like Android does after
+ * about 12 s. Counts how many inquiries were started and how many are active.
+ */
+class ManualClassicScanner : ClassicScanner {
+    private sealed interface Event {
+        data class Found(
+            val sighting: ClassicSighting,
+        ) : Event
+
+        data object Finished : Event
+    }
+
+    private val events = MutableSharedFlow<Event>(extraBufferCapacity = 64)
+    var starts = 0
+        private set
+    var active = 0
+        private set
+
+    suspend fun found(sighting: ClassicSighting) = events.emit(Event.Found(sighting))
+
+    suspend fun finish() = events.emit(Event.Finished)
+
+    override fun discover(): Flow<ClassicSighting> =
+        events
+            .onStart {
+                starts++
+                active++
+            }.takeWhile { it !is Event.Finished }
+            .filterIsInstance<Event.Found>()
+            .map { it.sighting }
+            .onCompletion { active-- }
 }

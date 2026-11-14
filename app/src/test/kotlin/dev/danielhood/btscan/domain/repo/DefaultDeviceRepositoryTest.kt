@@ -6,6 +6,7 @@ import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.Clock
+import dev.danielhood.btscan.testing.NoClassicScanner
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -71,7 +72,13 @@ class DefaultDeviceRepositoryTest {
         connectable: Boolean = true,
     ) = RawAdvertisement(address, rssi, Bytes(bytes), connectable, Instant.EPOCH.plusMillis(testScheduler.currentTime))
 
-    private fun TestScope.repo(scanner: BleScanner) = DefaultDeviceRepository(scanner, clock(), backgroundScope)
+    private fun TestScope.repo(scanner: BleScanner) =
+        DefaultDeviceRepository(
+            scanner,
+            NoClassicScanner,
+            clock(),
+            backgroundScope,
+        )
 
     @Test
     fun `aggregates advertisements per address keeping the latest rssi and counting them`() =

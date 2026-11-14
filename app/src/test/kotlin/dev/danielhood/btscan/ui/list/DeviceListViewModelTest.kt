@@ -10,6 +10,7 @@ import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
 import dev.danielhood.btscan.testing.FakePermissionChecker
 import dev.danielhood.btscan.testing.ManualScanner
+import dev.danielhood.btscan.testing.NoClassicScanner
 import dev.danielhood.btscan.testing.advance
 import dev.danielhood.btscan.testing.rawAd
 import dev.danielhood.btscan.testing.testClock
@@ -50,7 +51,7 @@ class DeviceListViewModelTest {
         adapterState: AdapterState = AdapterState.ON,
     ): Fixture {
         val clock = testClock()
-        val repo = DefaultDeviceRepository(scanner, clock, backgroundScope)
+        val repo = DefaultDeviceRepository(scanner, NoClassicScanner, clock, backgroundScope)
         val permissions = FakePermissionChecker(permission)
         val adapter = FakeAdapterStateMonitor(adapterState)
         val vm = DeviceListViewModel(repo, adapter, permissions, clock)

@@ -50,6 +50,10 @@ fun DeviceListRoute(
             DeviceListActions(
                 onToggleScan = viewModel::toggleScan,
                 onClear = viewModel::clear,
+                onClassicScan = viewModel::onClassicScanClicked,
+                onConfirmClassicNotice = viewModel::confirmClassicNotice,
+                onDismissClassicNotice = viewModel::dismissClassicNotice,
+                onSourceFilterChange = viewModel::setSourceFilter,
                 onHideUnnamedChange = viewModel::setHideUnnamed,
                 onDeviceClick = onDeviceClick,
                 onGrantPermission = { permissionLauncher.launch(viewModel.permissionsToRequest.toTypedArray()) },

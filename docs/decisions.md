@@ -71,6 +71,8 @@ Uses `BluetoothLeScanner`. Classic discovery (`BluetoothAdapter.startDiscovery`)
 
 Why: most nearby devices advertise via BLE; advertisement data gives rich details (name, RSSI, TX power, service UUIDs, manufacturer data) without ever connecting. See open question 1 in the README.
 
+**Update 2026-11-14 (D-P2-2): classic discovery was added (Tier 2b), still no connections.** The owner approved it on the condition that it is gated by the UI: a classic inquiry (`BluetoothAdapter.startDiscovery`, about 12 s, can briefly disturb audio on a connected headset) only ever starts from an explicit tap on "Scan classic devices", confirmed in a notice once per process. It never starts on launch, on a permission grant, on resume, when a BLE scan starts or when Bluetooth returns; it is a separate button, not part of Start/Stop; and `ArchitectureTest` confines the platform calls to `AndroidClassicScanner.kt` and the single start call to the list ViewModel's user-intent path. The two scans never run at the same time (starting one stops the other and says so). Still out of scope: connections, pairing, and the classic service lookup (2c), which will need the same kind of UI gate per device.
+
 ## D8. SDK levels
 
 | Setting | Value | Reason |

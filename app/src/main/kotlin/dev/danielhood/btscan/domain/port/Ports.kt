@@ -1,6 +1,7 @@
 package dev.danielhood.btscan.domain.port
 
 import dev.danielhood.btscan.domain.model.AdapterState
+import dev.danielhood.btscan.domain.model.ClassicSighting
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
 import dev.danielhood.btscan.domain.system.SystemInfoResult
@@ -34,6 +35,15 @@ interface PermissionChecker {
 /** Reads what the Android system already knows about a device. Never contacts the device and never pairs. */
 interface SystemDeviceInfoSource {
     suspend fun lookup(address: String): SystemInfoResult
+}
+
+/**
+ * Classic Bluetooth discovery (an inquiry). Cold flow: collecting starts one inquiry that ends by itself after about
+ * 12 seconds; cancelling the collector stops it. Failures are thrown as ScanFailure. It is started only from an
+ * explicit user action (see DeviceListViewModel): it can briefly disturb audio on a connected headset.
+ */
+interface ClassicScanner {
+    fun discover(): Flow<ClassicSighting>
 }
 
 /** Injected time source; never call the system clock directly from domain or ViewModel code. */

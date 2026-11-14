@@ -146,7 +146,7 @@ private fun InfoField(label: Int, value: String, tag: String, note: Int? = null)
 }
 
 @Composable
-private fun classText(info: DeviceClassInfo?): String? =
+internal fun classText(info: DeviceClassInfo?): String? =
     info?.let {
         val major = stringResource(majorLabel(it.major))
         it.minor?.let { minor ->

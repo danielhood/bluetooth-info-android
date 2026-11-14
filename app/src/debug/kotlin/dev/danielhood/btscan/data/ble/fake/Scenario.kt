@@ -5,6 +5,8 @@ import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.Bytes
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.model.ScanFailure
+import dev.danielhood.btscan.domain.system.BondState
+import dev.danielhood.btscan.domain.system.DeviceClassInfo
 import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 
 /** A simulated device. All times are milliseconds since the scan started. Output is fully deterministic. */
@@ -32,6 +34,23 @@ data class FakeFailure(
     val afterMs: Long = 0,
 )
 
+private const val DEFAULT_CLASSIC_RSSI = -60
+
+/** A device a fake classic inquiry reports [atMs] after it starts. */
+data class FakeClassicSighting(
+    val address: String,
+    val name: String? = null,
+    val rssi: Int? = DEFAULT_CLASSIC_RSSI,
+    val deviceClass: DeviceClassInfo? = null,
+    val bondState: BondState? = BondState.NONE,
+    val atMs: Long = 0,
+) {
+    companion object {
+        /** The fake inquiry ends by itself this long after it starts, like the real one (about 12 s). */
+        const val INQUIRY_MS = 12_000L
+    }
+}
+
 data class Scenario(
     val name: String,
     val devices: List<FakeDevice>,
@@ -39,4 +58,6 @@ data class Scenario(
     val adapterState: AdapterState = AdapterState.ON,
     /** What the fake system knows about each address (Tier 2a); addresses not listed are unknown to it. */
     val systemInfo: Map<String, SystemDeviceInfo> = emptyMap(),
+    /** What a classic inquiry finds (Tier 2b); empty means the inquiry finds nothing. */
+    val classic: List<FakeClassicSighting> = emptyList(),
 )

@@ -71,7 +71,7 @@ Each tier adds to `verify.sh` (new scenarios in the smoke test, new golden-vecto
 | ID | Question | Recommended default |
 |---|---|---|
 | D-P2-1 | Proceed in the order X2, (X1 ∥ Tier 1), Tier 2a, Tier 2b/2c, Tier 3? | Yes |
-| D-P2-2 | Tier 2b: reopen the "BLE only" decision (D7) to add classic Bluetooth discovery? | Yes, behind a separate source filter and a time-boxed 12 s inquiry |
+| D-P2-2 | Tier 2b: reopen the "BLE only" decision (D7) to add classic Bluetooth discovery? | **Decided 2026-11-14: yes, with the owner's condition that it is gated by the UI** (explicit button, first-use notice, never automatic); separate source filter and a time-boxed 12 s inquiry |
 | D-P2-3 | Tier 3: allow connecting at all in this app, under the policy doc? | Yes, with per-device confirmation, read-only, allowlisted characteristics, own-devices notice |
 | D-P2-4 | Tier 3: allow "read every readable characteristic" (advanced mode)? | No for v1; revisit after v1 is verified |
 | D-P2-5 | Test peripheral: spend effort on option B (Bumble/netsim) or stop at option A? | Try B in a time-boxed spike; keep A regardless |

@@ -13,6 +13,7 @@ import dev.danielhood.btscan.domain.system.SystemInfoResult
 import dev.danielhood.btscan.testing.FakePermissionChecker
 import dev.danielhood.btscan.testing.FakeSystemInfoSource
 import dev.danielhood.btscan.testing.ManualScanner
+import dev.danielhood.btscan.testing.NoClassicScanner
 import dev.danielhood.btscan.testing.advance
 import dev.danielhood.btscan.testing.rawAd
 import dev.danielhood.btscan.testing.testClock
@@ -51,6 +52,7 @@ class DeviceDetailViewModelTest {
     private fun TestScope.defaultScenarioRepo() =
         DefaultDeviceRepository(
             FakeBleScanner(Scenarios.require("default"), testClock()),
+            NoClassicScanner,
             testClock(),
             backgroundScope,
         )
@@ -60,7 +62,7 @@ class DeviceDetailViewModelTest {
     @Test
     fun `unknown address is not found`() =
         runTest {
-            val repo = DefaultDeviceRepository(ManualScanner(), testClock(), backgroundScope)
+            val repo = DefaultDeviceRepository(ManualScanner(), NoClassicScanner, testClock(), backgroundScope)
             assertEquals(DeviceDetailUiState.NotFound, vm("nope", repo).uiState.value)
         }
 
@@ -107,7 +109,7 @@ class DeviceDetailViewModelTest {
     fun `rssi updates live`() =
         runTest {
             val scanner = ManualScanner()
-            val repo = DefaultDeviceRepository(scanner, testClock(), backgroundScope)
+            val repo = DefaultDeviceRepository(scanner, NoClassicScanner, testClock(), backgroundScope)
             repo.startScan()
             advance(0)
             scanner.ads.emit(rawAd("A", rssi = -70))
@@ -124,7 +126,7 @@ class DeviceDetailViewModelTest {
     fun `last seen age counts up every second`() =
         runTest {
             val scanner = ManualScanner()
-            val repo = DefaultDeviceRepository(scanner, testClock(), backgroundScope)
+            val repo = DefaultDeviceRepository(scanner, NoClassicScanner, testClock(), backgroundScope)
             repo.startScan()
             advance(0)
             scanner.ads.emit(rawAd("A"))
@@ -158,7 +160,7 @@ class DeviceDetailViewModelTest {
     fun `device that returns after dropping is no longer out of range`() =
         runTest {
             val scanner = ManualScanner()
-            val repo = DefaultDeviceRepository(scanner, testClock(), backgroundScope)
+            val repo = DefaultDeviceRepository(scanner, NoClassicScanner, testClock(), backgroundScope)
             repo.startScan()
             advance(0)
             scanner.ads.emit(rawAd("A"))

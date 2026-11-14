@@ -1,11 +1,13 @@
 package dev.danielhood.btscan
 
+import dev.danielhood.btscan.RealPorts
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.testing.AlwaysOnAdapterMonitor
 import dev.danielhood.btscan.testing.FakePermissionChecker
 import dev.danielhood.btscan.testing.FakeSystemInfoSource
 import dev.danielhood.btscan.testing.ManualScanner
+import dev.danielhood.btscan.testing.NoClassicScanner
 import dev.danielhood.btscan.testing.rawAd
 import dev.danielhood.btscan.testing.testClock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,9 +29,7 @@ class AppContainerTest {
             }
         return AppContainer(
             permissionChecker = FakePermissionChecker(),
-            realScanner = realScanner,
-            realAdapterMonitor = AlwaysOnAdapterMonitor,
-            realSystemInfo = FakeSystemInfoSource(),
+            real = RealPorts(realScanner, AlwaysOnAdapterMonitor, FakeSystemInfoSource(), NoClassicScanner),
             scope = backgroundScope,
             clock = clock,
         )
@@ -89,9 +89,7 @@ class AppContainerTest {
             val container =
                 AppContainer(
                     permissionChecker = FakePermissionChecker(),
-                    realScanner = failing,
-                    realAdapterMonitor = AlwaysOnAdapterMonitor,
-                    realSystemInfo = FakeSystemInfoSource(),
+                    real = RealPorts(failing, AlwaysOnAdapterMonitor, FakeSystemInfoSource(), NoClassicScanner),
                     scope = backgroundScope,
                     clock = testClock(),
                 )

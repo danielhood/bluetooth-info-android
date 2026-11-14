@@ -5,6 +5,7 @@ import dev.danielhood.btscan.domain.estimate.DistanceBand
 import dev.danielhood.btscan.domain.estimate.Estimates
 import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.RadioInfo
 import dev.danielhood.btscan.domain.parser.AdFlag
 import dev.danielhood.btscan.domain.parser.CompanyIds
@@ -50,6 +51,8 @@ data class DeviceDetailUi(
     val radio: RadioInfo? = null,
     /** How the address was formed (from the scan result; Android 15 and later); null when unknown. */
     val addressType: AddressType? = null,
+    /** Which radio found the device; the "Found by" line shows only when a classic inquiry was involved. */
+    val source: DeviceSource = DeviceSource.BLE,
     /** Estimated average milliseconds between received packets; null until enough packets were seen. */
     val intervalEstimateMs: Long? = null,
     /** Rough distance band; null unless the device advertises a calibrated reference power. */
@@ -131,6 +134,7 @@ internal fun BleDevice.toDetailUi() =
         decoded = decoded,
         radio = radio,
         addressType = addressType,
+        source = source,
         intervalEstimateMs = Estimates.advertisingIntervalMs(this),
         distanceBand = Estimates.distanceBand(this),
     )

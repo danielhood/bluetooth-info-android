@@ -11,6 +11,9 @@ interface DeviceRepository {
 
     val scanning: StateFlow<Boolean>
 
+    /** True while a classic inquiry runs. Never true together with [scanning]: starting one stops the other. */
+    val scanningClassic: StateFlow<Boolean>
+
     /** Set when the last scan ended with an error; cleared when a new scan starts. */
     val failure: StateFlow<ScanFailure?>
 
@@ -22,6 +25,15 @@ interface DeviceRepository {
 
     /** Stops scanning. Found devices are kept so they can still be inspected. */
     fun stopScan()
+
+    /**
+     * Starts one classic inquiry (it ends by itself) and stops a BLE scan first. Call only from an explicit user
+     * action.
+     * Found devices merge into the same list by address.
+     */
+    fun startClassicDiscovery()
+
+    fun stopClassicDiscovery()
 
     /** Forgets all devices. Scanning, if active, continues. */
     fun clear()

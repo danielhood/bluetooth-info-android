@@ -381,6 +381,65 @@ object Scenarios {
                 ),
         )
 
+    /**
+     * Tier 2b: BLE devices plus what a classic inquiry finds. Address 1 is seen by both (it appears once, marked
+     * BOTH); 10 to 12 are classic only: a paired car stereo, an unpaired phone and an unnamed laptop.
+     */
+    private val classicMixed =
+        Scenario(
+            name = "classic-mixed",
+            devices =
+                listOf(
+                    FakeDevice(
+                        address = addr(1),
+                        advertisement =
+                            advertisement {
+                                flags(0x06)
+                                completeName("Buds Pro")
+                            },
+                        baseRssi = -48,
+                    ),
+                    FakeDevice(
+                        address = addr(2),
+                        advertisement =
+                            advertisement {
+                                flags(0x06)
+                                completeName("Thermo Sensor")
+                            },
+                        baseRssi = -62,
+                        phaseMs = 100,
+                    ),
+                ),
+            classic =
+                listOf(
+                    FakeClassicSighting(
+                        addr(1),
+                        "Buds Pro",
+                        -50,
+                        DeviceClassInfo.of(0x0418),
+                        BondState.BONDED,
+                        atMs = 1_000,
+                    ),
+                    FakeClassicSighting(
+                        addr(10),
+                        "Car Audio",
+                        -58,
+                        DeviceClassInfo.of(0x0420),
+                        BondState.BONDED,
+                        atMs = 2_500,
+                    ),
+                    FakeClassicSighting(
+                        addr(11),
+                        "Old Phone",
+                        -70,
+                        DeviceClassInfo.of(0x020C),
+                        BondState.NONE,
+                        atMs = 4_000,
+                    ),
+                    FakeClassicSighting(addr(12), null, -80, DeviceClassInfo.of(0x010C), BondState.NONE, atMs = 6_000),
+                ),
+        )
+
     private val scanFails =
         Scenario(
             name = "scan-fails",
@@ -420,6 +479,7 @@ object Scenarios {
             vendors,
             radio,
             systemInfo,
+            classicMixed,
             scanFails,
             tooFrequent,
             bluetoothOff,

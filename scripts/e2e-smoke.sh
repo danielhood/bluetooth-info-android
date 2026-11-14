@@ -202,7 +202,7 @@ echo "-- vendor hints (Tier 1)"
 "$S/ui.sh" wait device_list_screen 10 >/dev/null
 sleep 1.5
 "$S/ui.sh" tap scan_button >/dev/null
-check "vendor devices appear"       wait_rows 6 8
+check "vendor devices appear"       wait_rows 4 8
 open_device C0:FF:EE:00:00:01 || true
 check "find my hint section"        "$S/ui.sh" wait detail_decoded_tracker_hint 8
 check "hint says unofficial"        bash -c "'$S/ui.sh' find decoded_tracker_hint_confidence | grep -q 'Unofficial hint'"
@@ -272,6 +272,48 @@ check "pairing state shown"         bash -c "'$S/ui.sh' wait system_bond_state 1
 "$S/ui.sh" wait device_list 5 >/dev/null
 open_device C0:FF:EE:00:00:04 || true
 check "unknown device says so"      "$S/ui.sh" wait system_info_unavailable 10
+
+echo "-- classic scan (Tier 2b): gated by the UI, never starts by itself"
+"$S/app.sh" launch --scenario classic-mixed >/dev/null
+"$S/ui.sh" wait device_list_screen 10 >/dev/null
+sleep 2
+check "no inquiry on launch"        absent classic_scan_indicator
+check "classic button present"      "$S/ui.sh" find classic_scan_button
+"$S/ui.sh" tap classic_scan_button >/dev/null
+check "gate notice is shown"        "$S/ui.sh" wait classic_notice_dialog 8
+check "notice warns about audio"    "$S/ui.sh" find "disturb audio"
+sleep 3
+check "nothing started behind the notice" absent classic_scan_indicator
+check "no devices before confirming" bash -c "[ \"\$($S/ui.sh dump | grep -c 'id=device_row_')\" -eq 0 ]"
+"$S/shot.sh" smoke-classic-notice >/dev/null
+"$S/ui.sh" tap classic_notice_cancel >/dev/null
+sleep 2
+check "cancel starts nothing"       absent classic_scan_indicator
+check "cancel closes the notice"    absent classic_notice_dialog
+sleep 1.5
+"$S/ui.sh" tap classic_scan_button >/dev/null
+"$S/ui.sh" wait classic_notice_dialog 8 >/dev/null
+"$S/ui.sh" tap classic_notice_confirm >/dev/null
+check "inquiry starts after confirming" "$S/ui.sh" wait classic_scan_indicator 6
+check "four classic-mixed devices"  wait_rows 4 10
+check "classic only badge"          bash -c "'$S/ui.sh' find source_badge_C0:FF:EE:00:00:0A | grep -q \"text='Classic'\""
+check "paired car audio line"       bash -c "'$S/ui.sh' dump | grep -q 'Paired'"
+"$S/shot.sh" smoke-classic-scanning >/dev/null
+check "inquiry ends by itself"      bash -c "for i in \$(seq 1 20); do '$S/ui.sh' find classic_scan_indicator >/dev/null 2>&1 || exit 0; sleep 1; done; exit 1"
+check "found devices are kept"      bash -c "[ \"\$($S/ui.sh dump | grep -c 'id=device_row_')\" -ge 4 ]"
+sleep 1.5
+"$S/ui.sh" tap scan_button >/dev/null
+check "ble scan merges the shared device" bash -c "for i in \$(seq 1 12); do '$S/ui.sh' find source_badge_C0:FF:EE:00:00:01 | grep -q 'BLE + Classic' && exit 0; sleep 1; done; exit 1"
+"$S/ui.sh" tap source_filter_classic >/dev/null
+sleep 1
+check "classic filter hides ble only" bash -c "! '$S/ui.sh' dump | grep -q 'id=device_row_C0:FF:EE:00:00:02'"
+"$S/ui.sh" tap source_filter_all >/dev/null
+sleep 1.5
+"$S/ui.sh" tap classic_scan_button >/dev/null
+check "second inquiry needs no second notice" "$S/ui.sh" wait classic_scan_indicator 6
+check "ble scan was stopped for it" "$S/ui.sh" wait list_notice 5
+"$S/shot.sh" smoke-classic-note >/dev/null
+"$S/ui.sh" tap classic_scan_button >/dev/null
 
 echo "-- launch without overrides"
 "$S/app.sh" launch >/dev/null

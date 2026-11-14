@@ -22,6 +22,7 @@ IDs (`F-…`) are for citing in tests and commits. Priority: **M** must, **S** s
 | F-L10 | M | Empty states: before first scan, "Tap Start scan to look for nearby devices"; scanning with no results yet, "Searching…"; stopped with zero results, "No devices found". |
 | F-L11 | M | Devices unseen for 30 s while scanning are removed. |
 | F-L12 | M | Scanning stops automatically when the app is backgrounded (state becomes Idle with devices retained). |
+| F-L13 | S | **Classic scan (Tier 2b):** a separate "Scan classic devices (about 12 s)" button runs one classic inquiry that ends by itself. **UI gate:** it only starts from that tap, confirmed in a notice (it can briefly disturb audio) once per process; nothing else starts it. Results merge into the same list by address; a device seen by both radios appears once. Rows show a transport badge (BLE, Classic, BLE + Classic) once any classic device exists, plus pairing state (when readable) and device class for classic devices. An All / BLE / Classic filter narrows the list. BLE and classic scans never run together: starting one stops the other and a note says so. Stops when the app is backgrounded or Bluetooth turns off. |
 
 ### 2. Device Detail (secondary screen)
 
@@ -88,6 +89,7 @@ Selected with `--es scenario <name>`; each is deterministic (seeded) so screensh
 | `vendors` | Apple Find My / AirDrop / Proximity Pairing / unnamed message, Fast Pair (both modes), Tile- and SmartTag-style identifiers, a plain device (exact bytes in `VendorFrames.kt`; payloads are filler) | Tier 1 vendor hints and wording rules |
 | `radio` | Extended advertising with 2M PHY, set id and periodic interval; coded PHY without TX power; truncated report; slow legacy device; fast calibrated iBeacon (intervals 500/500/500/1000/100 ms) | Radio section, omitted unavailable values, interval and distance estimates |
 | `system-info` | A paired dual-mode headset with an alias and cached profiles, an LE sensor, a device being paired, and one the system knows nothing about | Tier 2a System information states and the permission flow |
+| `classic-mixed` | Two BLE devices plus a classic inquiry that finds the shared headset (shown once, BLE + Classic) and three classic-only devices (paired car stereo, unpaired phone, unnamed laptop) over about 6 s, ending at 12 s | Tier 2b gate, merge, badges, filter |
 | `bluetooth-off` | Adapter reports Off | Bluetooth-off state |
 | `unsupported` | Adapter reports Unsupported | Unsupported state |
 | `scan-fails` | Scanner throws `ScanFailure` after 2 s | Failed state and Retry |

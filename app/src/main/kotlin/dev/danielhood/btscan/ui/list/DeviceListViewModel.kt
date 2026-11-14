@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.ScanFailure
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
@@ -33,17 +34,23 @@ class DeviceListViewModel(
         val permanentlyDenied: Boolean = false,
         val hideUnnamed: Boolean = false,
         val hasScanned: Boolean = false,
+        val sourceFilter: SourceFilter = SourceFilter.ALL,
+        val classicNoticePending: Boolean = false,
+        val notice: ListNotice? = null,
     )
 
     private val local = MutableStateFlow(Local(permissions.current()))
     private var lastToggle: Instant? = null
+
+    /** The classic-scan notice is confirmed once per process; nothing about it is stored. */
+    private var classicNoticeAccepted = false
 
     init {
         // When Bluetooth (or location, on old Android) goes away the platform silently ends the scan, so stop ours too;
         // otherwise the screen would claim to be scanning after Bluetooth comes back. The user starts again.
         viewModelScope.launch {
             adapterMonitor.state.collect { adapter ->
-                if (adapter != AdapterState.ON && repository.scanning.value) repository.stopScan()
+                if (adapter != AdapterState.ON) stopEverything()
             }
         }
     }
@@ -54,37 +61,48 @@ class DeviceListViewModel(
     val uiState: StateFlow<DeviceListUiState> =
         combine(
             repository.devices,
-            repository.scanning,
+            combine(repository.scanning, repository.scanningClassic) { ble, classic -> ble to classic },
             repository.failure,
             adapterMonitor.state,
             local,
-        ) { devices, scanning, failure, adapter, local -> build(devices, scanning, failure, adapter, local) }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.Eagerly,
-                initialValue =
-                    build(
-                        repository.devices.value,
-                        repository.scanning.value,
-                        repository.failure.value,
-                        AdapterState.ON,
-                        local.value,
-                    ),
-            )
+        ) { devices, scanning, failure, adapter, local ->
+            build(devices, scanning.first, scanning.second, failure, adapter, local)
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue =
+                build(
+                    repository.devices.value,
+                    repository.scanning.value,
+                    repository.scanningClassic.value,
+                    repository.failure.value,
+                    AdapterState.ON,
+                    local.value,
+                ),
+        )
 
     private fun build(
         devices: List<BleDevice>,
         scanning: Boolean,
+        classicScanning: Boolean,
         failure: ScanFailure?,
         adapter: AdapterState,
         local: Local,
     ): DeviceListUiState {
-        val rows = devices.filter { !local.hideUnnamed || it.name != null }.map { it.toRowUi() }
+        val rows =
+            devices
+                .filter { !local.hideUnnamed || it.name != null }
+                .filter { matches(local.sourceFilter, it.source) }
+                .map { it.toRowUi() }
         return DeviceListUiState(
             status = deriveStatus(adapter, local.permission, local.permanentlyDenied, scanning, failure),
             devices = rows,
             hideUnnamed = local.hideUnnamed,
             hasScanned = local.hasScanned,
+            classicScanning = classicScanning,
+            classicNoticePending = local.classicNoticePending,
+            notice = local.notice,
+            sourceFilter = local.sourceFilter,
         )
     }
 
@@ -95,14 +113,63 @@ class DeviceListViewModel(
         if (state.isScanning) {
             repository.stopScan()
         } else {
+            val interrupted = repository.scanningClassic.value
             repository.startScan()
-            local.update { it.copy(hasScanned = true) }
+            local.update {
+                it.copy(hasScanned = true, notice = if (interrupted) ListNotice.CLASSIC_STOPPED_FOR_BLE else null)
+            }
         }
+    }
+
+    // ---- Classic scan: gated by the UI. Only these three functions can start an inquiry, and only after the user
+    // tapped the button and (once per process) confirmed the notice. Nothing starts it on launch, on a permission
+    // grant, on resume, or because a BLE scan started (ArchitectureTest pins the call to this file).
+
+    /** The classic scan button: stops a running inquiry, otherwise asks first (once per process) and then starts. */
+    fun onClassicScanClicked() {
+        val state = uiState.value
+        if (state.classicScanning) {
+            repository.stopClassicDiscovery()
+            return
+        }
+        if (!state.canStartClassic || isDebounced()) return
+        if (classicNoticeAccepted) {
+            startClassic()
+        } else {
+            local.update { it.copy(classicNoticePending = true) }
+        }
+    }
+
+    /** The user accepted the notice: remember that for this process and start the inquiry they asked for. */
+    fun confirmClassicNotice() {
+        classicNoticeAccepted = true
+        local.update { it.copy(classicNoticePending = false) }
+        if (uiState.value.canStartClassic) startClassic()
+    }
+
+    fun dismissClassicNotice() = local.update { it.copy(classicNoticePending = false) }
+
+    private fun startClassic() {
+        val interrupted = repository.scanning.value
+        repository.startClassicDiscovery()
+        local.update {
+            it.copy(
+                hasScanned = true,
+                notice = if (interrupted) ListNotice.BLE_STOPPED_FOR_CLASSIC else null,
+            )
+        }
+    }
+
+    fun setSourceFilter(filter: SourceFilter) = local.update { it.copy(sourceFilter = filter) }
+
+    private fun stopEverything() {
+        if (repository.scanning.value) repository.stopScan()
+        if (repository.scanningClassic.value) repository.stopClassicDiscovery()
     }
 
     fun clear() {
         repository.clear()
-        local.update { it.copy(hasScanned = false) }
+        local.update { it.copy(hasScanned = false, notice = null) }
     }
 
     fun setHideUnnamed(hide: Boolean) = local.update { it.copy(hideUnnamed = hide) }
@@ -124,9 +191,7 @@ class DeviceListViewModel(
     }
 
     /** Called when the app leaves the foreground: scanning stops, found devices are kept. */
-    fun onBackgrounded() {
-        if (repository.scanning.value) repository.stopScan()
-    }
+    fun onBackgrounded() = stopEverything()
 
     private fun isDebounced(): Boolean {
         val now = clock.now()
@@ -136,3 +201,11 @@ class DeviceListViewModel(
         return false
     }
 }
+
+/** Whether a device found by [source] belongs in the list under [filter]; devices seen by both radios are in both. */
+private fun matches(filter: SourceFilter, source: DeviceSource): Boolean =
+    when (filter) {
+        SourceFilter.ALL -> true
+        SourceFilter.BLE -> source != DeviceSource.CLASSIC
+        SourceFilter.CLASSIC -> source != DeviceSource.BLE
+    }

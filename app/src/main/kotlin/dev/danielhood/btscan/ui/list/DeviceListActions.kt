@@ -4,6 +4,10 @@ package dev.danielhood.btscan.ui.list
 data class DeviceListActions(
     val onToggleScan: () -> Unit = {},
     val onClear: () -> Unit = {},
+    val onClassicScan: () -> Unit = {},
+    val onConfirmClassicNotice: () -> Unit = {},
+    val onDismissClassicNotice: () -> Unit = {},
+    val onSourceFilterChange: (SourceFilter) -> Unit = {},
     val onHideUnnamedChange: (Boolean) -> Unit = {},
     val onDeviceClick: (String) -> Unit = {},
     val onGrantPermission: () -> Unit = {},

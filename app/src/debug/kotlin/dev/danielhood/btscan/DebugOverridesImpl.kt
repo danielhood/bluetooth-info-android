@@ -3,10 +3,12 @@ package dev.danielhood.btscan
 import android.content.Intent
 import dev.danielhood.btscan.data.ble.fake.FakeAdapterStateMonitor
 import dev.danielhood.btscan.data.ble.fake.FakeBleScanner
+import dev.danielhood.btscan.data.ble.fake.FakeClassicScanner
 import dev.danielhood.btscan.data.ble.fake.FakeSystemDeviceInfoSource
 import dev.danielhood.btscan.data.ble.fake.Scenarios
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
+import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
@@ -45,6 +47,12 @@ class DebugOverridesImpl : DebugOverrides {
             else -> {
                 throw IllegalArgumentException("Unknown scanner '${config.scanner}'. Use 'fake' or 'real'.")
             }
+        }
+
+    override fun classicScannerFor(config: DebugConfig, clock: Clock): ClassicScanner? =
+        when (config.scanner) {
+            SCANNER_FAKE -> FakeClassicScanner(Scenarios.require(config.scenario ?: Scenarios.DEFAULT), clock)
+            else -> null
         }
 
     override fun systemInfoSourceFor(config: DebugConfig, permissions: PermissionChecker): SystemDeviceInfoSource? =

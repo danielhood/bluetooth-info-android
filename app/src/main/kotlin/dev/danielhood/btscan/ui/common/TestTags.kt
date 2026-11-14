@@ -15,6 +15,13 @@ object TestTags {
     const val FAILURE_BANNER = "failure_banner"
     const val RETRY_BUTTON = "retry_button"
     const val DEBUG_LABEL = "debug_label"
+    const val CLASSIC_SCAN_BUTTON = "classic_scan_button"
+    const val CLASSIC_SCAN_INDICATOR = "classic_scan_indicator"
+    const val CLASSIC_NOTICE_DIALOG = "classic_notice_dialog"
+    const val CLASSIC_NOTICE_CONFIRM = "classic_notice_confirm"
+    const val CLASSIC_NOTICE_CANCEL = "classic_notice_cancel"
+    const val LIST_NOTICE = "list_notice"
+    const val DETAIL_FOUND_BY = "detail_found_by"
 
     const val DETAIL_SCREEN = "detail_screen"
     const val BACK_BUTTON = "back_button"
@@ -67,4 +74,13 @@ object TestTags {
 
     /** One decoded value, for example `decoded_ibeacon_beacon_major`. */
     fun decodedField(decoder: String, key: String) = "decoded_${decoder}_$key"
+}
+
+/** Tags for the classic scan controls on the list screen. */
+object ClassicTags {
+    /** Source filter chip: `all`, `ble` or `classic`. */
+    fun filter(name: String) = "source_filter_$name"
+
+    /** Transport badge on a list row. */
+    fun badge(address: String) = "source_badge_$address"
 }

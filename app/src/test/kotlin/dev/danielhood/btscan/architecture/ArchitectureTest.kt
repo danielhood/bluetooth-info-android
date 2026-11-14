@@ -239,16 +239,36 @@ class ArchitectureTest {
     }
 
     @Test
-    fun `no call that contacts a device over the air exists yet`() {
-        // Tier 2a reads only what the system cached. Classic discovery (2b), SDP lookup (2c) and GATT (Tier 3) each
-        // relax one token in their own documented commit.
+    fun `no call that queries a device over the air exists yet`() {
+        // SDP lookup (2c) and GATT (Tier 3) each relax one token in their own documented commit.
         assertNone(
-            "policy: Tier 2a does not contact devices",
-            offendersContaining(
-                allSourcesIncludingTests,
-                listOf("fetchUuidsWithSdp", "startDiscovery", "cancelDiscovery"),
-            ),
+            "policy: not started",
+            offendersContaining(allSourcesIncludingTests, listOf("fetchUuidsWithSdp")),
         )
+    }
+
+    @Test
+    fun `classic discovery is started and cancelled in exactly one file`() {
+        // Tier 2b (decision D-P2-2): the inquiry can disturb audio, so the platform calls live in one reviewed file.
+        val allowed = "data/ble/android/AndroidClassicScanner.kt"
+        val offenders =
+            offendersContaining(
+                allMainDebugRelease.filter { !it.path.replace('\\', '/').endsWith(allowed) },
+                listOf("startDiscovery", "cancelDiscovery"),
+            )
+        assertNone("startDiscovery and cancelDiscovery only in $allowed", offenders)
+    }
+
+    @Test
+    fun `a classic inquiry can only be started from the list view model's user intent`() {
+        // The UI gate: nothing else (lifecycle observers, DI, repository callers, scanners) may start an inquiry.
+        val definitions = setOf("domain/repo/DeviceRepository.kt", "domain/repo/DefaultDeviceRepository.kt")
+        val offenders =
+            allMainDebugRelease
+                .filter { "startClassicDiscovery(" in it.readText() }
+                .map { it.relative() }
+                .filter { it !in definitions && it != "ui/list/DeviceListViewModel.kt" }
+        assertNone("startClassicDiscovery is only called from DeviceListViewModel", offenders)
     }
 
     /**

@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import dev.danielhood.btscan.R
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.parser.AdFlag
 import dev.danielhood.btscan.ui.common.TestTags
 import dev.danielhood.btscan.ui.common.agoText
@@ -119,6 +120,9 @@ private fun Loaded(
             device.addressType?.let {
                 Field(R.string.detail_address_type, stringResource(addressLabel(it)), TestTags.DETAIL_ADDRESS_TYPE)
             }
+            if (device.source != DeviceSource.BLE) {
+                Field(R.string.detail_found_by, stringResource(foundByLabel(device.source)), TestTags.DETAIL_FOUND_BY)
+            }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Field(
                     label = R.string.detail_signal,
@@ -159,8 +163,10 @@ private fun Loaded(
             HorizontalDivider()
             FlagsSection(device)
         }
-        HorizontalDivider()
-        RawSection(device.rawHex, onCopyRaw)
+        if (device.source != DeviceSource.CLASSIC) {
+            HorizontalDivider()
+            RawSection(device.rawHex, onCopyRaw)
+        }
     }
 }
 
@@ -286,3 +292,10 @@ private fun Field(label: Int, value: String, tag: String, modifier: Modifier = M
         }
     }
 }
+
+internal fun foundByLabel(source: DeviceSource): Int =
+    when (source) {
+        DeviceSource.BLE -> R.string.found_ble
+        DeviceSource.CLASSIC -> R.string.found_classic
+        DeviceSource.BOTH -> R.string.found_both
+    }

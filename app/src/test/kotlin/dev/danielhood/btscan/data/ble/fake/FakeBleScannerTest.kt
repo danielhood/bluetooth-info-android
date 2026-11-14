@@ -53,6 +53,7 @@ class FakeBleScannerTest {
                 "vendors",
                 "radio",
                 "system-info",
+                "classic-mixed",
                 "scan-fails",
                 "too-frequent",
                 "bluetooth-off",

@@ -13,7 +13,9 @@ import dev.danielhood.btscan.domain.estimate.DistanceBand
 import dev.danielhood.btscan.domain.model.AddressType
 import dev.danielhood.btscan.domain.model.Advertisement
 import dev.danielhood.btscan.domain.model.Bytes
+import dev.danielhood.btscan.domain.model.ClassicInfo
 import dev.danielhood.btscan.domain.model.DataStatus
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.ManufacturerData
 import dev.danielhood.btscan.domain.model.Phy
 import dev.danielhood.btscan.domain.model.RadioInfo
@@ -26,7 +28,9 @@ import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 import dev.danielhood.btscan.ui.detail.SystemInfoState
 import dev.danielhood.btscan.ui.list.DeviceListUiState
 import dev.danielhood.btscan.ui.list.DeviceRowUi
+import dev.danielhood.btscan.ui.list.ListNotice
 import dev.danielhood.btscan.ui.list.ListStatus
+import dev.danielhood.btscan.ui.list.SourceFilter
 
 object SampleUi {
     val devices =
@@ -47,6 +51,48 @@ object SampleUi {
             DeviceRowUi("C0:FF:EE:00:00:03", null, -62, 3, false, DecoderId.EDDYSTONE_UID),
             DeviceRowUi("C0:FF:EE:00:00:04", null, -70, 2, false, DecoderId.TRACKER_HINT),
             DeviceRowUi("C0:FF:EE:00:00:05", "Plain Device", -78, 2, true),
+        )
+
+    /** BLE sensor, a device seen by both radios, and classic-only devices (as after a classic inquiry). */
+    val devicesMixed =
+        listOf(
+            DeviceRowUi(
+                "C0:FF:EE:00:00:01",
+                "Buds Pro",
+                -48,
+                4,
+                true,
+                source = DeviceSource.BOTH,
+                classic = ClassicInfo(DeviceClassInfo.of(0x0418), BondState.BONDED),
+            ),
+            DeviceRowUi(
+                "C0:FF:EE:00:00:0A",
+                "Car Audio",
+                -58,
+                3,
+                false,
+                source = DeviceSource.CLASSIC,
+                classic = ClassicInfo(DeviceClassInfo.of(0x0420), BondState.BONDED),
+            ),
+            DeviceRowUi("C0:FF:EE:00:00:02", "Thermo Sensor", -62, 3, true),
+            DeviceRowUi(
+                "C0:FF:EE:00:00:0B",
+                "Old Phone",
+                -70,
+                2,
+                false,
+                source = DeviceSource.CLASSIC,
+                classic = ClassicInfo(DeviceClassInfo.of(0x020C), BondState.NONE),
+            ),
+            DeviceRowUi(
+                "C0:FF:EE:00:00:0C",
+                null,
+                -80,
+                2,
+                false,
+                source = DeviceSource.CLASSIC,
+                classic = ClassicInfo(DeviceClassInfo.of(0x010C), null),
+            ),
         )
 
     fun state(

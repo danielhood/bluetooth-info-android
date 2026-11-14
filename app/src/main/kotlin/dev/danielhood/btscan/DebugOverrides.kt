@@ -3,6 +3,7 @@ package dev.danielhood.btscan
 import android.content.Intent
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
 import dev.danielhood.btscan.domain.port.BleScanner
+import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
@@ -40,6 +41,9 @@ interface DebugOverrides {
 
     /** A replacement adapter monitor for [config], or null to use the real one. Always null in release builds. */
     fun adapterMonitorFor(config: DebugConfig): AdapterStateMonitor?
+
+    /** A replacement classic scanner for [config], or null to use the real one. Always null in release builds. */
+    fun classicScannerFor(config: DebugConfig, clock: Clock): ClassicScanner?
 
     /** A replacement system-info source for [config], or null to use the real one. Always null in release builds. */
     fun systemInfoSourceFor(config: DebugConfig, permissions: PermissionChecker): SystemDeviceInfoSource?

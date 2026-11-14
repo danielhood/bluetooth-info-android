@@ -4,6 +4,8 @@ import dev.danielhood.btscan.domain.decode.DecoderId
 import dev.danielhood.btscan.domain.decode.primaryKind
 import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.ClassicInfo
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.ScanFailure
 
@@ -31,6 +33,12 @@ sealed interface ListStatus {
     ) : ListStatus
 }
 
+/** Which devices the list shows by how they were found. */
+enum class SourceFilter { ALL, BLE, CLASSIC }
+
+/** A one-line explanation shown under the controls after the app stopped one scan for the other. */
+enum class ListNotice { BLE_STOPPED_FOR_CLASSIC, CLASSIC_STOPPED_FOR_BLE }
+
 /** One row of the list; display-ready. */
 data class DeviceRowUi(
     val address: String,
@@ -41,6 +49,9 @@ data class DeviceRowUi(
     val isConnectable: Boolean,
     /** What a decoder recognised in the advertisement, shown as a small chip; null when nothing matched. */
     val kind: DecoderId? = null,
+    val source: DeviceSource = DeviceSource.BLE,
+    /** What a classic inquiry reported (class, pairing state); null for BLE-only devices. */
+    val classic: ClassicInfo? = null,
 )
 
 data class DeviceListUiState(
@@ -49,8 +60,20 @@ data class DeviceListUiState(
     val hideUnnamed: Boolean,
     /** True once the user has started a scan since the last Clear; picks the empty-state wording. */
     val hasScanned: Boolean,
+    /** A classic inquiry is running (about 12 s, ends by itself). */
+    val classicScanning: Boolean = false,
+    /** The first-use notice for classic scanning is on screen; nothing starts until the user confirms it. */
+    val classicNoticePending: Boolean = false,
+    val notice: ListNotice? = null,
+    val sourceFilter: SourceFilter = SourceFilter.ALL,
 ) {
     val isScanning: Boolean get() = status == ListStatus.Scanning
+
+    /** The classic scan button is usable under the same conditions as the BLE one (permission, adapter, location). */
+    val canStartClassic: Boolean get() = canToggleScan
+
+    /** Rows carry a transport badge once any device came from a classic inquiry (otherwise everything is BLE). */
+    val showSourceBadges: Boolean get() = devices.any { it.source != DeviceSource.BLE }
 
     /** The Start/Stop button is usable (Stop while scanning, Start when ready or retrying after a failure). */
     val canToggleScan: Boolean get() =
@@ -89,6 +112,8 @@ internal fun BleDevice.toRowUi() =
         signalLevel = signalLevel(rssi),
         isConnectable = isConnectable,
         kind = decoded.primaryKind(),
+        source = source,
+        classic = classic,
     )
 
 /** Pure derivation of the screen status. Order matters: the first applicable blocker wins. */

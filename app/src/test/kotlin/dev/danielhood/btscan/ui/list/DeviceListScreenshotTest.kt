@@ -45,6 +45,33 @@ class DeviceListScreenshotTest {
     fun kindChips() = shoot("kind-chips", SampleUi.state(ListStatus.Scanning, SampleUi.devicesWithKinds))
 
     @Test
+    fun classicMixed() = shoot("classic-mixed", SampleUi.state(ListStatus.Idle, SampleUi.devicesMixed))
+
+    @Test
+    fun classicScanning() =
+        shoot(
+            "classic-scanning",
+            SampleUi
+                .state(ListStatus.Idle, SampleUi.devicesMixed.take(2))
+                .copy(classicScanning = true, notice = ListNotice.BLE_STOPPED_FOR_CLASSIC),
+        )
+
+    @Test
+    fun classicNotice() =
+        shoot(
+            "classic-notice",
+            SampleUi.state(ListStatus.Idle, SampleUi.devices).copy(classicNoticePending = true),
+        )
+
+    @Test
+    fun classicMixedDark() =
+        shoot(
+            "classic-mixed-dark",
+            SampleUi.state(ListStatus.Idle, SampleUi.devicesMixed),
+            dark = true,
+        )
+
+    @Test
     fun scanningWithDevicesDark() =
         shoot("scanning-devices-dark", SampleUi.state(ListStatus.Scanning, SampleUi.devices), dark = true)
 
