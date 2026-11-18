@@ -3,12 +3,17 @@ package dev.danielhood.btscan.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.danielhood.btscan.domain.model.BleDevice
+import dev.danielhood.btscan.domain.model.DeviceSource
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.ProfileLookup
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 import dev.danielhood.btscan.domain.repo.DeviceRepository
+import dev.danielhood.btscan.domain.system.DeviceType
+import dev.danielhood.btscan.domain.system.ProfileLookupResult
 import dev.danielhood.btscan.domain.system.SystemInfoResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,9 +23,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_MS = 1000L
 private const val STOP_TIMEOUT_MS = 5000L
+
+/** A profile lookup that has not answered by now is given up on. */
+private const val LOOKUP_TIMEOUT_MS = 10_000L
 
 class DeviceDetailViewModel(
     private val address: String,
@@ -28,6 +37,7 @@ class DeviceDetailViewModel(
     private val clock: Clock,
     private val systemInfoSource: SystemDeviceInfoSource,
     private val permissions: PermissionChecker,
+    private val profileLookup: ProfileLookup,
 ) : ViewModel() {
     /** Last device data seen for [address]; kept after the repository drops the device. */
     private val lastKnown = MutableStateFlow(repository.devices.value.firstOrNull { it.address == address })
@@ -44,6 +54,10 @@ class DeviceDetailViewModel(
                 SystemInfoState.NeedsPermission(permanentlyDenied = false)
             },
         )
+
+    /** The profile lookup: it contacts the device, so it moves only on explicit user actions ([ProfileLookupState]). */
+    private val profiles = MutableStateFlow<ProfileLookupState>(ProfileLookupState.Idle)
+    private var lookupJob: Job? = null
 
     /** Runtime permissions the UI asks for when the user taps "Allow system information". */
     val systemInfoPermissions: List<String> get() = permissions.connectPermissions
@@ -88,6 +102,83 @@ class DeviceDetailViewModel(
         }
     }
 
+    // ---- Profile lookup (Tier 2c): gated by the UI. fetchProfiles is called only from confirmProfileLookup, which
+    // does nothing unless the user has just been shown the confirmation for this device (ArchitectureTest pins the
+    // call to this file).
+
+    /** The "Look up supported profiles" button: shows the confirmation. Nothing contacts the device yet. */
+    fun onLookUpProfilesClicked() {
+        val state = profiles.value
+        if (state is ProfileLookupState.Running || state is ProfileLookupState.Confirming) return
+        if (!canLookUp(lastKnown.value, systemInfo.value)) return
+        profiles.value = ProfileLookupState.Confirming
+    }
+
+    /** The user confirmed the dialog naming this device: ask it (10 s limit). Ignored without a pending dialog. */
+    fun confirmProfileLookup() {
+        if (profiles.value != ProfileLookupState.Confirming) return
+        profiles.value = ProfileLookupState.Running
+        lookupJob =
+            viewModelScope.launch {
+                val result = withTimeoutOrNull(LOOKUP_TIMEOUT_MS) { profileLookup.fetchProfiles(address) }
+                profiles.value =
+                    when (result) {
+                        null -> {
+                            ProfileLookupState.TimedOut
+                        }
+
+                        is ProfileLookupResult.Profiles -> {
+                            refreshSystemInfoQuietly()
+                            ProfileLookupState.Done(result.uuids)
+                        }
+
+                        ProfileLookupResult.NotStarted -> {
+                            ProfileLookupState.NotStarted
+                        }
+
+                        ProfileLookupResult.PermissionMissing -> {
+                            systemInfo.value = SystemInfoState.NeedsPermission(permanentlyDenied = false)
+                            ProfileLookupState.Idle
+                        }
+                    }
+            }
+    }
+
+    fun dismissProfileLookup() {
+        if (profiles.value == ProfileLookupState.Confirming) profiles.value = ProfileLookupState.Idle
+    }
+
+    /** Leaving the screen (or the app): drop an open dialog and cancel a running lookup. */
+    fun cancelProfileLookup() {
+        lookupJob?.cancel()
+        val state = profiles.value
+        if (state is ProfileLookupState.Running || state is ProfileLookupState.Confirming) {
+            profiles.value = ProfileLookupState.Idle
+        }
+    }
+
+    /**
+     * After a lookup Android has cached what the device said (and may have changed the pairing state), so read the
+     * system information again. Cache reads only; no "loading" state, so the result on screen does not flicker.
+     */
+    private fun refreshSystemInfoQuietly() {
+        viewModelScope.launch {
+            (systemInfoSource.lookup(address) as? SystemInfoResult.Available)?.let {
+                systemInfo.value = SystemInfoState.Loaded(it.info)
+            }
+        }
+    }
+
+    private fun canLookUp(known: BleDevice?, info: SystemInfoState): Boolean {
+        val classicCapable =
+            known?.source != DeviceSource.BLE ||
+                (info as? SystemInfoState.Loaded)?.info?.deviceType.let {
+                    it == DeviceType.CLASSIC ||
+                        it == DeviceType.DUAL
+                }
+        return known != null && info is SystemInfoState.Loaded && classicCapable
+    }
+
     private fun ticker(): Flow<Unit> =
         flow {
             while (true) {
@@ -98,15 +189,20 @@ class DeviceDetailViewModel(
 
     /** The once-a-second age ticker runs only while something observes this state. */
     val uiState: StateFlow<DeviceDetailUiState> =
-        combine(lastKnown, present, ticker(), systemInfo) { known, present, _, info ->
-            build(known, present, info)
+        combine(lastKnown, present, ticker(), systemInfo, profiles) { known, present, _, info, lookup ->
+            build(known, present, info, lookup)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-            build(lastKnown.value, present.value, systemInfo.value),
+            build(lastKnown.value, present.value, systemInfo.value, profiles.value),
         )
 
-    private fun build(known: BleDevice?, present: Boolean, info: SystemInfoState): DeviceDetailUiState {
+    private fun build(
+        known: BleDevice?,
+        present: Boolean,
+        info: SystemInfoState,
+        lookup: ProfileLookupState,
+    ): DeviceDetailUiState {
         if (known == null) return DeviceDetailUiState.NotFound
         val now = clock.now()
         return DeviceDetailUiState.Loaded(
@@ -115,6 +211,8 @@ class DeviceDetailViewModel(
             firstSeenAgoSeconds = secondsBetween(known.firstSeen, now),
             lastSeenAgoSeconds = secondsBetween(known.lastSeen, now),
             systemInfo = info,
+            profiles = lookup,
+            canLookUpProfiles = canLookUp(known, info),
         )
     }
 }

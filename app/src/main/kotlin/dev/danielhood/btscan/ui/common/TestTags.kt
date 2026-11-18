@@ -84,3 +84,20 @@ object ClassicTags {
     /** Transport badge on a list row. */
     fun badge(address: String) = "source_badge_$address"
 }
+
+/** Tags for the profile lookup on the detail screen (Tier 2c). */
+object ProfileTags {
+    const val BUTTON = "profiles_button"
+    const val RUNNING = "profiles_running"
+    const val HEADER = "profiles_header"
+    const val EMPTY = "profiles_empty"
+    const val TIMEOUT = "profiles_timeout"
+    const val NOT_STARTED = "profiles_not_started"
+    const val DIALOG = "profiles_confirm_dialog"
+    const val CONFIRM = "profiles_confirm"
+    const val CANCEL = "profiles_cancel"
+
+    fun uuid(index: Int) = "profile_uuid_$index"
+
+    fun name(index: Int) = "profile_name_$index"
+}

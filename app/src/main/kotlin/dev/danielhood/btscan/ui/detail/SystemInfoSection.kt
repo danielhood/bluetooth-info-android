@@ -4,13 +4,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import dev.danielhood.btscan.R
@@ -23,6 +28,7 @@ import dev.danielhood.btscan.domain.system.MajorClass
 import dev.danielhood.btscan.domain.system.MinorClass
 import dev.danielhood.btscan.domain.system.ProfileUuids
 import dev.danielhood.btscan.domain.system.SystemDeviceInfo
+import dev.danielhood.btscan.ui.common.ProfileTags
 import dev.danielhood.btscan.ui.common.TestTags
 import dev.danielhood.btscan.ui.common.mergedTestTag
 import java.util.UUID
@@ -32,7 +38,13 @@ import java.util.UUID
  * that is only asked for when the user taps the button here; scanning and the rest of the screen never depend on it.
  */
 @Composable
-internal fun SystemInfoSection(state: SystemInfoState, onAllow: () -> Unit, onOpenAppSettings: () -> Unit) {
+internal fun SystemInfoSection(
+    state: SystemInfoState,
+    onAllow: () -> Unit,
+    onOpenAppSettings: () -> Unit,
+    lookup: ProfileLookupUi = ProfileLookupUi(),
+    lookupActions: ProfileLookupActions = ProfileLookupActions(),
+) {
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             text = stringResource(R.string.detail_system_info),
@@ -63,9 +75,124 @@ internal fun SystemInfoSection(state: SystemInfoState, onAllow: () -> Unit, onOp
 
             is SystemInfoState.Loaded -> {
                 Loaded(state.info)
+                if (lookup.canLookUp) ProfileLookupBlock(lookup, lookupActions)
             }
         }
     }
+}
+
+/** What the profile lookup block needs: its state, whether it is offered, and the device's label for the dialog. */
+internal data class ProfileLookupUi(
+    val state: ProfileLookupState = ProfileLookupState.Idle,
+    val canLookUp: Boolean = false,
+    val deviceLabel: String = "",
+)
+
+internal class ProfileLookupActions(
+    val onLookUp: () -> Unit = {},
+    val onConfirm: () -> Unit = {},
+    val onDismiss: () -> Unit = {},
+)
+
+/**
+ * Tier 2c: ask the device which profiles it supports. This contacts the device, so the button only opens a dialog
+ * naming the device; nothing is asked until the user confirms it, every time.
+ */
+@Composable
+private fun ProfileLookupBlock(lookup: ProfileLookupUi, actions: ProfileLookupActions) {
+    val busy = lookup.state is ProfileLookupState.Running || lookup.state is ProfileLookupState.Confirming
+    OutlinedButton(onClick = actions.onLookUp, enabled = !busy, modifier = Modifier.testTag(ProfileTags.BUTTON)) {
+        Text(stringResource(R.string.profiles_button))
+    }
+    when (val state = lookup.state) {
+        ProfileLookupState.Running -> {
+            Text(
+                stringResource(R.string.profiles_running),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(ProfileTags.RUNNING),
+            )
+        }
+
+        ProfileLookupState.TimedOut -> {
+            Text(
+                stringResource(R.string.profiles_timeout),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(ProfileTags.TIMEOUT),
+            )
+        }
+
+        ProfileLookupState.NotStarted -> {
+            Text(
+                stringResource(R.string.profiles_not_started),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag(ProfileTags.NOT_STARTED),
+            )
+        }
+
+        is ProfileLookupState.Done -> {
+            ProfileResult(state)
+        }
+
+        ProfileLookupState.Idle, ProfileLookupState.Confirming -> {
+            // Nothing to show yet: the dialog below handles Confirming.
+        }
+    }
+    if (lookup.state == ProfileLookupState.Confirming) ProfileLookupDialog(lookup.deviceLabel, actions)
+}
+
+@Composable
+private fun ProfileResult(state: ProfileLookupState.Done) {
+    Text(
+        stringResource(R.string.profiles_header),
+        style = MaterialTheme.typography.labelMedium,
+        modifier = Modifier.testTag(ProfileTags.HEADER),
+    )
+    if (state.uuids.isEmpty()) {
+        Text(
+            stringResource(R.string.profiles_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag(ProfileTags.EMPTY),
+        )
+    }
+    state.uuids.forEachIndexed { i, uuid ->
+        Column {
+            uuidName(uuid)?.let {
+                Text(it, style = MaterialTheme.typography.titleSmall, modifier = Modifier.testTag(ProfileTags.name(i)))
+            }
+            Text(
+                uuid.toString(),
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+                modifier = Modifier.testTag(ProfileTags.uuid(i)),
+            )
+        }
+    }
+    Text(
+        stringResource(R.string.profiles_note),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun ProfileLookupDialog(deviceLabel: String, actions: ProfileLookupActions) {
+    AlertDialog(
+        onDismissRequest = actions.onDismiss,
+        title = { Text(stringResource(R.string.profiles_dialog_title)) },
+        text = { Text(stringResource(R.string.profiles_dialog_text, deviceLabel)) },
+        confirmButton = {
+            TextButton(onClick = actions.onConfirm, modifier = Modifier.testTag(ProfileTags.CONFIRM)) {
+                Text(stringResource(R.string.profiles_dialog_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = actions.onDismiss, modifier = Modifier.testTag(ProfileTags.CANCEL)) {
+                Text(stringResource(R.string.profiles_dialog_cancel))
+            }
+        },
+        // A dialog is its own window, so it needs its own opt-in for test tags to reach `ui.sh dump`.
+        modifier = Modifier.semantics { testTagsAsResourceId = true }.testTag(ProfileTags.DIALOG),
+    )
 }
 
 @Composable

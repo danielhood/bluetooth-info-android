@@ -60,4 +60,6 @@ data class Scenario(
     val systemInfo: Map<String, SystemDeviceInfo> = emptyMap(),
     /** What a classic inquiry finds (Tier 2b); empty means the inquiry finds nothing. */
     val classic: List<FakeClassicSighting> = emptyList(),
+    /** How devices answer a profile lookup (Tier 2c), by address. */
+    val profiles: Map<String, FakeProfileBehaviour> = emptyMap(),
 )

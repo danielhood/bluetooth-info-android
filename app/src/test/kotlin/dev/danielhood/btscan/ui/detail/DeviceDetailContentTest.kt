@@ -2,6 +2,7 @@ package dev.danielhood.btscan.ui.detail
 
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.assertWidthIsAtLeast
@@ -16,6 +17,7 @@ import dev.danielhood.btscan.testing.SampleDetail
 import dev.danielhood.btscan.testing.assertAllInteractiveNodesLabelled
 import dev.danielhood.btscan.testing.assertTouchTargetAtLeast48dp
 import dev.danielhood.btscan.ui.AppSurface
+import dev.danielhood.btscan.ui.common.ProfileTags
 import dev.danielhood.btscan.ui.common.TestTags
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -43,6 +45,9 @@ class DeviceDetailContentTest {
                     onCopyRaw = { calls += "copy=$it" },
                     onAllowSystemInfo = { calls += "allow" },
                     onOpenAppSettings = { calls += "settings" },
+                    onLookUpProfiles = { calls += "lookup" },
+                    onConfirmProfileLookup = { calls += "lookup-confirm" },
+                    onDismissProfileLookup = { calls += "lookup-dismiss" },
                 )
             }
         }
@@ -290,7 +295,7 @@ class DeviceDetailContentTest {
         rule
             .onNodeWithTag(
                 TestTags.SYSTEM_INFO_MESSAGE,
-            ).assertTextContains("never pairs with, connects to or changes", substring = true)
+            ).assertTextContains("contacts a device only when you ask it to", substring = true)
         rule.onNodeWithTag(TestTags.SYSTEM_INFO_ALLOW_BUTTON).performClick()
         assertEquals(listOf("allow"), calls)
         rule.onNodeWithTag(TestTags.SYSTEM_INFO_SETTINGS_BUTTON).assertDoesNotExist()
@@ -359,5 +364,92 @@ class DeviceDetailContentTest {
     fun `no address type is shown when the platform could not report one`() {
         show(SampleDetail.loaded())
         rule.onNodeWithTag(TestTags.DETAIL_ADDRESS_TYPE).assertDoesNotExist()
+    }
+
+    // ---- Profile lookup (Tier 2c): contacts the device, so a dialog naming it comes first ----
+
+    private fun lookup(state: ProfileLookupState = ProfileLookupState.Idle, canLookUp: Boolean = true) =
+        SampleDetail.loaded(
+            systemInfo = SampleDetail.systemInfoSparse,
+            profiles = state,
+            canLookUpProfiles = canLookUp,
+        )
+
+    @Test
+    fun `the lookup button is offered only when the lookup applies and opens the dialog, nothing more`() {
+        show(lookup())
+        rule
+            .onNodeWithTag(
+                ProfileTags.BUTTON,
+            ).performScrollTo()
+            .assertTextEquals("Look up supported profiles")
+            .performClick()
+        assertEquals("a tap only asks to confirm", listOf("lookup"), calls)
+        rule.onNodeWithTag(ProfileTags.DIALOG).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a device the lookup does not apply to has no button`() {
+        show(lookup(canLookUp = false))
+        rule.onNodeWithTag(ProfileTags.BUTTON).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the confirmation names the device, warns, and only Ask the device confirms`() {
+        show(lookup(ProfileLookupState.Confirming))
+        rule.onNodeWithTag(ProfileTags.DIALOG).assertExists()
+        rule
+            .onNodeWithText(
+                "BT Scan will briefly contact Thermo Sensor over classic Bluetooth",
+                substring = true,
+            ).assertExists()
+        rule
+            .onNodeWithText(
+                "Only do this for devices you own or have permission to inspect.",
+                substring = true,
+            ).assertExists()
+        rule.onNodeWithTag(ProfileTags.CANCEL).performClick()
+        assertEquals(listOf("lookup-dismiss"), calls)
+        rule.onNodeWithTag(ProfileTags.CONFIRM).performClick()
+        assertEquals(listOf("lookup-dismiss", "lookup-confirm"), calls)
+    }
+
+    @Test
+    fun `the button is disabled while a lookup runs and the progress text shows`() {
+        show(lookup(ProfileLookupState.Running))
+        rule.onNodeWithTag(ProfileTags.BUTTON).assertIsNotEnabled()
+        rule.onNodeWithTag(ProfileTags.RUNNING).assertTextEquals("Asking the device\u2026")
+    }
+
+    @Test
+    fun `answers are shown with friendly names and say they were asked just now`() {
+        val uuids =
+            listOf(0x110B, 0x111E).map {
+                dev.danielhood.btscan.domain.parser.AdvertisementParser
+                    .uuidFromShort(it.toLong())
+            }
+        show(lookup(ProfileLookupState.Done(uuids)))
+        rule.onNodeWithTag(ProfileTags.HEADER).performScrollTo().assertTextEquals("Supported profiles (asked just now)")
+        rule.onNodeWithTag(ProfileTags.name(0)).assertTextEquals("A2DP Audio Sink")
+        rule.onNodeWithTag(ProfileTags.name(1)).assertTextEquals("Hands-Free")
+        rule.onNodeWithText("BT Scan changes nothing on it.", substring = true).assertExists()
+    }
+
+    @Test
+    fun `no answer, no profiles and a refused query each read plainly`() {
+        show(lookup(ProfileLookupState.TimedOut))
+        rule.onNodeWithTag(ProfileTags.TIMEOUT).assertTextEquals("The device did not answer within 10 seconds.")
+    }
+
+    @Test
+    fun `an empty answer is not an error`() {
+        show(lookup(ProfileLookupState.Done(emptyList())))
+        rule.onNodeWithTag(ProfileTags.EMPTY).assertTextEquals("The device answered with no profiles.")
+    }
+
+    @Test
+    fun `a refused query says android could not ask`() {
+        show(lookup(ProfileLookupState.NotStarted))
+        rule.onNodeWithTag(ProfileTags.NOT_STARTED).assertTextEquals("Android could not ask this device.")
     }
 }

@@ -12,6 +12,7 @@ import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 import dev.danielhood.btscan.domain.system.SystemInfoResult
 import dev.danielhood.btscan.testing.FakePermissionChecker
 import dev.danielhood.btscan.testing.FakeSystemInfoSource
+import dev.danielhood.btscan.testing.ManualProfileLookup
 import dev.danielhood.btscan.testing.ManualScanner
 import dev.danielhood.btscan.testing.NoClassicScanner
 import dev.danielhood.btscan.testing.advance
@@ -44,7 +45,8 @@ class DeviceDetailViewModelTest {
         repo: DeviceRepository,
         source: FakeSystemInfoSource = FakeSystemInfoSource(),
         permissions: FakePermissionChecker = FakePermissionChecker(),
-    ) = DeviceDetailViewModel(address, repo, testClock(), source, permissions).also {
+        lookup: ManualProfileLookup = ManualProfileLookup(),
+    ) = DeviceDetailViewModel(address, repo, testClock(), source, permissions, lookup).also {
         backgroundScope.launch { it.uiState.collect {} }
         advance(0)
     }

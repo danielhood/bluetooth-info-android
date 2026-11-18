@@ -379,6 +379,19 @@ object Scenarios {
                             deviceClass = DeviceClassInfo.of(0x05C0),
                         ),
                 ),
+            profiles =
+                mapOf(
+                    addr(1) to
+                        FakeProfileBehaviour.Answers(
+                            listOf(
+                                0x110B,
+                                0x111E,
+                                0x110E,
+                                0x1124,
+                            ).map { AdvertisementParser.uuidFromShort(it.toLong()) },
+                        ),
+                    addr(3) to FakeProfileBehaviour.Silent,
+                ),
         )
 
     /**

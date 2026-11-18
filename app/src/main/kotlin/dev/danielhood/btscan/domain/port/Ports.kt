@@ -4,6 +4,7 @@ import dev.danielhood.btscan.domain.model.AdapterState
 import dev.danielhood.btscan.domain.model.ClassicSighting
 import dev.danielhood.btscan.domain.model.PermissionState
 import dev.danielhood.btscan.domain.model.RawAdvertisement
+import dev.danielhood.btscan.domain.system.ProfileLookupResult
 import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
@@ -30,6 +31,15 @@ interface PermissionChecker {
     val connectPermissions: List<String>
 
     fun connectState(): PermissionState
+}
+
+/**
+ * Asks one device which profiles it supports (a classic service lookup). Unlike everything else in the app this
+ * CONTACTS the device: a short classic session. It is started only from an explicit tap on that device's detail screen
+ * after a confirmation naming it (see DeviceDetailViewModel); the caller applies the timeout. Never pairs.
+ */
+interface ProfileLookup {
+    suspend fun fetchProfiles(address: String): ProfileLookupResult
 }
 
 /** Reads what the Android system already knows about a device. Never contacts the device and never pairs. */

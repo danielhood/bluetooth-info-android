@@ -6,6 +6,7 @@ import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.testing.AlwaysOnAdapterMonitor
 import dev.danielhood.btscan.testing.FakePermissionChecker
 import dev.danielhood.btscan.testing.FakeSystemInfoSource
+import dev.danielhood.btscan.testing.ManualProfileLookup
 import dev.danielhood.btscan.testing.ManualScanner
 import dev.danielhood.btscan.testing.NoClassicScanner
 import dev.danielhood.btscan.testing.rawAd
@@ -29,7 +30,14 @@ class AppContainerTest {
             }
         return AppContainer(
             permissionChecker = FakePermissionChecker(),
-            real = RealPorts(realScanner, AlwaysOnAdapterMonitor, FakeSystemInfoSource(), NoClassicScanner),
+            real =
+                RealPorts(
+                    realScanner,
+                    AlwaysOnAdapterMonitor,
+                    FakeSystemInfoSource(),
+                    NoClassicScanner,
+                    ManualProfileLookup(),
+                ),
             scope = backgroundScope,
             clock = clock,
         )
@@ -89,7 +97,14 @@ class AppContainerTest {
             val container =
                 AppContainer(
                     permissionChecker = FakePermissionChecker(),
-                    real = RealPorts(failing, AlwaysOnAdapterMonitor, FakeSystemInfoSource(), NoClassicScanner),
+                    real =
+                        RealPorts(
+                            failing,
+                            AlwaysOnAdapterMonitor,
+                            FakeSystemInfoSource(),
+                            NoClassicScanner,
+                            ManualProfileLookup(),
+                        ),
                     scope = backgroundScope,
                     clock = testClock(),
                 )

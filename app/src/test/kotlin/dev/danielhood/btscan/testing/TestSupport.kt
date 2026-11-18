@@ -10,8 +10,12 @@ import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.ProfileLookup
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
+import dev.danielhood.btscan.domain.system.ProfileLookupResult
 import dev.danielhood.btscan.domain.system.SystemInfoResult
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -46,6 +50,25 @@ class FakePermissionChecker(
     override fun current(): PermissionState = state
 
     override fun connectState(): PermissionState = connect
+}
+
+/**
+ * Profile lookup whose answer the test sets; records every address it was asked, which is the evidence that a
+ * lookup (which contacts the device) never happens without the user's confirmation. [silent] never answers.
+ */
+class ManualProfileLookup(
+    var result: ProfileLookupResult = ProfileLookupResult.Profiles(emptyList()),
+    var silent: Boolean = false,
+    var delayMs: Long = 0,
+) : ProfileLookup {
+    val asked = mutableListOf<String>()
+
+    override suspend fun fetchProfiles(address: String): ProfileLookupResult {
+        asked += address
+        if (silent) awaitCancellation()
+        if (delayMs > 0) delay(delayMs)
+        return result
+    }
 }
 
 /** System-info source whose answer the test sets; records each lookup. */
@@ -105,6 +128,7 @@ class TestApp :
                         AlwaysOnAdapterMonitor,
                         FakeSystemInfoSource(),
                         NoClassicScanner,
+                        ManualProfileLookup(),
                     ),
             ).also { it.debugConfig = dev.danielhood.btscan.DebugConfig(scanner = "fake", scenario = "default") }
     }

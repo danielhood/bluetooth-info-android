@@ -64,6 +64,7 @@ fun AppRoot(container: AppContainer, debugLabel: String?, darkTheme: Boolean = i
                                         container.clock,
                                         container.systemDeviceInfoSource,
                                         container.permissionChecker,
+                                        container.profileLookup,
                                     )
                                 }
                             },

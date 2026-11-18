@@ -6,6 +6,7 @@ import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.ProfileLookup
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 
 /**
@@ -44,6 +45,9 @@ interface DebugOverrides {
 
     /** A replacement classic scanner for [config], or null to use the real one. Always null in release builds. */
     fun classicScannerFor(config: DebugConfig, clock: Clock): ClassicScanner?
+
+    /** A replacement profile lookup for [config], or null to use the real one. Always null in release builds. */
+    fun profileLookupFor(config: DebugConfig, permissions: PermissionChecker): ProfileLookup?
 
     /** A replacement system-info source for [config], or null to use the real one. Always null in release builds. */
     fun systemInfoSourceFor(config: DebugConfig, permissions: PermissionChecker): SystemDeviceInfoSource?

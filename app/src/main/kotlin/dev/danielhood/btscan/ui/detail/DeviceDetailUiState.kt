@@ -14,6 +14,7 @@ import dev.danielhood.btscan.domain.system.SystemDeviceInfo
 import dev.danielhood.btscan.ui.list.signalLevel
 import java.time.Duration
 import java.time.Instant
+import java.util.UUID
 
 data class ServiceUi(
     val uuid: String,
@@ -76,6 +77,29 @@ sealed interface SystemInfoState {
     data object Unavailable : SystemInfoState
 }
 
+/**
+ * Asking a device which profiles it supports (Tier 2c). This CONTACTS the device, so it never leaves [Idle] without an
+ * explicit tap, and [Confirming] (a dialog naming the device) always comes first: nothing has contacted it until the
+ * user confirms. There is no "remember my answer".
+ */
+sealed interface ProfileLookupState {
+    data object Idle : ProfileLookupState
+
+    /** The confirmation dialog is on screen. */
+    data object Confirming : ProfileLookupState
+
+    data object Running : ProfileLookupState
+
+    data class Done(
+        val uuids: List<UUID>,
+    ) : ProfileLookupState
+
+    data object TimedOut : ProfileLookupState
+
+    /** The platform would not start the query. */
+    data object NotStarted : ProfileLookupState
+}
+
 sealed interface DeviceDetailUiState {
     /** The device was never known to the repository (for example after process restore). */
     data object NotFound : DeviceDetailUiState
@@ -90,6 +114,9 @@ sealed interface DeviceDetailUiState {
         val firstSeenAgoSeconds: Long,
         val lastSeenAgoSeconds: Long,
         val systemInfo: SystemInfoState = SystemInfoState.NeedsPermission(permanentlyDenied = false),
+        val profiles: ProfileLookupState = ProfileLookupState.Idle,
+        /** The lookup button is offered only for classic or dual-mode devices, once system information is readable. */
+        val canLookUpProfiles: Boolean = false,
     ) : DeviceDetailUiState
 }
 

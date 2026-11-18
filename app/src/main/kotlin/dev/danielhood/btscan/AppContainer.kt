@@ -9,9 +9,11 @@ import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.ProfileLookup
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 import dev.danielhood.btscan.domain.repo.DefaultDeviceRepository
 import dev.danielhood.btscan.domain.repo.DeviceRepository
+import dev.danielhood.btscan.domain.system.ProfileLookupResult
 import dev.danielhood.btscan.domain.system.SystemInfoResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +28,7 @@ class RealPorts(
     val adapterMonitor: AdapterStateMonitor,
     val systemInfo: SystemDeviceInfoSource,
     val classicScanner: ClassicScanner,
+    val profileLookup: ProfileLookup,
 )
 
 /** Manual dependency injection root. The only place allowed to see every layer. */
@@ -76,6 +79,18 @@ class AppContainer(
                     val chosen = debugOverrides.classicScannerFor(debugConfig, clock) ?: real.classicScanner
                     emitAll(chosen.discover())
                 }
+        }
+
+    /** Resolved at lookup time, like the other ports; only the detail ViewModel's confirmed action calls it. */
+    val profileLookup: ProfileLookup =
+        object : ProfileLookup {
+            override suspend fun fetchProfiles(address: String): ProfileLookupResult =
+                (
+                    debugOverrides.profileLookupFor(
+                        debugConfig,
+                        permissionChecker,
+                    ) ?: real.profileLookup
+                ).fetchProfiles(address)
         }
 
     val deviceRepository: DeviceRepository = DefaultDeviceRepository(scanner, classicScanner, clock, scope)

@@ -33,11 +33,16 @@ fun DeviceDetailRoute(viewModel: DeviceDetailViewModel, onBack: () -> Unit) {
             viewModel.onSystemInfoPermissionResult(granted, canAskAgain)
         }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshSystemInfoPermission() }
+    // Leaving the screen or the app drops an open confirmation and cancels a running lookup.
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.cancelProfileLookup() }
     DeviceDetailContent(
         state = state,
         onBack = onBack,
         onAllowSystemInfo = { permissionLauncher.launch(viewModel.systemInfoPermissions.toTypedArray()) },
         onOpenAppSettings = { SystemIntents.openAppSettings(context) },
+        onLookUpProfiles = viewModel::onLookUpProfilesClicked,
+        onConfirmProfileLookup = viewModel::confirmProfileLookup,
+        onDismissProfileLookup = viewModel::dismissProfileLookup,
         onCopyRaw = { hex ->
             scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText("advertisement", hex))) }
         },

@@ -25,6 +25,7 @@ import dev.danielhood.btscan.domain.system.BondState
 import dev.danielhood.btscan.domain.system.DeviceClassInfo
 import dev.danielhood.btscan.domain.system.DeviceType
 import dev.danielhood.btscan.domain.system.SystemDeviceInfo
+import dev.danielhood.btscan.ui.detail.ProfileLookupState
 import dev.danielhood.btscan.ui.detail.SystemInfoState
 import dev.danielhood.btscan.ui.list.DeviceListUiState
 import dev.danielhood.btscan.ui.list.DeviceRowUi
@@ -265,11 +266,15 @@ object SampleDetail {
         device: dev.danielhood.btscan.ui.detail.DeviceDetailUi = thermo,
         outOfRange: Boolean = false,
         systemInfo: SystemInfoState = SystemInfoState.NeedsPermission(permanentlyDenied = false),
+        profiles: ProfileLookupState = ProfileLookupState.Idle,
+        canLookUpProfiles: Boolean = false,
     ) = dev.danielhood.btscan.ui.detail.DeviceDetailUiState.Loaded(
         device = device,
         outOfRange = outOfRange,
         firstSeenAgoSeconds = 75,
         lastSeenAgoSeconds = if (outOfRange) 41 else 1,
         systemInfo = systemInfo,
+        profiles = profiles,
+        canLookUpProfiles = canLookUpProfiles,
     )
 }

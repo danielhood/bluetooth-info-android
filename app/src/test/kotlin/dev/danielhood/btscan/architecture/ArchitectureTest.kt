@@ -239,12 +239,35 @@ class ArchitectureTest {
     }
 
     @Test
-    fun `no call that queries a device over the air exists yet`() {
-        // SDP lookup (2c) and GATT (Tier 3) each relax one token in their own documented commit.
-        assertNone(
-            "policy: not started",
-            offendersContaining(allSourcesIncludingTests, listOf("fetchUuidsWithSdp")),
-        )
+    fun `the service lookup call lives in exactly one file`() {
+        // Tier 2c: fetchUuidsWithSdp CONTACTS the device, so the platform call is confined to one reviewed file.
+        val allowed = "data/ble/android/AndroidProfileLookup.kt"
+        val offenders =
+            offendersContaining(
+                allSourcesIncludingTests.filter { !it.path.replace('\\', '/').endsWith(allowed) },
+                listOf("fetchUuidsWithSdp"),
+            )
+        assertNone("fetchUuidsWithSdp only in $allowed", offenders)
+    }
+
+    @Test
+    fun `a profile lookup can only be started from the detail view model's confirmed action`() {
+        // The UI gate: the port declaration, its implementations and the container's delegate name it; the only
+        // caller of the port is the detail ViewModel (after the per-device confirmation).
+        val allowed =
+            setOf(
+                "domain/port/Ports.kt",
+                "data/ble/android/AndroidProfileLookup.kt",
+                "data/ble/fake/FakeProfileLookup.kt",
+                "AppContainer.kt",
+                "ui/detail/DeviceDetailViewModel.kt",
+            )
+        val offenders =
+            allMainDebugRelease
+                .filter { "fetchProfiles(" in it.readText() }
+                .map { it.relative() }
+                .filter { it !in allowed }
+        assertNone("fetchProfiles is only called from DeviceDetailViewModel", offenders)
     }
 
     @Test

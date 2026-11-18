@@ -4,6 +4,7 @@ import android.content.Intent
 import dev.danielhood.btscan.data.ble.fake.FakeAdapterStateMonitor
 import dev.danielhood.btscan.data.ble.fake.FakeBleScanner
 import dev.danielhood.btscan.data.ble.fake.FakeClassicScanner
+import dev.danielhood.btscan.data.ble.fake.FakeProfileLookup
 import dev.danielhood.btscan.data.ble.fake.FakeSystemDeviceInfoSource
 import dev.danielhood.btscan.data.ble.fake.Scenarios
 import dev.danielhood.btscan.domain.port.AdapterStateMonitor
@@ -11,6 +12,7 @@ import dev.danielhood.btscan.domain.port.BleScanner
 import dev.danielhood.btscan.domain.port.ClassicScanner
 import dev.danielhood.btscan.domain.port.Clock
 import dev.danielhood.btscan.domain.port.PermissionChecker
+import dev.danielhood.btscan.domain.port.ProfileLookup
 import dev.danielhood.btscan.domain.port.SystemDeviceInfoSource
 import dev.danielhood.btscan.util.AppLog
 
@@ -46,6 +48,21 @@ class DebugOverridesImpl : DebugOverrides {
 
             else -> {
                 throw IllegalArgumentException("Unknown scanner '${config.scanner}'. Use 'fake' or 'real'.")
+            }
+        }
+
+    /** One fake lookup per launch config: its `asked` list is the evidence that nothing was asked unprompted. */
+    override fun profileLookupFor(config: DebugConfig, permissions: PermissionChecker): ProfileLookup? =
+        when (config.scanner) {
+            SCANNER_FAKE -> {
+                FakeProfileLookup(
+                    permissions,
+                    Scenarios.require(config.scenario ?: Scenarios.DEFAULT).profiles,
+                )
+            }
+
+            else -> {
+                null
             }
         }
 

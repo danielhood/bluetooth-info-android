@@ -31,9 +31,14 @@ wait_rows() { # min count, timeout seconds
 scan_enabled() { "$S/ui.sh" find scan_button | grep -q 'enabled=true'; }
 scan_disabled() { "$S/ui.sh" find scan_button | grep -q 'enabled=false'; }
 button_text() { "$S/ui.sh" dump | grep -A1 'id=scan_button' | grep -q "text='$1'"; }
-sorted_by_signal() { # rssi values in dump order must be non-increasing
-  "$S/ui.sh" dump | grep -oE -- "text='-[0-9]+ dBm'" | tr -dc '0-9\n-' |
-    python3 -I -c 'import sys; v=[int(x) for x in sys.stdin.read().split()]; sys.exit(0 if len(v)>1 and v==sorted(v, reverse=True) else 1)'
+sorted_by_signal() { # rssi values in dump order must be non-increasing; a dump can catch the list mid-update, so retry
+  local try
+  for try in 1 2 3; do
+    "$S/ui.sh" dump | grep -oE -- "text='-[0-9]+ dBm'" | tr -dc '0-9\n-' |
+      python3 -I -c 'import sys; v=[int(x) for x in sys.stdin.read().split()]; sys.exit(0 if len(v)>1 and v==sorted(v, reverse=True) else 1)' && return 0
+    sleep 1
+  done
+  return 1
 }
 count_text() { "$S/ui.sh" find device_count | grep -q "text='$1'"; }
 rssi_changes() { # detail rssi text must differ across samples within ~8 s
@@ -106,9 +111,10 @@ check "title is the device name"    bash -c "'$S/ui.sh' find detail_name | grep 
 check "address matches the row"     bash -c "'$S/ui.sh' find detail_address | grep -q \"text='C0:FF:EE:00:00:01'\""
 check "connectable is yes"          bash -c "'$S/ui.sh' find detail_connectable | grep -q \"text='Yes'\""
 check "tx power -4 dBm"             bash -c "'$S/ui.sh' find detail_tx_power | grep -q \"text='-4 dBm'\""
-check "service name is shown"       "$S/ui.sh" find "Environmental Sensing"
 check "rssi changes within 8s"      rssi_changes
 "$S/shot.sh" smoke-detail >/dev/null
+adb shell input swipe 540 1900 540 1200 300; sleep 1   # the section above the services has grown; bring them into view
+check "service name is shown"       "$S/ui.sh" find "Environmental Sensing"
 "$S/ui.sh" tap back_button >/dev/null
 check "top bar back returns to list" "$S/ui.sh" wait device_list 5
 check "scanning continues after back" button_text "Stop scan"
@@ -264,14 +270,48 @@ check "paired shown"                bash -c "'$S/ui.sh' find system_bond_state |
 "$S/shot.sh" smoke-system-info >/dev/null
 adb shell input swipe 540 1900 540 700 300; sleep 1
 check "device class shown"          bash -c "'$S/ui.sh' find system_class | grep -q 'Audio or video: Headphones'"
+echo "-- profile lookup (Tier 2c): contacts the device, so a confirmation naming it comes first, every time"
+adb shell input swipe 540 1900 540 1300 300; sleep 1
+check "lookup offered for a dual-mode device" "$S/ui.sh" wait profiles_button 6
+check "nothing asked unprompted"    absent profiles_header
+"$S/ui.sh" tap profiles_button >/dev/null
+check "confirmation is shown"       "$S/ui.sh" wait profiles_confirm_dialog 6
+check "it names the device"         bash -c "'$S/ui.sh' find 'BT Scan will briefly contact' | grep -q 'Buds Pro'"
+sleep 3
+check "nothing asked behind the dialog" absent profiles_header
+"$S/shot.sh" smoke-profiles-confirm >/dev/null
+"$S/ui.sh" tap profiles_cancel >/dev/null
+sleep 2
+check "cancel asks nothing"         absent profiles_header
+check "cancel closes the dialog"    absent profiles_confirm_dialog
+sleep 1.5
+"$S/ui.sh" tap profiles_button >/dev/null
+"$S/ui.sh" wait profiles_confirm_dialog 6 >/dev/null
+check "asked again, not remembered" "$S/ui.sh" find profiles_confirm
+"$S/ui.sh" tap profiles_confirm >/dev/null
+check "the device answers"          "$S/ui.sh" wait profiles_header 8
+check "friendly profile names"      bash -c "'$S/ui.sh' find profile_name_0 | grep -q 'A2DP Audio Sink'"
+"$S/shot.sh" smoke-profiles >/dev/null
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
 open_device C0:FF:EE:00:00:03 || true
 check "pairing state shown"         bash -c "'$S/ui.sh' wait system_bond_state 10 && '$S/ui.sh' find system_bond_state | grep -q 'Pairing in progress'"
+adb shell input swipe 540 1900 540 1300 300; sleep 1
+check "lookup offered for a classic device" "$S/ui.sh" wait profiles_button 6
+"$S/ui.sh" tap profiles_button >/dev/null
+"$S/ui.sh" wait profiles_confirm_dialog 6 >/dev/null
+"$S/ui.sh" tap profiles_confirm >/dev/null
+check "asking shows progress"       "$S/ui.sh" wait profiles_running 6
+check "a silent device times out"   "$S/ui.sh" wait profiles_timeout 16
+"$S/ui.sh" back >/dev/null
+"$S/ui.sh" wait device_list 5 >/dev/null
+open_device C0:FF:EE:00:00:02 || true
+check "ble only device has no lookup" bash -c "'$S/ui.sh' wait system_info_message 8 >/dev/null 2>&1 || '$S/ui.sh' wait system_name 8 >/dev/null 2>&1; ! '$S/ui.sh' find profiles_button >/dev/null 2>&1"
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null
 open_device C0:FF:EE:00:00:04 || true
 check "unknown device says so"      "$S/ui.sh" wait system_info_unavailable 10
+check "and has no lookup"           absent profiles_button
 
 echo "-- classic scan (Tier 2b): gated by the UI, never starts by itself"
 "$S/app.sh" launch --scenario classic-mixed >/dev/null

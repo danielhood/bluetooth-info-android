@@ -49,6 +49,9 @@ fun DeviceDetailContent(
     modifier: Modifier = Modifier,
     onAllowSystemInfo: () -> Unit = {},
     onOpenAppSettings: () -> Unit = {},
+    onLookUpProfiles: () -> Unit = {},
+    onConfirmProfileLookup: () -> Unit = {},
+    onDismissProfileLookup: () -> Unit = {},
 ) {
     val title =
         (state as? DeviceDetailUiState.Loaded)?.device?.name
@@ -75,8 +78,19 @@ fun DeviceDetailContent(
                     .semantics { contentDescription = "Device detail screen" },
         ) {
             when (state) {
-                DeviceDetailUiState.NotFound -> NotFound(onBack)
-                is DeviceDetailUiState.Loaded -> Loaded(state, onCopyRaw, onAllowSystemInfo, onOpenAppSettings)
+                DeviceDetailUiState.NotFound -> {
+                    NotFound(onBack)
+                }
+
+                is DeviceDetailUiState.Loaded -> {
+                    Loaded(
+                        state,
+                        onCopyRaw,
+                        onAllowSystemInfo,
+                        onOpenAppSettings,
+                        ProfileLookupActions(onLookUpProfiles, onConfirmProfileLookup, onDismissProfileLookup),
+                    )
+                }
             }
         }
     }
@@ -106,6 +120,7 @@ private fun Loaded(
     onCopyRaw: (String) -> Unit,
     onAllowSystemInfo: () -> Unit,
     onOpenAppSettings: () -> Unit,
+    lookupActions: ProfileLookupActions,
 ) {
     val device = state.device
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -150,7 +165,13 @@ private fun Loaded(
         DecodedSections(device.decoded)
         RadioSection(device)
         HorizontalDivider()
-        SystemInfoSection(state.systemInfo, onAllowSystemInfo, onOpenAppSettings)
+        SystemInfoSection(
+            state.systemInfo,
+            onAllowSystemInfo,
+            onOpenAppSettings,
+            ProfileLookupUi(state.profiles, state.canLookUpProfiles, device.name ?: device.address),
+            lookupActions,
+        )
         HorizontalDivider()
         ServicesSection(device)
         HorizontalDivider()
