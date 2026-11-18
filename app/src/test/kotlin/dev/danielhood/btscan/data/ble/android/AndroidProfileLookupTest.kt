@@ -39,7 +39,7 @@ class AndroidProfileLookupTest {
         shadowOf(app).registeredReceivers.count { it.intentFilter.hasAction(BluetoothDevice.ACTION_UUID) }
 
     @Test
-    fun `without the connect permission nothing is asked`() =
+    fun `without the connect permission nothing is queried`() =
         runBlocking {
             assertEquals(ProfileLookupResult.PermissionMissing, lookup().fetchProfiles(address))
             assertEquals("no receiver was left registered", 0, registeredUuidReceivers())

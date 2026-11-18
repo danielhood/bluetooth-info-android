@@ -2,7 +2,7 @@ package dev.danielhood.btscan.domain.system
 
 import java.util.UUID
 
-/** Outcome of asking a device which profiles it supports (a classic service lookup). */
+/** Outcome of querying a device which profiles it supports (a classic service lookup). */
 sealed interface ProfileLookupResult {
     /** The device answered. [uuids] may be empty: it answered but lists nothing. */
     data class Profiles(

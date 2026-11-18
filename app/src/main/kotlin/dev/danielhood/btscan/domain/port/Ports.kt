@@ -34,7 +34,7 @@ interface PermissionChecker {
 }
 
 /**
- * Asks one device which profiles it supports (a classic service lookup). Unlike everything else in the app this
+ * Queries one device for the profiles it supports (a classic service lookup). Unlike everything else in the app this
  * CONTACTS the device: a short classic session. It is started only from an explicit tap on that device's detail screen
  * after a confirmation naming it (see DeviceDetailViewModel); the caller applies the timeout. Never pairs.
  */

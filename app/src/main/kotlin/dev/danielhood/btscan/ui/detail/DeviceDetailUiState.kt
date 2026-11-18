@@ -78,9 +78,9 @@ sealed interface SystemInfoState {
 }
 
 /**
- * Asking a device which profiles it supports (Tier 2c). This CONTACTS the device, so it never leaves [Idle] without an
- * explicit tap, and [Confirming] (a dialog naming the device) always comes first: nothing has contacted it until the
- * user confirms. There is no "remember my answer".
+ * Querying a device for the profiles it supports (Tier 2c). This CONTACTS the device, so it never leaves [Idle]
+ * without an explicit tap, and [Confirming] (a dialog naming the device) always comes first: nothing has contacted
+ * it until the user confirms. There is no "remember my answer".
  */
 sealed interface ProfileLookupState {
     data object Idle : ProfileLookupState

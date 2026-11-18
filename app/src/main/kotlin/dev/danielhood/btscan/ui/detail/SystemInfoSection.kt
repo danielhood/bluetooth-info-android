@@ -95,8 +95,8 @@ internal class ProfileLookupActions(
 )
 
 /**
- * Tier 2c: ask the device which profiles it supports. This contacts the device, so the button only opens a dialog
- * naming the device; nothing is asked until the user confirms it, every time.
+ * Tier 2c: query the device for the profiles it supports. This contacts the device, so the button only opens a dialog
+ * naming the device; nothing is queried until the user confirms it, every time.
  */
 @Composable
 private fun ProfileLookupBlock(lookup: ProfileLookupUi, actions: ProfileLookupActions) {

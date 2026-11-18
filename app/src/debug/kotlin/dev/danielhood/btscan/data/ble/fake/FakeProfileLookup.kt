@@ -8,7 +8,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import java.util.UUID
 
-/** What a fake device does when asked which profiles it supports. */
+/** What a fake device does when queried for the profiles it supports. */
 sealed interface FakeProfileBehaviour {
     /** Answers with [uuids] after [delayMs]. */
     data class Answers(
@@ -31,12 +31,12 @@ class FakeProfileLookup(
     private val permissions: PermissionChecker,
     private val behaviours: Map<String, FakeProfileBehaviour>,
 ) : ProfileLookup {
-    /** Addresses that were asked, in order (a test or smoke script can assert that nothing was asked unprompted). */
-    val asked = mutableListOf<String>()
+    /** Addresses that were queried, in order (tests and smoke scripts assert nothing is queried unprompted). */
+    val queried = mutableListOf<String>()
 
     override suspend fun fetchProfiles(address: String): ProfileLookupResult {
         if (permissions.connectState() !is PermissionState.Granted) return ProfileLookupResult.PermissionMissing
-        asked += address
+        queried += address
         return when (val behaviour = behaviours[address]) {
             is FakeProfileBehaviour.Answers -> {
                 delay(behaviour.delayMs)

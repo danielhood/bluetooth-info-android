@@ -34,11 +34,11 @@ class AndroidProfileLookup(
         return when {
             permissions.connectState() !is PermissionState.Granted -> ProfileLookupResult.PermissionMissing
             adapter == null || !BluetoothAdapter.checkBluetoothAddress(address) -> ProfileLookupResult.NotStarted
-            else -> ask(adapter.getRemoteDevice(address))
+            else -> query(adapter.getRemoteDevice(address))
         }
     }
 
-    private suspend fun ask(device: BluetoothDevice): ProfileLookupResult =
+    private suspend fun query(device: BluetoothDevice): ProfileLookupResult =
         suspendCancellableCoroutine { continuation ->
             val unregistered = AtomicBoolean(false)
             val receiver =

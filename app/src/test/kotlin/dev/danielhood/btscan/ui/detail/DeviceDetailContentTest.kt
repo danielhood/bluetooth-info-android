@@ -295,7 +295,7 @@ class DeviceDetailContentTest {
         rule
             .onNodeWithTag(
                 TestTags.SYSTEM_INFO_MESSAGE,
-            ).assertTextContains("contacts a device only when you ask it to", substring = true)
+            ).assertTextContains("contacts a device only when you choose to query it", substring = true)
         rule.onNodeWithTag(TestTags.SYSTEM_INFO_ALLOW_BUTTON).performClick()
         assertEquals(listOf("allow"), calls)
         rule.onNodeWithTag(TestTags.SYSTEM_INFO_SETTINGS_BUTTON).assertDoesNotExist()
@@ -384,7 +384,7 @@ class DeviceDetailContentTest {
             ).performScrollTo()
             .assertTextEquals("Look up supported profiles")
             .performClick()
-        assertEquals("a tap only asks to confirm", listOf("lookup"), calls)
+        assertEquals("a tap only opens the confirmation", listOf("lookup"), calls)
         rule.onNodeWithTag(ProfileTags.DIALOG).assertDoesNotExist()
     }
 
@@ -395,7 +395,7 @@ class DeviceDetailContentTest {
     }
 
     @Test
-    fun `the confirmation names the device, warns, and only Ask the device confirms`() {
+    fun `the confirmation names the device, warns, and only Query the device confirms`() {
         show(lookup(ProfileLookupState.Confirming))
         rule.onNodeWithTag(ProfileTags.DIALOG).assertExists()
         rule
@@ -418,18 +418,22 @@ class DeviceDetailContentTest {
     fun `the button is disabled while a lookup runs and the progress text shows`() {
         show(lookup(ProfileLookupState.Running))
         rule.onNodeWithTag(ProfileTags.BUTTON).assertIsNotEnabled()
-        rule.onNodeWithTag(ProfileTags.RUNNING).assertTextEquals("Asking the device\u2026")
+        rule.onNodeWithTag(ProfileTags.RUNNING).assertTextEquals("Querying the device\u2026")
     }
 
     @Test
-    fun `answers are shown with friendly names and say they were asked just now`() {
+    fun `answers are shown with friendly names and say they were queried just now`() {
         val uuids =
             listOf(0x110B, 0x111E).map {
                 dev.danielhood.btscan.domain.parser.AdvertisementParser
                     .uuidFromShort(it.toLong())
             }
         show(lookup(ProfileLookupState.Done(uuids)))
-        rule.onNodeWithTag(ProfileTags.HEADER).performScrollTo().assertTextEquals("Supported profiles (asked just now)")
+        rule
+            .onNodeWithTag(
+                ProfileTags.HEADER,
+            ).performScrollTo()
+            .assertTextEquals("Supported profiles (queried just now)")
         rule.onNodeWithTag(ProfileTags.name(0)).assertTextEquals("A2DP Audio Sink")
         rule.onNodeWithTag(ProfileTags.name(1)).assertTextEquals("Hands-Free")
         rule.onNodeWithText("BT Scan changes nothing on it.", substring = true).assertExists()
@@ -448,8 +452,8 @@ class DeviceDetailContentTest {
     }
 
     @Test
-    fun `a refused query says android could not ask`() {
+    fun `a refused query says android could not query`() {
         show(lookup(ProfileLookupState.NotStarted))
-        rule.onNodeWithTag(ProfileTags.NOT_STARTED).assertTextEquals("Android could not ask this device.")
+        rule.onNodeWithTag(ProfileTags.NOT_STARTED).assertTextEquals("Android could not query this device.")
     }
 }

@@ -51,7 +51,7 @@ class DebugOverridesImpl : DebugOverrides {
             }
         }
 
-    /** One fake lookup per launch config: its `asked` list is the evidence that nothing was asked unprompted. */
+    /** One fake lookup per launch config: its `queried` list is the evidence that nothing was queried unprompted. */
     override fun profileLookupFor(config: DebugConfig, permissions: PermissionChecker): ProfileLookup? =
         when (config.scanner) {
             SCANNER_FAKE -> {

@@ -114,7 +114,7 @@ class DeviceDetailViewModel(
         profiles.value = ProfileLookupState.Confirming
     }
 
-    /** The user confirmed the dialog naming this device: ask it (10 s limit). Ignored without a pending dialog. */
+    /** The user confirmed the dialog naming this device: query it (10 s limit). Ignored without a pending dialog. */
     fun confirmProfileLookup() {
         if (profiles.value != ProfileLookupState.Confirming) return
         profiles.value = ProfileLookupState.Running

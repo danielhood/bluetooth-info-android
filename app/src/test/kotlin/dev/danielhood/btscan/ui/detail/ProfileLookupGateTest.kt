@@ -38,7 +38,7 @@ import java.util.UUID
 /**
  * The UI gate for the classic service lookup. Unlike every other read in the app it CONTACTS the device, so it only
  * ever happens after the user tapped the button for that device and confirmed a dialog naming it, every time. The
- * port's call log (`asked`) is the evidence: it must stay empty on every other path.
+ * port's call log (`queried`) is the evidence: it must stay empty on every other path.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileLookupGateTest {
@@ -102,18 +102,18 @@ class ProfileLookupGateTest {
     }
 
     @Test
-    fun `tapping the button shows the confirmation and asks nobody`() =
+    fun `tapping the button shows the confirmation and queries nobody`() =
         runTest {
             val r = rig()
             assertTrue(r.state.canLookUpProfiles)
             r.vm.onLookUpProfilesClicked()
             advance(0)
             assertEquals(ProfileLookupState.Confirming, r.state.profiles)
-            assertTrue("nothing has contacted the device", r.lookup.asked.isEmpty())
+            assertTrue("nothing has contacted the device", r.lookup.queried.isEmpty())
         }
 
     @Test
-    fun `cancelling asks nobody and the next tap asks for confirmation again`() =
+    fun `cancelling queries nobody and the next tap shows the confirmation again`() =
         runTest {
             val r = rig()
             r.vm.onLookUpProfilesClicked()
@@ -123,17 +123,17 @@ class ProfileLookupGateTest {
             r.vm.onLookUpProfilesClicked()
             advance(0)
             assertEquals(ProfileLookupState.Confirming, r.state.profiles)
-            assertTrue(r.lookup.asked.isEmpty())
+            assertTrue(r.lookup.queried.isEmpty())
         }
 
     @Test
-    fun `confirming asks exactly this device once and shows the profiles`() =
+    fun `confirming queries exactly this device once and shows the profiles`() =
         runTest {
             val r = rig()
             r.vm.onLookUpProfilesClicked()
             r.vm.confirmProfileLookup()
             advance(0)
-            assertEquals(listOf(r.address), r.lookup.asked)
+            assertEquals(listOf(r.address), r.lookup.queried)
             assertEquals(ProfileLookupState.Done(listOf(a2dp, hfp)), r.state.profiles)
         }
 
@@ -144,11 +144,11 @@ class ProfileLookupGateTest {
             r.vm.confirmProfileLookup() // no tap, no dialog
             advance(100)
             assertEquals(ProfileLookupState.Idle, r.state.profiles)
-            assertTrue("a stray confirm cannot contact a device", r.lookup.asked.isEmpty())
+            assertTrue("a stray confirm cannot contact a device", r.lookup.queried.isEmpty())
         }
 
     @Test
-    fun `no other path asks a device`() =
+    fun `no other path queries a device`() =
         runTest {
             val r = rig(permission = PermissionState.Denied(canAskAgain = true))
             r.permissions.connect = PermissionState.Granted
@@ -158,7 +158,7 @@ class ProfileLookupGateTest {
             r.vm.dismissProfileLookup()
             r.vm.cancelProfileLookup()
             advance(100)
-            assertTrue("system information loads without asking the device", r.lookup.asked.isEmpty())
+            assertTrue("system information loads without querying the device", r.lookup.queried.isEmpty())
             assertTrue(r.state.systemInfo is SystemInfoState.Loaded)
         }
 
@@ -169,14 +169,14 @@ class ProfileLookupGateTest {
             r.vm.onLookUpProfilesClicked()
             r.vm.confirmProfileLookup()
             advance(0)
-            assertEquals(1, r.lookup.asked.size)
+            assertEquals(1, r.lookup.queried.size)
             r.vm.onLookUpProfilesClicked()
             advance(0)
-            assertEquals("asked again before anything is sent", ProfileLookupState.Confirming, r.state.profiles)
-            assertEquals(1, r.lookup.asked.size)
+            assertEquals("queried again before anything is sent", ProfileLookupState.Confirming, r.state.profiles)
+            assertEquals(1, r.lookup.queried.size)
             r.vm.confirmProfileLookup()
             advance(0)
-            assertEquals(2, r.lookup.asked.size)
+            assertEquals(2, r.lookup.queried.size)
         }
 
     @Test
@@ -187,7 +187,7 @@ class ProfileLookupGateTest {
             r.vm.onLookUpProfilesClicked()
             advance(0)
             assertEquals(ProfileLookupState.Idle, r.state.profiles)
-            assertTrue(r.lookup.asked.isEmpty())
+            assertTrue(r.lookup.queried.isEmpty())
         }
 
     @Test
@@ -218,7 +218,7 @@ class ProfileLookupGateTest {
             assertEquals(ProfileLookupState.Running, r.state.profiles)
             advance(200)
             assertEquals(ProfileLookupState.TimedOut, r.state.profiles)
-            assertEquals(1, r.lookup.asked.size)
+            assertEquals(1, r.lookup.queried.size)
         }
 
     @Test
@@ -233,7 +233,7 @@ class ProfileLookupGateTest {
             advance(100)
             assertEquals(ProfileLookupState.Running, r.state.profiles)
             advance(2_000)
-            assertEquals(1, r.lookup.asked.size)
+            assertEquals(1, r.lookup.queried.size)
             assertTrue(r.state.profiles is ProfileLookupState.Done)
         }
 
@@ -296,7 +296,7 @@ class ProfileLookupGateTest {
             advance(0)
             advance(0) // the quiet refresh is launched by the lookup's own coroutine
             assertEquals("a second read of the cache, not a second question to the device", 2, source.lookups.size)
-            assertEquals(1, r.lookup.asked.size)
+            assertEquals(1, r.lookup.queried.size)
             val loaded = r.state.systemInfo as SystemInfoState.Loaded
             assertEquals(listOf(a2dp), loaded.info.cachedUuids)
             assertEquals(BondState.BONDING, loaded.info.bondState)

@@ -25,7 +25,7 @@ class FakeProfileLookupTest {
             val fake = lookup()
             val result = fake.fetchProfiles(addresses[0])
             assertEquals(4, (result as ProfileLookupResult.Profiles).uuids.size)
-            assertEquals(listOf(addresses[0]), fake.asked)
+            assertEquals(listOf(addresses[0]), fake.queried)
         }
 
     @Test
@@ -46,11 +46,11 @@ class FakeProfileLookupTest {
         }
 
     @Test
-    fun `the fake honours the real permission and asks nobody without it`() =
+    fun `the fake honours the real permission and queries nobody without it`() =
         runTest {
             val permissions = FakePermissionChecker(connect = PermissionState.Denied(canAskAgain = true))
             val fake = lookup(permissions)
             assertEquals(ProfileLookupResult.PermissionMissing, fake.fetchProfiles(addresses[0]))
-            assertTrue(fake.asked.isEmpty())
+            assertTrue(fake.queried.isEmpty())
         }
 }

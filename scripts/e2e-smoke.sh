@@ -273,21 +273,21 @@ check "device class shown"          bash -c "'$S/ui.sh' find system_class | grep
 echo "-- profile lookup (Tier 2c): contacts the device, so a confirmation naming it comes first, every time"
 adb shell input swipe 540 1900 540 1300 300; sleep 1
 check "lookup offered for a dual-mode device" "$S/ui.sh" wait profiles_button 6
-check "nothing asked unprompted"    absent profiles_header
+check "nothing queried unprompted"    absent profiles_header
 "$S/ui.sh" tap profiles_button >/dev/null
 check "confirmation is shown"       "$S/ui.sh" wait profiles_confirm_dialog 6
 check "it names the device"         bash -c "'$S/ui.sh' find 'BT Scan will briefly contact' | grep -q 'Buds Pro'"
 sleep 3
-check "nothing asked behind the dialog" absent profiles_header
+check "nothing queried behind the dialog" absent profiles_header
 "$S/shot.sh" smoke-profiles-confirm >/dev/null
 "$S/ui.sh" tap profiles_cancel >/dev/null
 sleep 2
-check "cancel asks nothing"         absent profiles_header
+check "cancel queries nothing"       absent profiles_header
 check "cancel closes the dialog"    absent profiles_confirm_dialog
 sleep 1.5
 "$S/ui.sh" tap profiles_button >/dev/null
 "$S/ui.sh" wait profiles_confirm_dialog 6 >/dev/null
-check "asked again, not remembered" "$S/ui.sh" find profiles_confirm
+check "queried again, not remembered" "$S/ui.sh" find profiles_confirm
 "$S/ui.sh" tap profiles_confirm >/dev/null
 check "the device answers"          "$S/ui.sh" wait profiles_header 8
 check "friendly profile names"      bash -c "'$S/ui.sh' find profile_name_0 | grep -q 'A2DP Audio Sink'"
@@ -301,7 +301,7 @@ check "lookup offered for a classic device" "$S/ui.sh" wait profiles_button 6
 "$S/ui.sh" tap profiles_button >/dev/null
 "$S/ui.sh" wait profiles_confirm_dialog 6 >/dev/null
 "$S/ui.sh" tap profiles_confirm >/dev/null
-check "asking shows progress"       "$S/ui.sh" wait profiles_running 6
+check "querying shows progress"       "$S/ui.sh" wait profiles_running 6
 check "a silent device times out"   "$S/ui.sh" wait profiles_timeout 16
 "$S/ui.sh" back >/dev/null
 "$S/ui.sh" wait device_list 5 >/dev/null

@@ -53,7 +53,7 @@ class FakePermissionChecker(
 }
 
 /**
- * Profile lookup whose answer the test sets; records every address it was asked, which is the evidence that a
+ * Profile lookup whose answer the test sets; records every address it was queried for, which is the evidence that a
  * lookup (which contacts the device) never happens without the user's confirmation. [silent] never answers.
  */
 class ManualProfileLookup(
@@ -61,10 +61,10 @@ class ManualProfileLookup(
     var silent: Boolean = false,
     var delayMs: Long = 0,
 ) : ProfileLookup {
-    val asked = mutableListOf<String>()
+    val queried = mutableListOf<String>()
 
     override suspend fun fetchProfiles(address: String): ProfileLookupResult {
-        asked += address
+        queried += address
         if (silent) awaitCancellation()
         if (delayMs > 0) delay(delayMs)
         return result

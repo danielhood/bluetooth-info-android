@@ -155,7 +155,7 @@
   <string name="distance_few_metres">A few metres</string>
   <string name="distance_far">Far, over about 10 m</string>
   <string name="detail_system_info">System information</string>
-  <string name="system_info_permission_message">To show what your phone already knows about this device (its name, whether it is paired, and its type), BT Scan needs your permission to read it. Scanning works without it. BT Scan never pairs with or changes any device, and contacts a device only when you ask it to.</string>
+  <string name="system_info_permission_message">To show what your phone already knows about this device (its name, whether it is paired, and its type), BT Scan needs your permission to read it. Scanning works without it. BT Scan never pairs with or changes any device, and contacts a device only when you choose to query it.</string>
   <string name="system_info_permission_denied">The permission is turned off. You can turn it on in the app\'s settings. Scanning keeps working without it.</string>
   <string name="system_info_allow">Allow system information</string>
   <string name="system_info_open_settings">Open app settings</string>
@@ -259,14 +259,14 @@
   <string name="found_classic">Classic inquiry</string>
   <string name="found_both">Both</string>
   <string name="profiles_button">Look up supported profiles</string>
-  <string name="profiles_running">Asking the device…</string>
-  <string name="profiles_header">Supported profiles (asked just now)</string>
+  <string name="profiles_running">Querying the device…</string>
+  <string name="profiles_header">Supported profiles (queried just now)</string>
   <string name="profiles_empty">The device answered with no profiles.</string>
   <string name="profiles_timeout">The device did not answer within 10 seconds.</string>
-  <string name="profiles_not_started">Android could not ask this device.</string>
-  <string name="profiles_note">Asked of the device just now over classic Bluetooth. BT Scan changes nothing on it.</string>
-  <string name="profiles_dialog_title">Ask this device for its profiles?</string>
-  <string name="profiles_dialog_text">BT Scan will briefly contact %1$s over classic Bluetooth and ask which profiles it supports. Only do this for devices you own or have permission to inspect. The device may be briefly busy while it answers, and some devices may ask to pair; you can decline. BT Scan will not change anything on the device.</string>
-  <string name="profiles_dialog_confirm">Ask the device</string>
+  <string name="profiles_not_started">Android could not query this device.</string>
+  <string name="profiles_note">The device was queried just now over classic Bluetooth. BT Scan changes nothing on it.</string>
+  <string name="profiles_dialog_title">Query this device for its profiles?</string>
+  <string name="profiles_dialog_text">BT Scan will briefly contact %1$s over classic Bluetooth and query it for the profiles it supports. Only do this for devices you own or have permission to inspect. The device may be briefly busy while it answers, and some devices may ask to pair; you can decline. BT Scan will not change anything on the device.</string>
+  <string name="profiles_dialog_confirm">Query the device</string>
   <string name="profiles_dialog_cancel">Cancel</string>
 </resources>
