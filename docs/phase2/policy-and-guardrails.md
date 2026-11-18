@@ -61,7 +61,7 @@ Wording is part of the safety design and lives in one string resources file so i
 
 *(Adjust the last sentence when 2c/Tier 3 are enabled; it must never over-promise.)*
 
-**Classic scan notice (Tier 2b, in the app now; first use per process, awaiting owner review)** "Classic scanning looks for older Bluetooth devices for about 12 seconds. It can briefly disturb audio playing on your headphones." Buttons: Scan, Cancel. Also in the app: "The BLE scan was stopped for the classic scan: the two cannot run together." and the reverse.
+**Classic scan notice (Tier 2b, in the app now; first use per process; approved 2026-11-17 by the owner)** "Classic scanning looks for older Bluetooth devices for about 12 seconds. It can briefly disturb audio playing on your headphones." Buttons: Scan, Cancel. Also in the app: "The BLE scan was stopped for the classic scan: the two cannot run together." and the reverse.
 
 **Profile lookup confirmation (Tier 2c, in the app now; approved 2026-11-17 by the owner, after the wording was revised from "ask" to "query")** "Query this device for its profiles? BT Scan will briefly contact <name or address> over classic Bluetooth and query it for the profiles it supports. Only do this for devices you own or have permission to inspect. The device may be briefly busy while it answers, and some devices may ask to pair; you can decline. BT Scan will not change anything on the device." Buttons: Query the device, Cancel. Shown every time, never remembered. The "may ask to pair" sentence is observed behaviour, not boilerplate: Android attempted to pair with the test host during a lookup.
 
@@ -92,7 +92,7 @@ Wording is part of the safety design and lives in one string resources file so i
 
 | ID | Question | Recommended |
 |---|---|---|
-| P-1 | Approve the draft consent wording, or adjust? | **Partly decided (2026-11-14):** the wording shipped through Tier 2a (scan and Location permission screens, System information section, confidence labels, hint and tracker wording, estimate notes) was approved as written, including the "Tracker? (unverified)" list chip. **Also approved 2026-11-17:** the profile lookup confirmation and result texts and the two re-worded System information sentences (see above). Still awaiting review: the classic scan notice (Tier 2b). The connection consent wording for Tier 3 is still a draft. |
+| P-1 | Approve the draft consent wording, or adjust? | **Partly decided (2026-11-14):** the wording shipped through Tier 2a (scan and Location permission screens, System information section, confidence labels, hint and tracker wording, estimate notes) was approved as written, including the "Tracker? (unverified)" list chip. **Also approved 2026-11-17:** the profile lookup confirmation and result texts and the two re-worded System information sentences (see above). The classic scan notice (Tier 2b) was approved the same day. The connection consent wording for Tier 3 is still a draft. |
 | P-2 | Is an "own devices" notice sufficient, or should connecting require an additional deliberate step (for example typing a confirmation word) for devices not previously bonded? | Dialog plus notice is sufficient for a personal POC; revisit before any wider distribution |
 | P-3 | Should real third-party neighbourhood scans be allowed in committed documentation (only fake data in git)? | No: fake data only in git |
 | P-4 | Distribution intent: personal use only, or could this be shared? | If shared, add a privacy review, store-policy review (permissions declarations), and remove or further restrict Tier 3 |
